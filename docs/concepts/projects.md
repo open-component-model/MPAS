@@ -56,6 +56,10 @@ The reconciliation process for the project controller will be as follows:
 - watch for `ProjectSubscriptionBindings`
 - for any new `ProjectSubscriptionBindings` generate a `ProductDeployment` manifest and commit to the project repository
 
+The process for onboarding a new project is as follows:
+
+![image](https://user-images.githubusercontent.com/4415593/225442259-c4b7c78a-66e7-41de-9f04-1dd5ab881d8e.png)
+
 ### Git Repositories
 
 The git related functionality described above will not be part of the `Project` controller. Instead we shall add this functionality to the existing [git-sync-controller](https://github.com/open-component-model/git-sync-controller); the `Project` controller will create `Repository` objects that will be consumed by the `git-sync-controller`.
