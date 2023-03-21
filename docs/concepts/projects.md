@@ -309,4 +309,4 @@ The `ProjectTargetBinding` object contains a references to `Project` and `Target
 
 A Repository is a Git repository that is created to house products installed as part of an MPAS project.
 
-Because the Flux Source controller already defines an object named `GitRepository`, for the MPAS we shall define a Kubernetes API object named `Repository` that is describes project git repositories.
+Because the Flux Source controller already defines an object named `GitRepository`, for the MPAS we shall define a Kubernetes API object called `Repository` that describes project git repositories.
