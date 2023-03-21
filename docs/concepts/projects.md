@@ -103,7 +103,7 @@ A reference to `ProjectTargetBindings` should be stored in the `Project` status 
 
 The Project controller will watch the Kubernetes API for `ProjectSubscriptionBinding` events.
 
-When a new `ProjectSubscriptionBinding` created the Project controller should fetch `ProductonInstallation` resource from the component associated with the subscription in the `ProjectSubscriptionBinding`'s '`spec.subscriptionRef` field.
+When a new `ProjectSubscriptionBinding` is created, the Project controller should fetch `ProductInstallation` resource from the component associated with the subscription in the `ProjectSubscriptionBinding`'s '`spec.subscriptionRef` field.
 
 Using the `ProductionInstallation` resource the Project controller will generate a `ProductDeployment` manifest the project controller, product configuration file (if necessary) & production configuration README. The Project controller will also check for any available `ProjectTargetBindings` and write these to the `ProductDeployment` manifest.
 
