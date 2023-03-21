@@ -41,7 +41,7 @@ The functions required to be carried out by the `Product` controller are:
 
 To implement the functionality required for MPAS Projects we will create a dedicated Kubernetes controller. The controller will act as a coordinator, it's primary function being to translate the `Project` Custom Resource into lower level resources which will perform the specific operations.
 
-The reconciliation process for the project controller will be as follows:
+The reconciliation process for the product controller will be as follows:
 - fetch `spec.component.registryRef` object and create the `ComponentVersion` CR
 - for each pipeline in the `spec.pipelines` array:
   - 1. create the Localization CR
