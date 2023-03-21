@@ -301,7 +301,7 @@ The `Target` Kubernetes API object specifies the access details for the target. 
 
 #### Project Target Binding
 
-A Project Target Binding creates a relation between a Project and a component Subscription.
+A Project Target Binding creates a relation between a Project and a deployment Target.
 
 The `ProjectTargetBinding` object contains a references to `Project` and `Target` objects. The Project controller will look for available `ProjectTargetBinding`'s whenever it is creating a `ProductDeployment`.
 
