@@ -105,7 +105,7 @@ The Project controller will watch the Kubernetes API for `ProjectSubscriptionBin
 
 When a new `ProjectSubscriptionBinding` is created, the Project controller should fetch `ProductInstallation` resource from the component associated with the subscription in the `ProjectSubscriptionBinding`'s '`spec.subscriptionRef` field.
 
-Using the `ProductionInstallation` resource the Project controller will generate a `ProductDeployment` manifest the project controller, product configuration file (if necessary) & production configuration README. The Project controller will also check for any available `ProjectTargetBindings` and write these to the `ProductDeployment` manifest.
+Using the `ProductInstallation` resource, the Project controller will generate a `ProductDeployment` manifest, a product configuration file (if necessary) and a production configuration README. The Project controller will also check for any available `ProjectTargetBindings` and write these to the `ProductDeployment` manifest.
 
 These files will then be committed to the project repository on a new branch under the `products` directory in the repository. If the `GitRepository` has automatic pull-request creation enabled then a pull-request will be created.
 
