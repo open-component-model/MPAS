@@ -93,7 +93,7 @@ A reference to `ProjectSubscriptionBindings` should be stored in the `Project` s
 
 Targets shall be linked to the Project using a `ProjectTargetBinding` object. Any number of `ProjectTargetBinding`'s' can be created between a given Project or Target.
 
-A `ProjectTargetBinding` may ignore particular projects using the ignore field. Otherwise targets will be consumed used by all products in the `Project`.
+A `ProjectTargetBinding` may ignore particular products using the ignore field. Otherwise targets will be consumed/used by all products in the `Project`.
 
 Similar to `ProjectSubscriptionBinding`, the `ProjectTargetBinding` makes it possible to define both global and project specific targets.
 
