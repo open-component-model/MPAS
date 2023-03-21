@@ -277,7 +277,7 @@ spec:
 
 #### Project
 
-An MPAS Project is a collection of Products. Products are installed using OCM and GitOps. Products can be stored in one or more Git repositories that are managed by the Project.
+An MPAS Project is a collection of Products. Products are installed using OCM and GitOps. Products can be stored in one or more Git repositories that a `Project` manages.
 
 The `Project` Kubernetes API object that contains the metadata required to create and manage an individual MPAS Project.
 
