@@ -39,7 +39,7 @@ As has been described in the other concept documents, the `ProductDeployment` ma
 
 Similar to `ProjectSubscriptionBinding`, `ProjectTargetBinding`'s allow for the definition of global or project level `Target`s which can be consumed by any user with the appropriate Kubernetes RBAC permissions.
 
-One difference between the `ProjectTargetBinding` and the `ProjectSubscriptionBinding` is that `ProjectTargetBindings` should support ignoring particular products.
+One difference between the `ProjectTargetBinding` and the `ProjectSubscriptionBinding` is that `ProjectTargetBindings` should support ignoring particular products. Or said otherwise, the target would be disabled for a particular product.
 
 ## Unresolved Issues
 
