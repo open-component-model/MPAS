@@ -24,6 +24,8 @@ The MPAS control-plane (Project controller) is responsible for validating the Pr
 
 ## Proposal
 
+![image](https://user-images.githubusercontent.com/4415593/226613119-f0004869-09c8-448b-8432-096df5efcea7.png)
+
 We will introduce a Custom Resource named `ProductDeployment` that will extend the Kubernetes API to provide an API object responsible installing products. The `ProductDeployment` object will be consumed by a Custom Controller, (`Product` controller), in order to execute the functionality required to install the product.
 
 The `ProductDeployment` manifest will be committed to a Git repository by the `Project` controller and reconciled to the Kubernetes cluster using Flux. Note: The `ProductDeployment` manifest is constructed by the `Project` controller and is realized by the `Product` controller.
