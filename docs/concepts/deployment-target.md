@@ -27,7 +27,7 @@ We will introduce a new Kubernetes Custom Resource named `Target`.  The primary 
 
 The `Target` Custom Resource specify the `type` of target and contain a reference to a secret that provides access credentials for the target. When creating a `Target` is imperative that the correct kind of access credentials are present in the secret.
 
-When the `Product` controller is generating the OCM pipeline for a given `ProductDeployment`, it will fetch the target's specified in the `spec.targetRefs` field of the `ProductDeployment`. Depending on the type of target, the `Product` controller will generate an appropriate Kubernetes object.
+When the `Product` controller is generating the product deployment pipeline for a given `ProductDeployment`, it will fetch the target's specified in the `spec.targetRefs` field of the `ProductDeployment`. Depending on the type of target, the `Product` controller will generate an appropriate Kubernetes object.
 
 For a `Target` with type `kubernetes`, the `Product` controller will generate a Flux `Kustomization` and configure the `spec.kubeConfig` field to point at the `Target`'s `spec.access` secret. Flux will then deploy the end-result of the `ProductDeployment` pipeline to the target cluster.
 
