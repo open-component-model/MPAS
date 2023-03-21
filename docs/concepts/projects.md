@@ -283,7 +283,7 @@ The `Project` Kubernetes API object that contains the metadata required to creat
 
 #### Subscription
 
-A Subscription is request for an OCM component to be replicated from an delivery registry to a customer registry.
+A Subscription is a request for an OCM component to be replicated from a delivery registry to a customer registry.
 
 The `Subscription` Kubernetes API object specifies the details of the component, version constraints and the delivery & customer registries.
 
