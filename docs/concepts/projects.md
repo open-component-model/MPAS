@@ -35,7 +35,7 @@ The functions required to be carried out by the Project controller are:
 - ensuring the repositories have the appropriate maintainers configured
 - ensuring Flux is configured to reconcile the project Git repository
 
-Because MPAS is a GitOps system `Project` manifests should be stored in a dedicated "management repository". This repository would be reconciled by Flux and the `Project` manifests applied to the cluster using a `Kustomization` using a service account with the necessary permissions. Global `Subscriptions` and `Targets` for use within all projects can be stored in the "management repository" also.
+Because MPAS is a GitOps system `Project` manifests should be stored in a dedicated "management repository". This repository would be reconciled by Flux and the `Project` manifests applied to the cluster via a `Kustomization` impersonating a Service Account with appropriate permissions. Global `Subscriptions` and `Targets` for use within all projects can be stored in the "management repository" also.
 
 
 ### Project Controller
