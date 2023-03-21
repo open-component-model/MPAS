@@ -16,6 +16,8 @@ The purpose of a Subscription is to replicate OCM components containing a partic
 
 ## Proposal
 
+![image](https://user-images.githubusercontent.com/4415593/226594830-5b37a162-5248-44ef-b69b-7f4b845f2e8b.png)
+
 We will use the existing [replication-controller](https://github.com/open-component-model/replication-controller) with some modifications in order to satisfy the requirements of MPAS subscriptions.
 
 The `replication-controller` already offers a `ComponentSubscription` resource which performs the following operations:
