@@ -1,4 +1,4 @@
-# Concept Paper: Projects
+# Concept Paper: Products
 
 Table of contents:
 - [Context](#context)
