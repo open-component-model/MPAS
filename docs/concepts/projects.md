@@ -61,7 +61,7 @@ The reconciliation process for the project controller will be as follows:
 
 The process for on-boarding a new project is as follows:
 
-![image](https://user-images.githubusercontent.com/4415593/226642879-a3c3e136-a9a0-4c22-8661-c6e81592a42a.png)
+![image](https://user-images.githubusercontent.com/4415593/227281052-d4c31de3-c0c5-4bd6-8639-33602c6a31b0.png)
 
 ### Git Repositories
 
