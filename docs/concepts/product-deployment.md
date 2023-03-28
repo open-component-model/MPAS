@@ -104,7 +104,7 @@ spec:
       valuesFile:
         path: string
     targetRole: #
-      kind: string # (required) the kind of target: Kubernetes, CloudFoundry, OCI Repository, SSH
+      type: string # (required) the kind of target: Kubernetes, CloudFoundry, OCI Repository, SSH
       selector: # (required)
         matchLabels:
           string: string
