@@ -60,6 +60,8 @@ The reconciliation process for a `ProductDeployment` will be as follows:
       - 5.4 set the `spec.target` field on `ProductDeployment` to the target
   - 6. if the target field is non-empty create a Flux Kustomization configured with the target's KubeConfig which reconciles the Flux Source from step 4
 
+The `ProductDescription` may define the kind and features of the `Target`'s it requires. Because of this it is necessary for the product controller to make a scheduling decision of the basis of the information provided in the `ProductDescription` and the `Target`'s available within the MPAS system. Once a target is chosen then it is assigned to a specific pipeline in the `ProductDeployment` and from this point onwards is immutable.
+
 ### Product Configuration Values
 
 As previously mentioned, the product directory may contain a `values.yaml` that contains customer supplied parameters. The `Product` controller must fetch this file from Git and pass the values to the Configuration Custom Resource. This can be done by fetching the artifact from the Project's Flux GitRepository and setting the values on the `Configuration` custom resource's `spec.values` field, which allows for values to be passed inline.
