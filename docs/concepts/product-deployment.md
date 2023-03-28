@@ -83,35 +83,37 @@ spec:
     version: string
     registry:
       url: string
-  # will be used to create Localization Custom Resource
-  localization:
+  pipelines:
+  - name: string
+    # will be used to create Localization Custom Resource
+    localization:
     resource: # the ocm resource to be Localized
       name: string
       version: string
     rules: # the ocm resource containing the Localization rules
       name: string
-      version: string
-  # the configuration field will create a Configuration Custom Resource
-  # it will also fetch the valuesFile
-  # and pass them to the configuration
-  # a Flux OCI Repository will also be created
-  configuration:
-    rules:
+        version: string
+    # the configuration field will create a Configuration Custom Resource
+    # it will also fetch the valuesFile
+    # and pass them to the configuration
+    # a Flux OCI Repository will also be created
+    configuration:
+      rules:
+        name: string
+        version: string
+      valuesFile:
+        path: string
+    targetRole: #
+      kind: string # (required) the kind of target: Kubernetes, CloudFoundry, OCI Repository, SSH
+      selector: # (required)
+        matchLabels:
+          string: string
+        matchExpressions:
+          - { key: string, operator: In, values: [string] }
+          - { key: string, operator: NotIn, values: [string] }   matchLabels:
+    targetRef: # (optional) set by the product controller/scheduler once a target has been selected
       name: string
-      version: string
-    valuesFile:
-      path: string
-  targetSpec: #
-    kind: string # (required) the kind of target: Kubernetes, CloudFoundry, OCI Repository, SSH
-    selector: # (required)
-      matchLabels:
-        string: string
-      matchExpressions:
-        - { key: string, operator: In, values: [string] }
-        - { key: string, operator: NotIn, values: [string] }   matchLabels:
-  targetRef: # (optional) set by the product controller/scheduler once a target has been selected
-    name: string
-    namespace: string
+      namespace: string
 ```
 
 ### A.2. Product Deployment Generator Kubernetes API Object
