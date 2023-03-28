@@ -37,18 +37,37 @@ The `spec.description` field contains a textual description of the product that 
 
 ### Pipeline Specification
 
-The field `spec.pipelineSpec` defines pipelines which must be put in place to deploy the product. Multiple pipelines may be specified, each consisting of the following elements:
+The field `spec.pipelines` defines pipelines which must be put in place to deploy the product. Multiple pipelines may be specified, each consisting of the following elements:
 - `source` (required): the resource containing the deployment artifact (Kubernetes manifests, Flux HelmRelease etc...)
 - `localization` (required): the resource containing localization rules that can be used to localize the `source`
 - `configuration` (optional):
   - a resource containing configuration rules that can be used to configure the localized `source`
   - a resource containing a README file instructing the operator what parameters are available for configuration
 - `validation` (required): the resource which can be executed to validate the product has been configured correctly and ready for deployment
-- `target` (optional): a target to which the pipeline result should be deployed. If no target is specified the pipeline result will be deployed to any available target.
+- `targetRoleName` (optional): a target class to which the pipeline result should be deployed. If no target class is specified the pipeline result will be deployed to any available target.
 
 ### Target Specification
 
-The field `spec.targetSpec` defines the targets that are available for use by the pipeline(s). Target spec elements consist of a name and a set of label selectors. It is up to the consumer to ensure that targets with the appropriate labels exist.
+A Target Role is a logical grouping of features. The field `spec.targetRoles` defines the targets roles that are available for use by the pipeline(s). Target roles consist of a name, kind and a set of label selectors. It is up to the consumer to ensure that targets with the appropriate labels exist.
+
+Labels should be namespaced and have a well-defined taxonomy, for example:
+
+```yaml
+# devices
+"target.mpas.ocm.software/gpu"
+"target.mpas.ocm.software/hsm"
+"target.mpas.ocm.software/fpga"
+
+# networking
+"target.mpas.ocm.software/public-internet"
+"target.mpas.ocm.software/private-network"
+"target.mpas.ocm.software/enclave-network"
+
+# machine types
+"target.mpas.ocm.software/memory-optimized"
+"target.mpas.ocm.software/cpu-optimized"
+"target.mpas.ocm.software/network-optimized"
+```
 
 ## Miscellaneous
 
@@ -69,8 +88,9 @@ metadata:
   name: string
 spec:
   description: string
-  pipelineSpec:
+  pipelines:
   - name: string # (required)
+    targetRoleName: string # (optional)
     source: # (required)
       name: string # resource name
       version: string # resource version
@@ -102,14 +122,19 @@ spec:
       component: # (optional) if provided the resource is retrieved from this component
         name: string
         version: string
-  targetSpec:
+  # targetRoles defines a list of target classes that
+  # may be selected by a pipeline
+  # selector defines labels that a given target should have in order
+  # to be considered a member of the class
+  targetRoles: # (optional)
   - name: string # (required) the name of the target
+    kind: string # (required) the type of target
     selector: # (required)
       matchLabels:
         string: string
       matchExpressions:
         - { key: string, operator: In, values: [string] }
-        - { key: string, operator: NotIn, values: [string] }   matchLabels:
+        - { key: string, operator: NotIn, values: [string] }
 # out of scope
 # dependsOn:
 # - component: string
