@@ -128,7 +128,7 @@ spec:
   # to be considered a member of the class
   targetRoles: # (optional)
   - name: string # (required) the name of the target
-    kind: string # (required) the type of target
+    type: string # (required) the type of target
     selector: # (required)
       matchLabels:
         string: string
