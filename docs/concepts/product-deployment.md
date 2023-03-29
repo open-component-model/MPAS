@@ -16,7 +16,7 @@ Products are made available to the MPAS system as OCM Components via a Subscript
 
 ## Proposal
 
-![image](https://user-images.githubusercontent.com/4415593/226614131-3fd68575-3410-4865-9ba2-628bce1a3547.png)
+![image](https://user-images.githubusercontent.com/4415593/228482353-5158a7f2-e5b4-48ff-b650-a7f611327a92.png)
 
 We will introduce a Custom Resource named `ProductDeployment` that will provide an API object describing the product deployment. The `ProductDeployment` object will be consumed by a Custom Controller (`Product` controller) in order to execute the functionality required to install the product.
 
