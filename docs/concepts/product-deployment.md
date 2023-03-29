@@ -87,13 +87,13 @@ spec:
       url: string
   pipelines:
   - name: string
-    # will be used to create Localization Custom Resource
-    localization:
     resource: # the ocm resource to be Localized
       name: string
-      version: string
-    rules: # the ocm resource containing the Localization rules
-      name: string
+      version: string 
+    # will be used to create Localization Custom Resource
+    localization:
+       rules: # the ocm resource containing the Localization rules
+        name: string
         version: string
     # the configuration field will create a Configuration Custom Resource
     # it will also fetch the valuesFile
@@ -112,7 +112,7 @@ spec:
           string: string
         matchExpressions:
           - { key: string, operator: In, values: [string] }
-          - { key: string, operator: NotIn, values: [string] }   matchLabels:
+          - { key: string, operator: NotIn, values: [string] }
     targetRef: # (optional) set by the product controller/scheduler once a target has been selected
       name: string
       namespace: string
