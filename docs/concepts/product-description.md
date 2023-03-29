@@ -94,34 +94,29 @@ spec:
     source: # (required)
       name: string # resource name
       version: string # resource version
-      component: # (optional) if provided the resource is retrieved from this component
+      componentReference: # (optional) if provided the resource is retrieved from this component
         name: string
-        version: string
     localization: # (required)
       name: string # resource name
       version: string # resource version
-      component: # (optional) if provided the resource is retrieved from this component
+      componentReference: # (optional) if provided the resource is retrieved from this component
         name: string
-        version: string
     configuration: # (optional)
       rules:
         name: string # resource name
         version: string # resource version
-        component: # (optional) if provided the resource is retrieved from this component
-          name: string
-          version: string
+      componentReference: # (optional) if provided the resource is retrieved from this component
+        name: string
       readme:
         name: string # resource name
         version: string # resource version
-        component: # (optional) if provided the resource is retrieved from this component
-          name: string
-          version: string
+      componentReference: # (optional) if provided the resource is retrieved from this component
+        name: string
     validation: # (required)
       name: string # resource name
       version: string # resource version
-      component: # (optional) if provided the resource is retrieved from this component
+      componentReference: # (optional) if provided the resource is retrieved from this component
         name: string
-        version: string
   # targetRoles defines a list of target classes that
   # may be selected by a pipeline
   # selector defines labels that a given target should have in order
