@@ -96,7 +96,7 @@ spec:
       version: string # resource version
       componentReference: # (optional) if provided the resource is retrieved from this component
         name: string
-    localization: # (required)
+    localization: # (optional)
       name: string # resource name
       version: string # resource version
       componentReference: # (optional) if provided the resource is retrieved from this component
