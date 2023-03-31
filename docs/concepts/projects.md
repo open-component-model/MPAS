@@ -56,8 +56,6 @@ The reconciliation process for the project controller will be as follows:
 - create/update/delete Kubernetes secret containing deploy key for `Repository` for each repository in `spec.git.repositories`
 - create/update/delete Flux 'GitRepository' object targeting `spec.git.repository`
 - create/update/delete Flux 'Kustomization' objects targeting directories in `spec.git.repository` configured to use the project `ServiceAccount`
-- watch for `ProjectSubscriptionBindings`
-- for any new `ProjectSubscriptionBindings` generate a `ProductDeployment` manifest and commit to the project repository
 
 The process for on-boarding a new project is as follows:
 
