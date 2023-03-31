@@ -84,15 +84,13 @@ To deploy an instance of a product from a subscription to a target requires gene
 
 The Project controller will watch the Kubernetes API for `ProductDeploymentGenerator` events.
 
-When a new `ProductDeploymentGenerator` is created, the Project controller should fetch `ProductInstallation` resource from the component associated with the subscription in the `ProductDeploymentGenerator`'s '`spec.subscriptionRef` field.
+When a new `ProductDeploymentGenerator` is created, the Project controller should fetch `ProductDescription` resource from the component associated with the subscription in the `ProductDeploymentGenerator`'s '`spec.subscriptionRef` field.
 
-Using the `ProductInstallation` resource, the Project controller will generate a `ProductDeployment` manifest, a product configuration file (if necessary) and a production configuration README.
-
-The Project controller will fetch the selected `Targets` and write these to the `ProductDeployment` manifest.
+Using the `ProductDescription` resource, the Project controller will generate a `ProductDeployment` manifest, a product configuration file (if necessary) and a production configuration README.
 
 These files will then be committed to the project repository on a new branch under the `products` directory in the repository. If the `GitRepository` has automatic pull-request creation enabled then a pull-request will be created.
 
-Finally the Project controller will create a `ProductValidator` object that executes the `Validator` specified in the `ProductInstallation` resource against the pull-request and mark it as valid using appropriate means per provider.
+Finally the Project controller will create a `ProductValidator` object that executes the `Validator` specified in the `ProductDescription` resource against the pull-request and mark it as valid using appropriate means per provider.
 
 ### Role Based Access Control
 
@@ -126,7 +124,8 @@ spec:
   # be used to create and configure the project Git repositories
   git:
     provider: string # github or gitlab (required)
-    org: string # required
+    owner: string # required
+    isOrganisation: boolean
     # this is the repository that
     # will be used to administer the project
     # it is required
@@ -141,6 +140,8 @@ spec:
     repository:
       name: string # name of project repository that will be created ( required )
       maintainers: []string # identites of maintainers added to the project repository
+      visibility: string
+      exisitingRepositoryPolicy: string # adopt | fail (controls whether an existing repository with the same name should be adopted and used or fail, causing the reconciliation to stall)
     # credentials for access to the git provider's api, secret for MVP but
     # ultimately should be OAuth
     credentials:
@@ -199,7 +200,7 @@ spec:
     secretRef:
       name: string # (required)
   automaticPullRequestCreation: true # (optional: default true)
-  exisitingRepositoryPolicy: string # adopt | fail ( controls whether an existing repository with the same name should be adopted and used or fail, causing the reconciliation to stall)
+  exisitingRepositoryPolicy: string # adopt | fail (controls whether an existing repository with the same name should be adopted and used or fail, causing the reconciliation to stall)
 ```
 
 ## Appendix B: Glossary
@@ -220,7 +221,7 @@ The `Subscription` Kubernetes API object specifies the details of the component,
 
 A ProductDeploymentGenerator creates a relation between a Subscription and a set of Targets.
 
-The `ProductDeploymentGenerator` object contains references to `Project` and `Subscription` objects. The Project controller watches `ProductDeploymentGenerator` objects and creates `ProductDeployment` manifests.
+The `ProductDeploymentGenerator` object contains references to a `Subscription` object. The Product controller watches `ProductDeploymentGenerator` objects and creates `ProductDeployment` manifests.
 
 #### Target
 
