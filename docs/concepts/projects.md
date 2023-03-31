@@ -186,16 +186,20 @@ metadata:
   name: string
   namespace: string
 spec:
-  provider: string # github or gitlab (required)
-  org: string # required
+  provider: string # github | gitlab (required)
+  owner: string # required
+  isOrganisation: boolean # (default: true)
   name: string # name of project repository that will be created ( required )
   maintainers: []string # identites of maintainers added to the project repository
+  visibility: string # (default: private)
+  domain: string # the git provider domain
   # credentials for access to the git provider's api, secret for MVP but
   # ultimately should be OAuth
   credentials:
     secretRef:
       name: string # (required)
   automaticPullRequestCreation: true # (optional: default true)
+  exisitingRepositoryPolicy: string # adopt | fail ( controls whether an existing repository with the same name should be adopted and used or fail, causing the reconciliation to stall)
 ```
 
 ## Appendix B: Glossary
