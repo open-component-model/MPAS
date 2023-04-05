@@ -1,0 +1,27 @@
+apiVersion: config.ocm.software/v1alpha1
+kind: ConfigData
+metadata:
+  name: ocm-config
+  labels:
+    env: test
+configuration:
+  defaults:
+    message: "Welcome to the backend service"
+    replicas: 2
+  schema:
+    type: object
+    additionalProperties: false
+    properties:
+      replicas:
+        type: int
+      message:
+        type: string
+  rules:
+  - value: (( message ))
+    file: configmap.yaml
+    path: data.PODINFO_UI_MESSAGE
+localization:
+- resource:
+    name: image
+  file: deploy.yaml
+  image: spec.template.spec.containers[0].image

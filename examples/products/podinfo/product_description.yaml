@@ -1,0 +1,95 @@
+apiVersion: meta.mpas.ocm.software/v1alpha1
+kind: ProductDescription
+metadata:
+  name: podinfo
+spec:
+  description: |
+Podinfo is a tiny web application made with Go that showcases best practices of running microservices in Kubernetes. Podinfo is used by CNCF projects like Flux and Flagger for end-to-end testing and workshops. This product creates a podinfo deployment consisting of a frontend, backend & redis-based cache.
+  pipelines:
+  - name: backend
+    source:
+      name: manifests
+      version: 1.0.0
+      referencePath:
+      - name: backend
+    localization:
+      name: config
+      version: 1.0.0
+      referencePath:
+      - name: backend
+    configuration:
+      rules:
+        name: config
+        version: 1.0.0
+        referencePath:
+        - name: backend
+      readme:
+        name: config
+        version: 1.0.0
+        referencePath:
+        - name: backend
+    validation:
+      name: validation
+      version: 1.0.0
+      referencePath:
+      - name: backend
+  - name: frontend
+    source:
+      name: manifests
+      version: 1.0.0
+      referencePath:
+      - name: frontend
+    localization:
+      name: config
+      version: 1.0.0
+      referencePath:
+      - name: frontend
+    configuration:
+      rules:
+        name: config
+        version: 1.0.0
+        referencePath:
+        - name: frontend
+      readme:
+        name: config
+        version: 1.0.0
+        referencePath:
+        - name: frontend
+    validation:
+      name: validation
+      version: 1.0.0
+      referencePath:
+      - name: frontend
+  - name: cache
+    source:
+      name: manifests
+      version: 1.0.0
+      referencePath:
+      - name: redis
+    localization:
+      name: config
+      version: 1.0.0
+      referencePath:
+      - name: redis
+    configuration:
+      rules:
+        name: config
+        version: 1.0.0
+        referencePath:
+        - name: redis
+      readme:
+        name: config
+        version: 1.0.0
+        referencePath:
+        - name: redis
+    validation:
+      name: validation
+      version: 1.0.0
+      referencePath:
+      - name: redis
+  targetRoles:
+  - name: ingress
+    type: kubernetes
+    selector:
+      matchLabels:
+        target.mpas.ocm.software/ingress-enabled: "true"

@@ -1,0 +1,119 @@
+components:
+# -- product component
+- name: mpas.ocm.software/podinfo
+  version: 1.0.0
+  provider:
+    name: open-component-model
+  resources:
+  - name: product-description
+    type: productdescription.mpas.ocm.software
+    input:
+      type: file
+      path: product_description.yaml
+      compress: true
+  componentReferences:
+  - name: backend
+    componentName: mpas.ocm.software/podinfo/backend
+    version: 1.0.0
+  - name: frontend
+    componentName: mpas.ocm.software/podinfo/frontend
+    version: 1.0.0
+  - name: redis
+    componentName: mpas.ocm.software/redis
+    version: 1.0.0
+# -- backend component
+- name: mpas.ocm.software/podinfo/backend
+  version: 1.0.0
+  provider:
+    name: open-component-model
+  resources:
+  - name: config
+    type: configdata.ocm.software
+    input:
+      type: file
+      mediaType: application/yaml
+      path: ./app/backend/config.yaml
+      compress: true
+  - name: image
+    relation: external
+    type: ociImage
+    version: 6.2.0
+    access:
+      type: ociArtifact
+      imageReference: ghcr.io/stefanprodan/podinfo:6.2.0
+  - name: manifests
+    type: kustomize.ocm.fluxcd.io
+    input:
+      type: dir
+      path: ./app/backend/manifests
+      compress: true
+  - name: validation
+    type: validator.mpas.ocm.software
+    input:
+      type: file
+      path: ./app/backend/validation.rego
+      compress: true
+# -- frontend component
+- name: mpas.ocm.software/podinfo/frontend
+  version: 1.0.0
+  provider:
+    name: open-component-model
+  resources:
+  - name: config
+    type: configdata.ocm.software
+    input:
+      type: file
+      mediaType: application/yaml
+      path: ./app/frontend/config.yaml
+      compress: true
+  - name: image
+    relation: external
+    type: ociImage
+    version: 6.2.0
+    access:
+      type: ociArtifact
+      imageReference: ghcr.io/stefanprodan/podinfo:6.2.0
+  - name: manifests
+    type: kustomize.ocm.fluxcd.io
+    input:
+      type: dir
+      path: ./app/frontend/manifests
+      compress: true
+  - name: validation
+    type: validator.mpas.ocm.software
+    input:
+      type: file
+      path: ./app/frontend/validation.rego
+      compress: true
+# -- redis component
+- name: mpas.ocm.software/redis
+  version: 1.0.0
+  provider:
+    name: open-component-model
+  resources:
+  - name: config
+    type: configdata.ocm.software
+    input:
+      type: file
+      mediaType: application/yaml
+      path: ./redis/config.yaml
+      compress: true
+  - name: image
+    relation: external
+    type: ociImage
+    version: 6.0.1
+    access:
+      type: ociArtifact
+      imageReference: redis:6.0.1
+  - name: manifests
+    type: kustomize.ocm.fluxcd.io
+    input:
+      type: dir
+      path: ./redis/manifests
+      compress: true
+  - name: validation
+    type: validator.mpas.ocm.software
+    input:
+      type: file
+      path: ./redis/validation.rego
+      compress: true
