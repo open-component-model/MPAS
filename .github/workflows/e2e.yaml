@@ -1,0 +1,54 @@
+name: Run e2e test suite
+
+on:
+  repository_dispatch:
+    types: [component.controlplane.mpas::updated]
+
+jobs:
+  checkout-repos-and-init-workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.20
+
+      - name: Checkout mpas repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository }}
+          ref: main
+          path: mpas
+
+      - name: Checkout ocm-controller
+        uses: actions/checkout@v3
+        with:
+          repository: open-component-model/ocm-controller
+          ref: main
+          path: ocm-controller
+
+      - name: Checkout replication-controller
+        uses: actions/checkout@v3
+        with:
+          repository: open-component-model/replication-controller
+          ref: main
+          path: replication-controller
+
+      - name: Checkout git-controller
+        uses: actions/checkout@v3
+        with:
+          repository: open-component-model/git-controller
+          ref: main
+          path: git-controller
+
+      - name: Initialize workspace
+        run: |
+          go work init
+          go work use mpas
+          go work use ocm-controller
+          go work use replication-controller
+          go work use git-controller
+
+      - name: Run test suite
+        working-directory: mpas
+        run: go test -v -count=1 ./e2e
