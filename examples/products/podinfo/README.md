@@ -1,5 +1,17 @@
 ## Podinfo Product
 
+Podinfo is a tiny web application made with Go that showcases best practices of running microservices in Kubernetes. Podinfo is used by CNCF projects like Flux and Flagger for end-to-end testing and workshops. This product creates a podinfo deployment consisting of a frontend, backend & redis-based cache.
+
+### Building
+
+To build the product use the following command:
+
+`ocm add componentversions --create components.yaml`
+
+This will create a `transport-archive` directory that you can then transfer to an OCI registry:
+
+`ocm transfer component ./transport-archive ghcr.io/open-component-model/mpas`
+
 ### Structure
 
 ```mermaid
