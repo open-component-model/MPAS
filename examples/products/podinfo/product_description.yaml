@@ -24,7 +24,7 @@ Podinfo is a tiny web application made with Go that showcases best practices of 
         referencePath:
         - name: backend
       readme:
-        name: config
+        name: instructions
         version: 1.0.0
         referencePath:
         - name: backend
@@ -51,7 +51,7 @@ Podinfo is a tiny web application made with Go that showcases best practices of 
         referencePath:
         - name: frontend
       readme:
-        name: config
+        name: instructions
         version: 1.0.0
         referencePath:
         - name: frontend
@@ -78,7 +78,7 @@ Podinfo is a tiny web application made with Go that showcases best practices of 
         referencePath:
         - name: redis
       readme:
-        name: config
+        name: instructions
         version: 1.0.0
         referencePath:
         - name: redis

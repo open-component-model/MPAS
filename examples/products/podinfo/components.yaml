@@ -34,6 +34,13 @@ components:
       mediaType: application/yaml
       path: ./app/backend/config.yaml
       compress: true
+  - name: instructions
+    type: PlainText
+    input:
+      type: file
+      mediaType: text/markdown
+      path: ./app/backend/README.md
+      compress: true
   - name: image
     relation: external
     type: ociImage
@@ -66,6 +73,13 @@ components:
       mediaType: application/yaml
       path: ./app/frontend/config.yaml
       compress: true
+  - name: instructions
+    type: PlainText
+    input:
+      type: file
+      mediaType: text/markdown
+      path: ./app/frontend/README.md
+      compress: true
   - name: image
     relation: external
     type: ociImage
@@ -97,6 +111,13 @@ components:
       type: file
       mediaType: application/yaml
       path: ./redis/config.yaml
+      compress: true
+  - name: instructions
+    type: PlainText
+    input:
+      type: file
+      mediaType: text/markdown
+      path: ./redis/README.md
       compress: true
   - name: image
     relation: external

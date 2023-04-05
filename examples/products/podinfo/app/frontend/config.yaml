@@ -18,7 +18,7 @@ configuration:
       message:
         type: string
       replicas:
-        type: string
+        type: integer
   rules:
   - value: (( message ))
     file: configmap.yaml
@@ -26,6 +26,9 @@ configuration:
   - value: (( color ))
     file: configmap.yaml
     path: data.PODINFO_UI_COLOR
+  - value: (( replicas ))
+    file: deploy.yaml
+    path: spec.replicas
 localization:
 - resource:
     name: image

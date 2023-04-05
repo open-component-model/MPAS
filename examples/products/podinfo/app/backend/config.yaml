@@ -6,20 +6,23 @@ metadata:
     env: test
 configuration:
   defaults:
-    message: "Welcome to the backend service"
     replicas: 2
+    cacheAddr: tcp://redis:6379
   schema:
     type: object
     additionalProperties: false
     properties:
       replicas:
-        type: int
-      message:
+        type: integer
+      cacheAddr:
         type: string
   rules:
-  - value: (( message ))
+  - value: (( replicas ))
+    file: deploy.yaml
+    path: spec.replicas
+  - value: (( cacheAddr ))
     file: configmap.yaml
-    path: data.PODINFO_UI_MESSAGE
+    path: data.PODINFO_CACHE_SERVER
 localization:
 - resource:
     name: image

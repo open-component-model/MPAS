@@ -7,14 +7,7 @@ deny[msg] {
 }
 
 deny[msg] {
-  input.replicas > 2
+  input.replicas != 1
 
-  msg := "Replicas must be less than 2"
+  msg := "Replicas must equal 1"
 }
-
-deny[msg] {
-  input.replicas == 0
-
-  msg := "Replicas must not be zero"
-}
-

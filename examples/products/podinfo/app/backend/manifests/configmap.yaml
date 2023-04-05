@@ -5,5 +5,4 @@ metadata:
   labels:
     app: backend
 data:
-  PODINFO_UI_MESSAGE: "not configured"
-  PODINFO_UI_COLOR: "#34577c"
+  PODINFO_CACHE_SERVER: tcp://redis:6379
