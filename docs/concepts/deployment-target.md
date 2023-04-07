@@ -55,32 +55,6 @@ spec:
       namespace: string
 ```
 
-### A.2 ProjectTargetBinding Kubernetes API Object
-
-The API for a project ProjectTargetBinding should be as follows:
-
-```yaml
-apiVersion: mpas.ocm.software/v1alpha1
-kind: ProjectTargetBinding
-metadata:
-  name: string
-  namespace: string
-spec:
-  projectRef:
-    name: string
-    namespace: string
-    # ignore products is an optional field that denotes
-    # products that should not be deployed to this target
-    # it's behaviour could be similar to the sourceignore field
-    # which supports wildcards and exclusion semantics (*, !)
-    # could also be based on labels
-    ignoreProducts: # (optional)
-    - string
-  targetRef:
-    name: string
-    namespace: string
-```
-
 ## Appendix B: Glossary
 
 #### Product
@@ -103,23 +77,11 @@ A Subscription is request for an OCM component to be replicated from an delivery
 
 The `Subscription` Kubernetes API object specifies the details of the component, version constraints and the delivery & customer registries.
 
-#### Project Subscription Binding
-
-A Project Subscription Binding creates a relation between a Project and a component Subscription.
-
-The `ProjectSubscriptionBinding` object contains a references to `Project` and `Subscription` objects. The Project controller watches `ProjectSubscriptionBinding` objects and creates `ProductDeployment` manifests.
-
 #### Target
 
 A Target is a deployment environment for the final result of an MPAS product generation pipeline.
 
 The `Target` Kubernetes API object specifies the access details for the target. Creating or managing the target infrastructure is not the responsibility of the MPAS system.
-
-#### Project Target Binding
-
-A Project Target Binding creates a relation between a Project and a component Subscription.
-
-The `ProjectTargetBinding` object contains a references to `Project` and `Target` objects. The Project controller will look for available `ProjectTargetBinding`'s whenever it is creating a `ProductDeployment`.
 
 #### Repository
 
