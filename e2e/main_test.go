@@ -40,14 +40,18 @@ func TestHappyPath(t *testing.T) {
 	projectName := getYAMLField("project.yaml", "metadata.name")
 	projectRepoName := getYAMLField("project.yaml", "spec.git.repository.name")
 
-	project := features.New("Create Project").
+	management := features.New("Configure Management Repository").
 		Setup(setup.AddScheme(v1alpha1.AddToScheme)).
 		Setup(setup.AddScheme(sourcev1.AddToScheme)).
 		Setup(setup.AddScheme(kustomizev1.AddToScheme)).
 		Setup(setup.AddGitRepository(mpasRepoName)).
+		//TODO: change this to add single gitsource and
+		// multiple kustomizations
 		Setup(setup.AddFluxSyncForRepo(mpasRepoName, "projects/", namespace)).
 		Assess("project flux resources have been created", checkFluxResourcesReady(mpasRepoName)).
-		Setup(setup.CreateNamespace(mpasNamespace)).
+		Setup(setup.CreateNamespace(mpasNamespace))
+
+	project := features.New("Create Project").
 		Setup(setup.AddFileToGitRepository(mpasRepoName, "project.yaml", "projects/test-001.yaml")).
 		Assess("management repository has been created", assess.CheckRepoExists(mpasRepoName)).
 		Assess("management namespace has been created", checkNamespaceReady(mpasNamespace)).
@@ -57,39 +61,20 @@ func TestHappyPath(t *testing.T) {
 		Assess("flux resources have been created", checkFluxResourcesReady(projectName))
 
 	target := features.New("Add a target").
-		Setup(setup.AddScheme(v1alpha1.AddToScheme)).
-		Setup(setup.AddScheme(sourcev1.AddToScheme)).
-		Setup(setup.AddScheme(kustomizev1.AddToScheme)).
-		Setup(setup.AddGitRepository(mpasRepoName)).
-		Setup(setup.AddFluxSyncForRepo(mpasRepoName, "projects/", namespace)).
-		Assess("project flux resources have been created", checkFluxResourcesReady(mpasRepoName)).
-		Setup(setup.CreateNamespace(mpasNamespace)).
 		Setup(setup.AddFileToGitRepository(mpasRepoName, "target.yaml", "targets/ingress-target.yaml"))
 
 	subscription := features.New("Create a subscription").
-		Setup(setup.AddScheme(v1alpha1.AddToScheme)).
-		Setup(setup.AddScheme(sourcev1.AddToScheme)).
-		Setup(setup.AddScheme(kustomizev1.AddToScheme)).
-		Setup(setup.AddGitRepository(mpasRepoName)).
-		Setup(setup.AddFluxSyncForRepo(mpasRepoName, "projects/", namespace)).
-		Assess("project flux resources have been created", checkFluxResourcesReady(mpasRepoName)).
-		Setup(setup.CreateNamespace(mpasNamespace)).
 		Setup(setup.AddFileToGitRepository(mpasRepoName, "subscription.yaml", "subscriptions/podinfo.yaml"))
 
 	product := features.New("Install a product").
-		Setup(setup.AddScheme(v1alpha1.AddToScheme)).
-		Setup(setup.AddScheme(sourcev1.AddToScheme)).
-		Setup(setup.AddScheme(kustomizev1.AddToScheme)).
-		Setup(setup.AddGitRepository(mpasRepoName)).
-		Setup(setup.AddFluxSyncForRepo(mpasRepoName, "projects/", namespace)).
-		Assess("project flux resources have been created", checkFluxResourcesReady(mpasRepoName)).
-		Setup(setup.CreateNamespace(mpasNamespace)).
 		Setup(setup.AddFileToGitRepository(projectRepoName, "podinfo_product_generator.yaml", "generators/podinfo.yaml"))
 
-	testEnv.Test(t, project.Feature())
-	testEnv.Test(t, target.Feature())
-	testEnv.Test(t, subscription.Feature())
-	testEnv.Test(t, product.Feature())
+	testEnv.Test(t,
+		management.Feature(),
+		project.Feature(),
+		target.Feature(),
+		subscription.Feature(),
+		product.Feature())
 }
 
 func checkNamespaceReady(ns string) features.Func {
