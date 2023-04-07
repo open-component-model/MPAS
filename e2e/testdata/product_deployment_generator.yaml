@@ -1,0 +1,9 @@
+apiVersion: mpas.ocm.software/v1alpha1
+kind: ProductDeploymentGenerator
+metadata:
+  name: podinfo
+  namespace: test-001
+spec:
+  subscriptionRef:
+    name: podinfo
+    namespace: mpas-system

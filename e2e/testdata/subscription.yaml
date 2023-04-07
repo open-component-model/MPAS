@@ -1,0 +1,15 @@
+apiVersion: delivery.ocm.software/v1alpha1
+kind: ComponentSubscription
+metadata:
+  name: podinfo
+  namespace: mpas-system
+spec:
+  component: mpas.ocm.software/podinfo
+  semver: 1.0.0
+  source:
+    url: ghcr.io/open-component-model/mpas
+  serviceAccountName: mpas-admin
+  verify:
+  - name: default
+    secretRef:
+      name: mpas-sig
