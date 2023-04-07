@@ -22,6 +22,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	setupLog("starting e2e test suite")
+
 	cfg, _ := envconf.NewFromFlags()
 	testEnv = env.NewWithConfig(cfg)
 	kindClusterName = envconf.RandomName("mpas-e2e", 32)
@@ -34,6 +36,7 @@ func TestMain(m *testing.M) {
 		envfuncs.CreateKindCluster(kindClusterName),
 		envfuncs.CreateNamespace(namespace),
 		shared.StartGitServer(namespace),
+		shared.InstallFlux("latest"),
 		shared.RunTiltForControllers("ocm-controller", "git-controller"),
 		shared.ForwardPortForAppName("registry", 5000, stopChannelRegistry),
 		shared.ForwardPortForAppName("gitea", 3000, stopChannelGitea),

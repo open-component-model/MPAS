@@ -1,0 +1,20 @@
+apiVersion: mpas.ocm.software/v1alpha1
+kind: Project
+metadata:
+  name: test-001
+  namespace: mpas-system
+spec:
+  git:
+    provider: gitea
+    owner: open-component-model
+    isOrganisation: true
+    repository:
+      name: mpas-project-1
+      maintainers:
+      - alice.bobb
+      - bob.alisson
+      visibility: private
+      exisitingRepositoryPolicy: fail
+    credentials:
+      secretRef:
+        name: gitea-credentials
