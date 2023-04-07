@@ -32,9 +32,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Product
+        working-directory: ./examples/products/podinfo
         run: ocm add componentversions --create components.yaml
 
       - name: Push Product
+        working-directory: ./examples/products/podinfo
         run: ocm transfer component ./transport-archive ${{ env.REGISTRY }}
 
       - name: Verify Push
