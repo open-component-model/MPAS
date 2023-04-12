@@ -6,7 +6,6 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,7 +17,7 @@ import (
 )
 
 func setupLog(msg string) env.Func {
-	log.Println(fmt.Sprintf("\033[32m--- %s\033[0m", msg))
+	log.Printf("\033[32m--- %s\033[0m", msg)
 	return func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
 		return ctx, nil
 	}
