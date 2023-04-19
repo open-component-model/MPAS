@@ -2,7 +2,7 @@ name: Run e2e test suite
 
 on:
   repository_dispatch:
-    types: [component.controlplane.mpas::updated]
+    types: [component.controlplane.mpas.updated]
 
 jobs:
   checkout-repos-and-init-workspace:
