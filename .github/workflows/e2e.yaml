@@ -4,6 +4,10 @@ on:
   repository_dispatch:
     types: [component.controlplane.mpas.updated]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   checkout-repos-and-init-workspace:
     runs-on: ubuntu-latest
