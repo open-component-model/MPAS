@@ -52,7 +52,7 @@ The reconciliation process for a `ProductDeployment` will be as follows:
   - 1. create the Resource CR
   - 2. create the Localization CR
   - 3. fetch the configuration values provided by the user and create the Configuration CR
-  - 4. create a Flux Source pointing at the snapshot created in step 2
+  - 4. create a Flux Source pointing at the snapshot created in step 2 (b) ( or if configuration was provided, at step 3 (c) )
   - 5. bind to a target (this could be handled by a dedicated scheduler):
       - 5.1 get the target selector for the pipeline
       - 5.2 fetch the list of targets matching the target selector constraints
