@@ -36,7 +36,7 @@ Using the `ProductDescription` resource, the Project controller will generate a 
 
 The `ProductDescription` also specifies roles which describe the targets that are required for each pipeline in the product. A role defines the kind of target as well as the constraints used to select a particular target.
 
-These files will then be committed to the project repository on a new branch under the `products` directory in the repository. If the `GitRepository` has automatic pull-request creation enabled then a pull-request will be created.
+These files will then be committed to the project repository using a `Sync` requested based on the output `Snapshot` object of the above files on a new branch under the `products` directory in the repository. If the `Sync` request has automatic pull-request creation enabled then a pull-request will be created.
 
 Finally, the Product controller will create a `ProductValidator` object that executes the `Validator` specified in the `ProductDescription` against the pull-request.
 
