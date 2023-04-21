@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/open-component-model/ocm-controller/api/v1alpha1"
-	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
 )
 
@@ -51,14 +50,7 @@ func TestHappyPath(t *testing.T) {
 		Assess("project flux resources have been created", checkFluxResourcesReady(mpasRepoName)).
 		Setup(setup.CreateNamespace(mpasNamespace))
 
-	project := features.New("Create Project").
-		Setup(setup.AddFileToGitRepository(mpasRepoName, "project.yaml", "projects/test-001.yaml")).
-		Assess("management repository has been created", assess.CheckRepoExists(mpasRepoName)).
-		Assess("management namespace has been created", checkNamespaceReady(mpasNamespace)).
-		Assess("project namespace has been created", checkNamespaceReady(projectName)).
-		Assess("project repository has been created", assess.CheckRepoExists(projectRepoName)).
-		Assess("rbac has been created", checkRBACReady(projectName)).
-		Assess("flux resources have been created", checkFluxResourcesReady(projectName))
+	project := newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName)
 
 	target := features.New("Add a target").
 		Setup(setup.AddFileToGitRepository(mpasRepoName, "target.yaml", "targets/ingress-target.yaml"))
@@ -71,7 +63,7 @@ func TestHappyPath(t *testing.T) {
 
 	testEnv.Test(t,
 		management.Feature(),
-		project.Feature(),
+		project,
 		target.Feature(),
 		subscription.Feature(),
 		product.Feature())
