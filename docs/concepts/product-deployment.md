@@ -49,7 +49,7 @@ Once a `ProductDeployment` has been validated, approved and merged Flux will app
 The reconciliation process for a `ProductDeployment` will be as follows:
 - fetch `spec.component.registryRef` object and create the `ComponentVersion` CR
 - for each pipeline in the `spec.pipelines` array:
-  - 1. create a new CR called `ProductDeploymentPipeline` based on the pipeline items
+  - 1. create a new CR called `ProductDeploymentPipeline` based on the pipeline items and set `ProductDeployment` object as owner
   - 2. this CR is reconciled by the product controller in the following way:
     - 1. create the Resource CR
     - 2. create the Localization CR
@@ -61,7 +61,6 @@ The reconciliation process for a `ProductDeployment` will be as follows:
       - 5.3 if more than one target matches constraint, then select at random
       - 5.4 set the `spec.target` field on `ProductDeployment` to the target
     - 6. if the target field is non-empty create a Flux Kustomization configured with the target's KubeConfig which reconciles the Flux Source from step 4
-  - 2.1 the pipeline CR should set the `ProductDeployment` CR as owner
   - 3. the target controller will update the CR with a targetRef that the pipeline item ends up using
 
 The `ProductDescription` may define the kind and features of the `Target`'s it requires. Because of this it is necessary for the product controller to make a scheduling decision of the basis of the information provided in the `ProductDescription` and the `Target`'s available within the MPAS system. Once a target is chosen then it is assigned to a specific pipeline in the `ProductDeployment` and from this point onwards is immutable.
