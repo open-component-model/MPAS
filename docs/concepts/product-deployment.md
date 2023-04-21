@@ -116,9 +116,6 @@ spec:
         matchExpressions:
           - { key: string, operator: In, values: [string] }
           - { key: string, operator: NotIn, values: [string] }
-    targetRef: # (optional) set by the product controller/scheduler once a target has been selected
-      name: string
-      namespace: string
 ```
 
 ### A.2. Product Deployment Generator Kubernetes API Object
