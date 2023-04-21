@@ -32,7 +32,7 @@ The Product controller will watch the Kubernetes API for `ProductDeploymentGener
 
 When a new `ProductDeploymentGenerator` is created, the MPAS control-plane should fetch the `ProductDescription` resource from the component associated with the subscription in the `ProductDeploymentGenerator`'s '`spec.subscriptionRef` field.
 
-Using the `ProductDescription` resource, the Project controller will generate a `ProductDeployment` manifest, a product configuration file (if necessary) and a production configuration README.
+Using the `ProductDescription` resource, the Project controller will generate a `ProductDeployment` manifest, a product configuration file (if necessary) and a product configuration README.
 
 The `ProductDescription` also specifies roles which describe the targets that are required for each pipeline in the product. A role defines the kind of target as well as the constraints used to select a particular target.
 
@@ -49,16 +49,20 @@ Once a `ProductDeployment` has been validated, approved and merged Flux will app
 The reconciliation process for a `ProductDeployment` will be as follows:
 - fetch `spec.component.registryRef` object and create the `ComponentVersion` CR
 - for each pipeline in the `spec.pipelines` array:
-  - 1. create the Resource CR
-  - 2. create the Localization CR
-  - 3. fetch the configuration values provided by the user and create the Configuration CR
-  - 4. create a Flux Source pointing at the snapshot created in step 2 (b) ( or if configuration was provided, at step 3 (c) )
-  - 5. bind to a target (this could be handled by a dedicated scheduler):
+  - 1. create a new CR called `ProductDeploymentPipeline` based on the pipeline items
+  - 2. this CR is reconciled by the product controller in the following way:
+    - 1. create the Resource CR
+    - 2. create the Localization CR
+    - 3. fetch the configuration values provided by the user and create the Configuration CR
+    - 4. create a Flux Source pointing at the snapshot created in step 2 (b) ( or if configuration was provided, at step 3 (c) )
+    - 5. bind to a target (this could be handled by a dedicated scheduler):
       - 5.1 get the target selector for the pipeline
       - 5.2 fetch the list of targets matching the target selector constraints
       - 5.3 if more than one target matches constraint, then select at random
       - 5.4 set the `spec.target` field on `ProductDeployment` to the target
-  - 6. if the target field is non-empty create a Flux Kustomization configured with the target's KubeConfig which reconciles the Flux Source from step 4
+    - 6. if the target field is non-empty create a Flux Kustomization configured with the target's KubeConfig which reconciles the Flux Source from step 4
+  - 2.1 the pipeline CR should set the `ProductDeployment` CR as owner
+  - 3. the target controller will update the CR with a targetRef that the pipeline item ends up using
 
 The `ProductDescription` may define the kind and features of the `Target`'s it requires. Because of this it is necessary for the product controller to make a scheduling decision of the basis of the information provided in the `ProductDescription` and the `Target`'s available within the MPAS system. Once a target is chosen then it is assigned to a specific pipeline in the `ProductDeployment` and from this point onwards is immutable.
 
@@ -137,6 +141,48 @@ spec:
   # different repository
   repositoryRef: # (optional)
     name: string
+```
+
+### A.3. Product Deployment Pipeline Kubernetes API Object
+
+The API for a `ProductDeploymentPipeline` will be as follows:
+
+```yaml
+apiVersion: mpas.ocm.software/v1alpha1
+kind: ProductDeploymentPipeline
+metadata:
+  name: string # the name of the product deployment pipeline derived from the pipeline item in the list of pipeline items.
+  namespace: string # the storage namespace of the owner product deployment
+spec:
+  resource: # the ocm resource to be Localized
+    name: string
+    version: string 
+  # will be used to create Localization Custom Resource
+  localization:
+     rules: # the ocm resource containing the Localization rules
+      name: string
+      version: string
+  # the configuration field will create a Configuration Custom Resource
+  # it will also fetch the valuesFile
+  # and pass them to the configuration
+  # a Flux OCI Repository will also be created
+  configuration:
+    rules:
+      name: string
+      version: string
+    valuesFile:
+      path: string
+  targetRole: #
+    type: string # (required) the kind of target: Kubernetes, CloudFoundry, OCI Repository, SSH
+    selector: # (required)
+      matchLabels:
+        string: string
+      matchExpressions:
+        - { key: string, operator: In, values: [string] }
+        - { key: string, operator: NotIn, values: [string] }
+  targetRef: # (optional) set by the product controller/scheduler once a target has been selected
+    name: string
+    namespace: string
 ```
 
 ## Appendix B: Glossary
