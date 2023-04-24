@@ -8,7 +8,7 @@ require (
 	github.com/fluxcd/pkg/runtime v0.35.0
 	github.com/fluxcd/source-controller/api v1.0.0-rc.1
 	github.com/open-component-model/ocm-controller v0.5.0
-	github.com/open-component-model/ocm-e2e-framework v0.0.0-20230412072137-db89528de02a
+	github.com/open-component-model/ocm-e2e-framework v0.1.0
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.26.3
@@ -80,6 +80,7 @@ require (
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
+	github.com/go-logr/zapr v1.2.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
@@ -107,7 +108,7 @@ require (
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mandelsoft/filepath v0.0.0-20220503095057-4432a2285b68 // indirect
-	github.com/mandelsoft/logging v0.0.0-20221114215048-ab754b164dd6 // indirect
+	github.com/mandelsoft/logging v0.0.0-20230331123830-36542ef18f6f // indirect
 	github.com/mandelsoft/spiff v1.7.0-beta-4 // indirect
 	github.com/mandelsoft/vfs v0.0.0-20230114230722-fb9b39ce80b9 // indirect
 	github.com/marstr/guid v1.1.0 // indirect
@@ -125,7 +126,10 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/onsi/gomega v1.27.6 // indirect
-	github.com/open-component-model/ocm v0.2.0-rc.1 // indirect
+	github.com/open-component-model/mpas-product-controller v0.0.0-20230421151404-988973070ec7 // indirect
+	github.com/open-component-model/mpas-project-controller v0.0.0-20230419141522-bec22e3fe0eb // indirect
+	github.com/open-component-model/ocm v0.3.0-rc.1.0.20230408161516-7bac90d616ab // indirect
+	github.com/open-component-model/replication-controller v0.2.1-0.20230420172740-670e1238a8c7 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
@@ -149,6 +153,9 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect
 	go.starlark.net v0.0.0-20221028183056-acb66ad56dd2 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
+	go.uber.org/multierr v1.8.0 // indirect
+	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/net v0.8.0 // indirect

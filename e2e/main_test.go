@@ -53,13 +53,31 @@ func TestHappyPath(t *testing.T) {
 	project := newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName)
 
 	target := features.New("Add a target").
-		Setup(setup.AddFileToGitRepository(mpasRepoName, "target.yaml", "targets/ingress-target.yaml"))
+		Setup(setup.AddFilesToGitRepository(
+			setup.File{
+				RepoName:       mpasRepoName,
+				SourceFilepath: "target.yaml",
+				DestFilepath:   "targets/ingress-target.yaml",
+			},
+		))
 
 	subscription := features.New("Create a subscription").
-		Setup(setup.AddFileToGitRepository(mpasRepoName, "subscription.yaml", "subscriptions/podinfo.yaml"))
+		Setup(setup.AddFilesToGitRepository(
+			setup.File{
+				RepoName:       mpasRepoName,
+				SourceFilepath: "subscription.yaml",
+				DestFilepath:   "subscriptions/podinfo.yaml",
+			},
+		))
 
 	product := features.New("Install a product").
-		Setup(setup.AddFileToGitRepository(projectRepoName, "podinfo_product_generator.yaml", "generators/podinfo.yaml"))
+		Setup(setup.AddFilesToGitRepository(
+			setup.File{
+				RepoName:       projectRepoName,
+				SourceFilepath: "podinfo_product_generator.yaml",
+				DestFilepath:   "generators/podinfo.yaml",
+			},
+		))
 
 	testEnv.Test(t,
 		management.Feature(),
