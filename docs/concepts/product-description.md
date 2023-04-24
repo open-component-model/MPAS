@@ -105,13 +105,11 @@ spec:
       rules:
         name: string # resource name
         version: string # resource version
-      componentReference: # (optional) if provided the resource is retrieved from this component
-        name: string
+        componentReference: # (optional) if provided the resource is retrieved from this component
       readme:
         name: string # resource name
         version: string # resource version
-      componentReference: # (optional) if provided the resource is retrieved from this component
-        name: string
+        componentReference: # (optional) if provided the resource is retrieved from this component
     validation: # (required)
       name: string # resource name
       version: string # resource version
