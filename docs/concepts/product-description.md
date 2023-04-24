@@ -106,10 +106,12 @@ spec:
         name: string # resource name
         version: string # resource version
         componentReference: # (optional) if provided the resource is retrieved from this component
+          name: string
       readme:
         name: string # resource name
         version: string # resource version
         componentReference: # (optional) if provided the resource is retrieved from this component
+          name: string
     validation: # (required)
       name: string # resource name
       version: string # resource version
