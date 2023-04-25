@@ -122,6 +122,7 @@ spec:
   # be used to create and configure the project Git repositories
   git:
     provider: string # github or gitlab (required)
+    domain: string # the domain of the git provider (optional)
     owner: string # required
     isOrganisation: boolean
     # this is the repository that
@@ -135,11 +136,11 @@ spec:
     # - Kubernetes secret containing repository deploy key
     # - Flux GitRepository source in the project namespace
     # - Flux Kustomization configured with spec.serviceAccountName
-    repository:
-      name: string # name of project repository that will be created ( required )
-      maintainers: []string # identites of maintainers added to the project repository
-      visibility: string
-      exisitingRepositoryPolicy: string # adopt | fail (controls whether an existing repository with the same name should be adopted and used or fail, causing the reconciliation to stall)
+    repositoryName: string # name of project repository that will be created ( required )
+    defaultBranch: string # default branch for the project repository (default: main)
+    maintainers: []string # identites of maintainers added to the project repository
+    visibility: string
+    exisitingRepositoryPolicy: string # adopt | fail (controls whether an existing repository with the same name should be adopted and used or fail, causing the reconciliation to stall)
     # credentials for access to the git provider's api, secret for MVP but
     # ultimately should be OAuth
     credentials:
