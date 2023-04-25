@@ -24,6 +24,13 @@ import (
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
 )
 
+type kustomization struct {
+	name          string
+	path          string
+	sourceRefKind string
+	sourceRefName string
+}
+
 func newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName string) features.Feature {
 	// Setup and management resources
 	fb := features.New("Create Project").
@@ -95,14 +102,32 @@ func newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName
 	// Validate Flux resources are created correctly
 	fb = fb.Assess("flux resources have been created", checkFluxResourcesReady(projectName)).
 		Assess("flxu GitRepository is configured correctly", checkGitRepositoryConfiguration(projectName, projectRepoName, "main")).
-		Assess("flux Kustomization (subscriptions) is configured correctly",
-			checkKustomizationConfiguration(projectName+"-subscriptions", "./subscriptions", "GitRepository", projectName)).
-		Assess("flux Kustomization (targets) is configured correctly",
-			checkKustomizationConfiguration(projectName+"-targets", "./targets", "GitRepository", projectName)).
-		Assess("flux Kustomization (products) is configured correctly",
-			checkKustomizationConfiguration(projectName+"-products", "./products", "GitRepository", projectName)).
-		Assess("flux Kustomization (generators) is configured correctly",
-			checkKustomizationConfiguration(projectName+"-generators", "./generators", "GitRepository", projectName))
+		Assess("check flux kustomizations are configured correctly", checkKustomizationsConfiguration(
+			kustomization{
+				name:          projectName + "-subscriptions",
+				path:          "./subscriptions",
+				sourceRefKind: "GitRepository",
+				sourceRefName: projectName,
+			},
+			kustomization{
+				name:          projectName + "-targets",
+				path:          "./targets",
+				sourceRefKind: "GitRepository",
+				sourceRefName: projectName,
+			},
+			kustomization{
+				name:          projectName + "-products",
+				path:          "./products",
+				sourceRefKind: "GitRepository",
+				sourceRefName: projectName,
+			},
+			kustomization{
+				name:          projectName + "-generators",
+				path:          "./generators",
+				sourceRefKind: "GitRepository",
+				sourceRefName: projectName,
+			},
+		))
 
 	return fb.Feature()
 }
@@ -213,6 +238,7 @@ func checkSACanCreateResources(name string, res ...k8s.Object) features.Func {
 			re.SetNamespace(name)
 			t.Logf("checking if service account %s:%s can create %s resources...", name, name, re.GetObjectKind().GroupVersionKind())
 			err := r.Create(ctx, re)
+			// The API should attempt to authorize the request first, before validating the object schema
 			if err != nil && (apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err)) {
 				t.Error(err)
 			}
@@ -251,7 +277,7 @@ func checkGitRepositoryConfiguration(name string, url string, branch string) fea
 	}
 }
 
-func checkKustomizationConfiguration(name string, path string, sourceRefKind string, sourceRefName string) features.Func {
+func checkKustomizationsConfiguration(ks ...kustomization) features.Func {
 	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 		t.Helper()
 
@@ -261,23 +287,25 @@ func checkKustomizationConfiguration(name string, path string, sourceRefKind str
 			return ctx
 		}
 
-		t.Logf("checking if Kustomization %s has been configured correctly...", name)
-		k := &kustomizev1.Kustomization{}
-		if err := r.Get(ctx, name, "flux-system", k); err != nil {
-			t.Error(err)
-			return ctx
-		}
+		for _, ku := range ks {
+			t.Logf("checking if Kustomization %s has been configured correctly...", ku.name)
+			k := &kustomizev1.Kustomization{}
+			if err := r.Get(ctx, ku.name, "flux-system", k); err != nil {
+				t.Error(err)
+				return ctx
+			}
 
-		if k.Spec.SourceRef.Kind != sourceRefKind {
-			t.Errorf("expected Kustomization %s to have sourceRef kind %s, got %s", name, sourceRefKind, k.Spec.SourceRef.Kind)
-		}
+			if k.Spec.SourceRef.Kind != ku.sourceRefKind {
+				t.Errorf("expected Kustomization %s to have sourceRef kind %s, got %s", ku.name, ku.sourceRefKind, k.Spec.SourceRef.Kind)
+			}
 
-		if k.Spec.SourceRef.Name != sourceRefName {
-			t.Errorf("expected Kustomization %s to have sourceRef name %s, got %s", name, sourceRefName, k.Spec.SourceRef.Name)
-		}
+			if k.Spec.SourceRef.Name != ku.sourceRefName {
+				t.Errorf("expected Kustomization %s to have sourceRef name %s, got %s", ku.name, ku.sourceRefName, k.Spec.SourceRef.Name)
+			}
 
-		if k.Spec.Path != path {
-			t.Errorf("expected Kustomization %s to have path %s, got %s", name, path, k.Spec.Path)
+			if k.Spec.Path != ku.path {
+				t.Errorf("expected Kustomization %s to have path %s, got %s", ku.name, ku.path, k.Spec.Path)
+			}
 		}
 
 		return ctx
