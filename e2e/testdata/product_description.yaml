@@ -1,0 +1,14 @@
+apiVersion: meta.mpas.ocm.software/v1alpha1
+kind: ProductDescription
+metadata:
+  name: string
+spec:
+  description: string
+  pipelines:
+    - name: podinfo-backend
+      source:
+        name: backend
+        version:
+      validation: # (required)
+        name: string # resource name
+        version: string # resource version

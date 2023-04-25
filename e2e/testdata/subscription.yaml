@@ -7,7 +7,7 @@ spec:
   component: mpas.ocm.software/podinfo
   semver: 1.0.0
   source:
-    url: ghcr.io/open-component-model/mpas
+    url: http://registry.ocm-system.svc.cluster.local:4000/mpas-component
   serviceAccountName: mpas-admin
   verify:
   - name: default

@@ -6,9 +6,12 @@ package e2e
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -50,6 +53,50 @@ func TestHappyPath(t *testing.T) {
 		Assess("project flux resources have been created", checkFluxResourcesReady(mpasRepoName)).
 		Setup(setup.CreateNamespace(mpasNamespace))
 
+	content, err := os.ReadFile(filepath.Join("testdata", "product_description.yaml"))
+	if err != nil {
+		t.Fatal("failed to read setup file: %w", err)
+	}
+
+	setupComponent := features.New("Setup OCM component for testing").
+		Setup(setup.AddComponentVersions(setup.Component{
+			Component: shared.Component{
+				Name:    "mpas.ocm.software/podinfo",
+				Version: "1.0.0",
+			},
+			Repository: "podinfo",
+			CreateOptions: []shared.CreateOptions{
+				{
+					Resource: &shared.Resource{
+						Name: "product-description",
+						Data: string(content),
+						Type: "productdescription.mpas.ocm.software",
+					},
+				},
+				{
+					ComponentRef: &shared.ComponentRef{
+						Name:          "backend",
+						Version:       "1.0.0",
+						ComponentName: "mpas.ocm.software/podinfo/backend",
+					},
+				},
+				{
+					ComponentRef: &shared.ComponentRef{
+						Name:          "frontend",
+						Version:       "1.0.0",
+						ComponentName: "mpas.ocm.software/podinfo/frontend",
+					},
+				},
+				{
+					ComponentRef: &shared.ComponentRef{
+						Name:          "redis",
+						Version:       "1.0.0",
+						ComponentName: "mpas.ocm.software/redis",
+					},
+				},
+			},
+		}))
+
 	project := newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName)
 
 	target := features.New("Add a target").
@@ -70,18 +117,12 @@ func TestHappyPath(t *testing.T) {
 			},
 		))
 
-	product := features.New("Install a product").
-		Setup(setup.AddFilesToGitRepository(
-			setup.File{
-				RepoName:       projectRepoName,
-				SourceFilepath: "podinfo_product_generator.yaml",
-				DestFilepath:   "generators/podinfo.yaml",
-			},
-		))
+	product := newProductFeature(mpasRepoName, mpasNamespace, projectRepoName)
 
 	testEnv.Test(t,
 		management.Feature(),
-		project,
+		setupComponent.Feature(),
+		project.Feature(),
 		target.Feature(),
 		subscription.Feature(),
 		product.Feature())
@@ -183,9 +224,4 @@ func checkFluxResourcesReady(name string) features.Func {
 
 		return ctx
 	}
-}
-
-func checkProductReady(ctx context.Context, t *testing.T, env *envconf.Config) context.Context {
-	t.Fail()
-	return ctx
 }
