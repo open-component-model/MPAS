@@ -7,11 +7,13 @@ require (
 	github.com/fluxcd/pkg/apis/meta v1.0.0
 	github.com/fluxcd/pkg/runtime v0.35.0
 	github.com/fluxcd/source-controller/api v1.0.0-rc.1
+	github.com/open-component-model/git-controller v0.2.1-0.20230420095143-61f3c56dd194
 	github.com/open-component-model/mpas-product-controller v0.0.0-20230421151404-988973070ec7
 	github.com/open-component-model/mpas-project-controller v0.0.0-20230419141522-bec22e3fe0eb
 	github.com/open-component-model/ocm-controller v0.5.0
 	github.com/open-component-model/ocm-e2e-framework v0.3.1
 	github.com/open-component-model/replication-controller v0.2.1-0.20230420172740-670e1238a8c7
+	github.com/sourcegraph/conc v0.3.0
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.26.3
@@ -152,6 +154,8 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect
 	go.starlark.net v0.0.0-20221028183056-acb66ad56dd2 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
+	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
