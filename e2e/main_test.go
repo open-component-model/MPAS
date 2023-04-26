@@ -6,12 +6,9 @@ package e2e
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -24,7 +21,6 @@ import (
 	fconditions "github.com/fluxcd/pkg/runtime/conditions"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/open-component-model/ocm-controller/api/v1alpha1"
@@ -53,49 +49,7 @@ func TestHappyPath(t *testing.T) {
 		Assess("project flux resources have been created", checkFluxResourcesReady(mpasRepoName)).
 		Setup(setup.CreateNamespace(mpasNamespace))
 
-	content, err := os.ReadFile(filepath.Join("testdata", "product_description.yaml"))
-	if err != nil {
-		t.Fatal("failed to read setup file: %w", err)
-	}
-
-	setupComponent := features.New("Setup OCM component for testing").
-		Setup(setup.AddComponentVersions(setup.Component{
-			Component: shared.Component{
-				Name:    "mpas.ocm.software/podinfo",
-				Version: "1.0.0",
-			},
-			Repository: "podinfo",
-			CreateOptions: []shared.CreateOptions{
-				{
-					Resource: &shared.Resource{
-						Name: "product-description",
-						Data: string(content),
-						Type: "productdescription.mpas.ocm.software",
-					},
-				},
-				{
-					ComponentRef: &shared.ComponentRef{
-						Name:          "backend",
-						Version:       "1.0.0",
-						ComponentName: "mpas.ocm.software/podinfo/backend",
-					},
-				},
-				{
-					ComponentRef: &shared.ComponentRef{
-						Name:          "frontend",
-						Version:       "1.0.0",
-						ComponentName: "mpas.ocm.software/podinfo/frontend",
-					},
-				},
-				{
-					ComponentRef: &shared.ComponentRef{
-						Name:          "redis",
-						Version:       "1.0.0",
-						ComponentName: "mpas.ocm.software/redis",
-					},
-				},
-			},
-		}))
+	setupComponent := createTestComponentVersion(t)
 
 	project := newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName)
 
@@ -120,12 +74,13 @@ func TestHappyPath(t *testing.T) {
 	product := newProductFeature(mpasRepoName, mpasNamespace, projectRepoName)
 
 	testEnv.Test(t,
-		management.Feature(),
 		setupComponent.Feature(),
+		management.Feature(),
 		project.Feature(),
 		target.Feature(),
 		subscription.Feature(),
-		product.Feature())
+		product.Feature(),
+	)
 }
 
 func checkNamespaceReady(ns string) features.Func {
@@ -145,34 +100,6 @@ func checkNamespaceReady(ns string) features.Func {
 		}
 
 		t.Logf("namespace %s exists.", ns)
-		return ctx
-	}
-}
-
-func checkRBACReady(name string) features.Func {
-	return func(ctx context.Context, t *testing.T, env *envconf.Config) context.Context {
-		t.Helper()
-
-		r, err := resources.New(env.Client().RESTConfig())
-		if err != nil {
-			t.Error(err)
-			return ctx
-		}
-
-		t.Logf("checking if service account %s exists...", name)
-		sa := &corev1.ServiceAccount{}
-		if err := r.Get(ctx, name, name, sa); err != nil {
-			t.Error(err)
-			return ctx
-		}
-
-		t.Logf("checking if role binding %s exists...", name)
-		rb := &rbacv1.RoleBinding{}
-		if err := r.Get(ctx, name, name, rb); err != nil {
-			t.Error(err)
-			return ctx
-		}
-
 		return ctx
 	}
 }

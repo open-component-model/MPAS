@@ -10,7 +10,7 @@ require (
 	github.com/open-component-model/mpas-product-controller v0.0.0-20230421151404-988973070ec7
 	github.com/open-component-model/mpas-project-controller v0.0.0-20230419141522-bec22e3fe0eb
 	github.com/open-component-model/ocm-controller v0.5.0
-	github.com/open-component-model/ocm-e2e-framework v0.2.0
+	github.com/open-component-model/ocm-e2e-framework v0.3.1
 	github.com/open-component-model/replication-controller v0.2.1-0.20230420172740-670e1238a8c7
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	gopkg.in/yaml.v3 v3.0.1

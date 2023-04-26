@@ -778,10 +778,10 @@ github.com/open-component-model/ocm v0.3.0-rc.1.0.20230408161516-7bac90d616ab h1
 github.com/open-component-model/ocm v0.3.0-rc.1.0.20230408161516-7bac90d616ab/go.mod h1:6l7kb3ahhUzn7rU7Y5MNIX+a1hA5KyxHuqRJiToe0uc=
 github.com/open-component-model/ocm-controller v0.5.0 h1:zlQKMFT8pfec5QmgHxokSkAB8XWJc7/fw2TDiL+gzr8=
 github.com/open-component-model/ocm-controller v0.5.0/go.mod h1:s5I22ufWAjRcjmirO7nqx87TPgDrFUB5CoJFG1Nga2Q=
-github.com/open-component-model/ocm-e2e-framework v0.1.0 h1:nvfcGyaUNwEFIE8bMLti9vR+HApCCNm/JsR6Af4sNLE=
-github.com/open-component-model/ocm-e2e-framework v0.1.0/go.mod h1:mjMfRjdh6kLPI3kWKUh9jgWNZllFlPIVEymHlBpPZ+Y=
-github.com/open-component-model/ocm-e2e-framework v0.2.0 h1:27FTXQvab9EFaF8sj4MKLrs9pm9t982ekTwOwvdTcdM=
-github.com/open-component-model/ocm-e2e-framework v0.2.0/go.mod h1:mjMfRjdh6kLPI3kWKUh9jgWNZllFlPIVEymHlBpPZ+Y=
+github.com/open-component-model/ocm-e2e-framework v0.3.0 h1:BnNfOyXX9yaw+/CAEYTK1dVOWxCYhO9XqJ01szjE6KA=
+github.com/open-component-model/ocm-e2e-framework v0.3.0/go.mod h1:mjMfRjdh6kLPI3kWKUh9jgWNZllFlPIVEymHlBpPZ+Y=
+github.com/open-component-model/ocm-e2e-framework v0.3.1 h1:WxpNFfZ/718vk8Pj60ps4wlNbqLUZbt0q+16R/ZDfMA=
+github.com/open-component-model/ocm-e2e-framework v0.3.1/go.mod h1:mjMfRjdh6kLPI3kWKUh9jgWNZllFlPIVEymHlBpPZ+Y=
 github.com/open-component-model/replication-controller v0.2.1-0.20230420172740-670e1238a8c7 h1:PUm1XRB+qzLISCrIQqUDsfhBBprpulmkbf8mqQ0T7Ng=
 github.com/open-component-model/replication-controller v0.2.1-0.20230420172740-670e1238a8c7/go.mod h1:f/TAoU/EMlMkry019U5CoK0AWr4f5QOuLjDqqcrLSTM=
 github.com/opencontainers/go-digest v0.0.0-20170106003457-a6d0ee40d420/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
