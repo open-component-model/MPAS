@@ -31,7 +31,7 @@ type kustomization struct {
 	sourceRefName string
 }
 
-func newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName string) features.Feature {
+func newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName string) *features.FeatureBuilder {
 	// Setup and management resources
 	fb := features.New("Create Project").
 		Setup(setup.AddFilesToGitRepository(setup.File{
@@ -129,7 +129,7 @@ func newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName
 			},
 		))
 
-	return fb.Feature()
+	return fb
 }
 
 func checkServiceAccountReady(name string) features.Func {

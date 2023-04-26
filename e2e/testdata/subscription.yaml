@@ -5,11 +5,13 @@ metadata:
   namespace: mpas-system
 spec:
   component: mpas.ocm.software/podinfo
+  interval: 5s
   semver: 1.0.0
   source:
-    url: ghcr.io/open-component-model/mpas
+    url: http://registry.ocm-system.svc.cluster.local:5000
   serviceAccountName: mpas-admin
   verify:
   - name: default
-    secretRef:
-      name: mpas-sig
+    publicKey:
+      secretRef:
+        name: mpas-sig
