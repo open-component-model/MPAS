@@ -76,6 +76,8 @@ The directory structure of the Project Repository should be as follows:
 
 This directory structure shall be created by the controller with responsibility for provisioning the project git repository.
 
+Relevant information, such as commit message and commit user, will be part of the `Project` CRD.
+
 ### Installing Products within Projects
 
 To deploy an instance of a product from a subscription to a target requires generating a `ProductDeployment`. To enable this we shall introduce the `ProductDeploymentGenerator`. The `ProductDeploymentGenerator` creates a relationship between a `Subscription` and a set of `Target`s. The `ProductDeploymentGenerator` is a namespaced resource that exists in the context of a project.
@@ -121,6 +123,10 @@ spec:
   # The spec.git object contains the configuration that will
   # be used to create and configure the project Git repositories
   git:
+    commitTemplate:
+      email: <email>
+      message: "Commit made by the project controller"
+      name: Joe Commit
     provider: string # github or gitlab (required)
     domain: string # the domain of the git provider (optional)
     owner: string # required
