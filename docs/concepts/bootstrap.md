@@ -62,7 +62,8 @@ flowchart TD
 
 To bootstrap an environment for MPAS using GitHub the following command can be issued:
 
-`mpas bootstrap github \
+```shell
+mpas bootstrap github \
   --owner=test \
   --repository=mpas.control \
   --public-key=mpas.pub \
@@ -70,7 +71,7 @@ To bootstrap an environment for MPAS using GitHub the following command can be i
   --registry=ghcr.io/phoban01/mpas \
   [--kubeconfig=~/.kubeconfig] \ # optional
   [--bin-dir=/usr/local/bin] # optional
-`
+```
 
 First of all the component archive will be transferred to the specified registry. Then the binaries can be installed.
 
