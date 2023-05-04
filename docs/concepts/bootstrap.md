@@ -42,6 +42,9 @@ The system will be modelled using OCM in a component named `ocm.software/mpas/bo
 
 ### Bootstrap Process
 
+<details>
+<summary><strong>Expand to view diagram</strong></summary>
+
 ```mermaid
 flowchart TD
    A[1: transfer component to registry]--> B
@@ -54,6 +57,8 @@ flowchart TD
    H[8: create ocm resource to sync bootstrap components] --> I
    I[9: verify configuration of mpas]
 ```
+
+</details>
 
 To bootstrap an environment for MPAS using GitHub the following command can be issued:
 
