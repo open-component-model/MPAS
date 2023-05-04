@@ -50,7 +50,7 @@ The reconciliation process for the project controller will be as follows:
 - verify git & oci credentials exist and are valid
 - create the project `Namespace`
 - create the project `ServiceAccount`
-- generate the `ClusterRoleBinding` for the Project `ServiceAccount`. The `ClusterRole` is created when MPAS is installed.
+- generate the Role and RoleBinding's for the Project `ServiceAccount`. The `ClusterRole` is created when MPAS is installed.
 - create/update/delete `Repository` object for `spec.git.repository`
 - create/update/delete deploy (SSH) key for `Repository` for `spec.git.repository`
 - create/update/delete Kubernetes secret containing deploy key for `Repository` for each repository in `spec.git.repositories`
