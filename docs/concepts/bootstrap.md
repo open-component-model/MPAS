@@ -42,6 +42,19 @@ The system will be modelled using OCM in a component named `ocm.software/mpas/bo
 
 ### Bootstrap Process
 
+```mermaid
+flowchart TD
+   A[1: transfer component to registry]--> B
+   B[2: install binaries to local filesystem]--> C
+   C[3: create mpas system repository] --> D
+   D[4: configure git repository] --> E
+   E[5: install flux] --> F
+   F[6: create flux sync resources] --> G
+   G[7: install ocm-controller] --> H
+   H[8: create ocm resource to sync bootstrap components] --> I
+   I[9: verify configuration of mpas]
+```
+
 To bootstrap an environment for MPAS using GitHub the following command can be issued:
 
 `mpas bootstrap github \
@@ -67,6 +80,8 @@ targets/
 A README file containing instructions for adding projects, subscriptions or targets should also be added to the repository.
 
 Flux should be installed into this repository under the path `./gitops` with appropriate `Kustomizations` targeting the `projects`, `subscriptions` and `targets` directories.
+
+Next the ocm-controller should be installed.
 
 Finally `ComponentVersion`, `Localization` and `FluxDeployer` manifests should be added to an `ocm-system` and configured to track the bootstrap component (note: the registry will need to be updated in the `ComponentVersion` custom resource). This will enable the `mpas` control plane to manage itself.
 
