@@ -5,23 +5,24 @@ import (
 	"fmt"
 	"testing"
 
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
-	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
-	projv1alpha1 "github.com/open-component-model/mpas-project-controller/api/v1alpha1"
-	ocmv1alpha1 "github.com/open-component-model/ocm-controller/api/v1alpha1"
-	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
+
+	ocmv1alpha1 "github.com/open-component-model/ocm-controller/api/v1alpha1"
+	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
+
+	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
+	projv1alpha1 "github.com/open-component-model/mpas-project-controller/api/v1alpha1"
 )
 
 type kustomization struct {
