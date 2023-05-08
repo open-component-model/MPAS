@@ -13,7 +13,7 @@ Setting up a new MPAS system requires an initial bootstrap phase and configurati
 
 ## Proposal
 
-We will create a CLI tool that can install the necessary controllers, binaries and configuration necessary in order to setup an MPAS system from scratch.
+We will create a CLI tool that can install the necessary controllers, binaries and configurations to set up an MPAS system from scratch.
 
 The binaries will be installed to the local filesystem, the component will be transferred to a local registry and then the controllers will be deployed in a cluster specified by the user.
 
