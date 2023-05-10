@@ -94,28 +94,28 @@ spec:
     source: # (required)
       name: string # resource name
       version: string # resource version
-      componentReference: # (optional) if provided the resource is retrieved from this component
+      referencePath: # (optional) if provided the resource is retrieved from this component
         name: string
     localization: # (optional)
       name: string # resource name
       version: string # resource version
-      componentReference: # (optional) if provided the resource is retrieved from this component
+      referencePath: # (optional) if provided the resource is retrieved from this component
         name: string
     configuration: # (optional)
       rules:
         name: string # resource name
         version: string # resource version
-        componentReference: # (optional) if provided the resource is retrieved from this component
+        referencePath: # (optional) if provided the resource is retrieved from this component
           name: string
       readme:
         name: string # resource name
         version: string # resource version
-        componentReference: # (optional) if provided the resource is retrieved from this component
+        referencePath: # (optional) if provided the resource is retrieved from this component
           name: string
     validation: # (required)
       name: string # resource name
       version: string # resource version
-      componentReference: # (optional) if provided the resource is retrieved from this component
+      referencePath: # (optional) if provided the resource is retrieved from this component
         name: string
   # targetRoles defines a list of target classes that
   # may be selected by a pipeline
