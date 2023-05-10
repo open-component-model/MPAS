@@ -90,14 +90,18 @@ spec:
       url: string
   pipelines:
   - name: string
-    resource: # the ocm resource to be Localized
+    resource:
       name: string
-      version: string 
+      version: string
+      referencePath: # optional definition of a reference path for a different component
+        - component: github.com/different/component
     # will be used to create Localization Custom Resource
     localization:
        rules: # the ocm resource containing the Localization rules
         name: string
         version: string
+        referencePath: # optional definition of a reference path for a different component
+          - component: github.com/different/component        
     # the configuration field will create a Configuration Custom Resource
     # it will also fetch the valuesFile
     # and pass them to the configuration
@@ -106,6 +110,8 @@ spec:
       rules:
         name: string
         version: string
+        referencePath: # optional definition of a reference path for a different component
+          - component: github.com/different/component                
       valuesFile:
         path: string
     targetRole: #
@@ -152,12 +158,16 @@ metadata:
 spec:
   resource: # the ocm resource to be Localized
     name: string
-    version: string 
+    version: string
+    referencePath: # optional definition of a reference path for a different component
+      - component: github.com/different/component            
   # will be used to create Localization Custom Resource
   localization:
      rules: # the ocm resource containing the Localization rules
       name: string
       version: string
+      referencePath: # optional definition of a reference path for a different component
+        - component: github.com/different/component
   # the configuration field will create a Configuration Custom Resource
   # it will also fetch the valuesFile
   # and pass them to the configuration
@@ -166,6 +176,8 @@ spec:
     rules:
       name: string
       version: string
+      referencePath: # optional definition of a reference path for a different component
+        - component: github.com/different/component      
     valuesFile:
       path: string
   targetRole: #
