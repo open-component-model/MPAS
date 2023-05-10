@@ -94,14 +94,13 @@ spec:
       name: string
       version: string
       referencePath: # optional definition of a reference path for a different component
-        - component: github.com/different/component
+        - name: string
     # will be used to create Localization Custom Resource
     localization:
-       rules: # the ocm resource containing the Localization rules
-        name: string
-        version: string
-        referencePath: # optional definition of a reference path for a different component
-          - component: github.com/different/component        
+      name: string
+      version: string
+      referencePath: # optional definition of a reference path for a different component
+        - name: string
     # the configuration field will create a Configuration Custom Resource
     # it will also fetch the valuesFile
     # and pass them to the configuration
@@ -111,7 +110,7 @@ spec:
         name: string
         version: string
         referencePath: # optional definition of a reference path for a different component
-          - component: github.com/different/component                
+          - name: string
       valuesFile:
         path: string
     targetRole: #
@@ -160,14 +159,13 @@ spec:
     name: string
     version: string
     referencePath: # optional definition of a reference path for a different component
-      - component: github.com/different/component            
+      - name: string
   # will be used to create Localization Custom Resource
   localization:
-     rules: # the ocm resource containing the Localization rules
-      name: string
-      version: string
-      referencePath: # optional definition of a reference path for a different component
-        - component: github.com/different/component
+    name: string
+    version: string
+    referencePath: # optional definition of a reference path for a different component
+      - name: string
   # the configuration field will create a Configuration Custom Resource
   # it will also fetch the valuesFile
   # and pass them to the configuration
@@ -177,7 +175,7 @@ spec:
       name: string
       version: string
       referencePath: # optional definition of a reference path for a different component
-        - component: github.com/different/component      
+        - name: string
     valuesFile:
       path: string
   targetRole: #
