@@ -15,8 +15,6 @@ Setting up a new MPAS system requires an initial bootstrap phase and configurati
 
 We will create a CLI tool that can install the necessary controllers, binaries and configurations to set up an MPAS system from scratch.
 
-The binaries will be installed to the local filesystem, the component will be transferred to a local registry and then the controllers will be deployed in a cluster specified by the user.
-
 This tool should be capable of running idempotently in an air-gapped environment and should be based on OCM.
 
 The following controllers will be installed:
@@ -36,9 +34,10 @@ The following controllers will be installed:
 The following binaries will be installed:
 - ocm
 - flux
-- kubectl?
 
 The system will be modelled using OCM in a component named `ocm.software/mpas/bootstrap`. The component archive will be written to a `tar.gz` file and delivered alongside the `mpas` CLI binary.
+
+The binaries, for tools such as ocm and flux, will be installed to the local filesystem, the "bootstrap" OCM component will be transferred to a local registry and then the controllers will be deployed in a cluster specified by the user.
 
 ### Bootstrap Process
 
@@ -67,7 +66,7 @@ mpas bootstrap github \
   --owner=test \
   --repository=mpas.control \
   --public-key=mpas.pub \
-  --from-file=bootstrap-component-archive.tar.gz \
+  --from-file=bootstrap-component-archive.tar.gz \ # this is the bootstrap component in archive format
   --registry=ghcr.io/phoban01/mpas \
   [--kubeconfig=~/.kubeconfig] \ # optional
   [--bin-dir=/usr/local/bin] # optional
