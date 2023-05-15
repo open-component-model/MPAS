@@ -1,4 +1,4 @@
-# Concept Paper: Subscriptions
+# Concept Paper: Bootstrap
 
 Table of contents:
 - [Context](#context)
