@@ -176,8 +176,6 @@ spec:
       version: string
       referencePath: # optional definition of a reference path for a different component
         - name: string
-    valuesFile:
-      path: string
   targetRole: #
     type: string # (required) the kind of target: Kubernetes, CloudFoundry, OCI Repository, SSH
     selector: # (required)
