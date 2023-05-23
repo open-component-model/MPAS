@@ -8,12 +8,13 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// DefaultComponents is the list of components to include in the management repository by default.
 var DefaultComponents = []string{
 	"ocm-controller",
 	"flux",
 }
 
-// BootstrapConfig is the configuration for the mpas CLI bootstrap command.
+// MpasConfig is the global configuration for the mpas CLI.
 type MpasConfig struct {
 	Kubeconfig string
 }
@@ -33,6 +34,7 @@ type BootstrapConfig struct {
 	Hostname   string
 }
 
+// AddFlags adds the bootstrap flags to the given flag set.
 func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringSliceVar(&m.Components, "components", []string{}, "The components to include in the management repository")
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")

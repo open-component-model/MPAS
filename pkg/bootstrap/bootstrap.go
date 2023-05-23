@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ErrReconciledWithWarning = errors.New("reconciled with warning")
+	errReconciledWithWarning = errors.New("reconciled with warning")
 )
 
 // options contains the options to be used during bootstrap
@@ -136,7 +136,7 @@ func (b *Bootstrap) Run() error {
 // reconcileManagementRepository reconciles the management repository. It creates it if it does not exist.
 func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 	repo, err := b.reconcileRepository(ctx, b.personal)
-	if err != nil && !errors.Is(err, ErrReconciledWithWarning) {
+	if err != nil && !errors.Is(err, errReconciledWithWarning) {
 		return err
 	}
 
@@ -162,7 +162,6 @@ func (b *Bootstrap) DeleteManagementRepository(ctx context.Context) error {
 	}
 	return nil
 }
-
 
 func (b *Bootstrap) reconcileRepository(ctx context.Context, personal bool) (gitprovider.UserRepository, error) {
 	var (
