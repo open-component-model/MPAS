@@ -8,23 +8,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func New(c MpasConfig, args []string) *cobra.Command {
+var defaultComponents = []string{
+	"ocm-controller",
+	"flux",
+}
+
+// New returns a new cobra.Command for mpas
+func New(args []string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "mpas",
-		Long: `mpas is a CLI tool for managing Open Component Model (OCM) projects.`,
+		Use:  "mpas [flags] <subcommand> [flags] [args]",
+		Long: `mpas is a CLI tool for managing (MPAS) multi platform automation system.`,
+		CompletionOptions: cobra.CompletionOptions{
+			HiddenDefaultCmd: true,
+		},
 	}
+	cmd.Print()
 
-	flags := cmd.PersistentFlags()
-	flags.StringVar(&c.Kubeconfig, "kubeconfig", "", "Path to kubeconfig file with authorization and master location information.")
-	flags.Parse(args)
+	cfg.AddFlags(cmd.PersistentFlags())
 
-	cmd.AddCommand(NewBoostrap(MpasConfig{}))
+	cmd.AddCommand(NewBoostrapGithub())
 
 	cmd.InitDefaultHelpCmd()
 	return cmd
-}
-
-// MpasConfig is the configuration for the mpas CLI.
-type MpasConfig struct {
-	Kubeconfig string
 }
