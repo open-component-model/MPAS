@@ -151,6 +151,19 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 	return nil
 }
 
+func (b *Bootstrap) DeleteManagementRepository(ctx context.Context) error {
+	if b.repository == nil {
+		return fmt.Errorf("management repository is not set")
+	}
+
+	err := b.repository.Delete(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete management repository: %w", err)
+	}
+	return nil
+}
+
+
 func (b *Bootstrap) reconcileRepository(ctx context.Context, personal bool) (gitprovider.UserRepository, error) {
 	var (
 		repo gitprovider.UserRepository

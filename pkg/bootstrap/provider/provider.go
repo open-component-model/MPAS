@@ -19,10 +19,11 @@ const (
 
 // ProviderOptions contains the options for the provider
 type ProviderOptions struct {
-	Provider string
-	Hostname string
-	Token    string
-	Username string
+	Provider           string
+	Hostname           string
+	Token              string
+	Username           string
+	DestructiveActions bool
 }
 
 // GitProvider is a provider for git repositories
@@ -67,6 +68,7 @@ func (m providerMap) register(name string, provider factoryFunc) {
 func githubProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
 	o := []gitprovider.ClientOption{
 		gitprovider.WithOAuth2Token(opts.Token),
+		gitprovider.WithDestructiveAPICalls(opts.DestructiveActions),
 	}
 	if opts.Hostname != "" {
 		o = append(o, gitprovider.WithDomain(opts.Hostname))

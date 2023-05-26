@@ -48,8 +48,8 @@ func NewBoostrapGithub() *cobra.Command {
 			}
 			b.Token = token
 
-			if b.Personal && b.Owner == "" {
-				return fmt.Errorf("owner must be set when using personal")
+			if b.Owner == "" {
+				return fmt.Errorf("owner must be set")
 			}
 
 			return b.Execute()

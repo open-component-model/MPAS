@@ -18,14 +18,16 @@ const (
 
 // BootstrapGithubCmd is a command for bootstrapping a GitHub repository
 type BootstrapGithubCmd struct {
-	Owner      string
-	Token      string
-	Personal   bool
-	Hostname   string
-	Repository string
-	FromFile   string
-	Registry   string
-	Components []string
+	Owner              string
+	Token              string
+	Personal           bool
+	Hostname           string
+	Repository         string
+	FromFile           string
+	Registry           string
+	Components         []string
+	DestructiveActions bool
+	bootstrapper       *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -39,9 +41,10 @@ func (b *BootstrapGithubCmd) Execute() error {
 	}
 
 	providerOpts := provider.ProviderOptions{
-		Provider: provider.ProviderGithub,
-		Hostname: hostname,
-		Token:    b.Token,
+		Provider:           provider.ProviderGithub,
+		Hostname:           hostname,
+		Token:              b.Token,
+		DestructiveActions: b.DestructiveActions,
 	}
 
 	providerClient, err := provider.New().Build(providerOpts)
@@ -49,7 +52,7 @@ func (b *BootstrapGithubCmd) Execute() error {
 		return err
 	}
 
-	bootstrapper := bootstrap.New(ctx, providerClient,
+	b.bootstrapper = bootstrap.New(ctx, providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
 		bootstrap.WithPersonal(b.Personal),
@@ -57,5 +60,13 @@ func (b *BootstrapGithubCmd) Execute() error {
 		bootstrap.WithRegistry(b.Registry),
 	)
 
-	return bootstrapper.Run()
+	return b.bootstrapper.Run()
+}
+
+// Cleanup cleans up the resources created by the command.
+func (b *BootstrapGithubCmd) Cleanup(ctx context.Context) error {
+	if b.bootstrapper != nil {
+		return b.bootstrapper.DeleteManagementRepository(ctx)
+	}
+	return nil
 }
