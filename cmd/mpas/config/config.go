@@ -8,7 +8,12 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// MpasConfig is the global configuration for the mpas CLI.
+var DefaultComponents = []string{
+	"ocm-controller",
+	"flux",
+}
+
+// BootstrapConfig is the configuration for the mpas CLI bootstrap command.
 type MpasConfig struct {
 	Kubeconfig string
 }
@@ -28,7 +33,6 @@ type BootstrapConfig struct {
 	Hostname   string
 }
 
-// AddFlags adds the bootstrap flags to the given flag set.
 func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringSliceVar(&m.Components, "components", []string{}, "The components to include in the management repository")
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")

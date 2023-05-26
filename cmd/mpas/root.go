@@ -5,19 +5,14 @@
 package main
 
 import (
+	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
 	"github.com/spf13/cobra"
 )
 
-var defaultComponents = []string{
-	"ocm-controller",
-	"flux",
-}
-
-// New returns a new cobra.Command for mpas
 func New(args []string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "mpas [flags] <subcommand> [flags] [args]",
-		Long: `mpas is a CLI tool for managing (MPAS) multi platform automation system.`,
+		Use:  "mpas",
+		Long: `mpas is a CLI tool for managing MPAS projects and bootstrapping the MPAS system into a cluster.`,
 		CompletionOptions: cobra.CompletionOptions{
 			HiddenDefaultCmd: true,
 		},
@@ -25,8 +20,7 @@ func New(args []string) *cobra.Command {
 	cmd.Print()
 
 	cfg.AddFlags(cmd.PersistentFlags())
-
-	cmd.AddCommand(NewBoostrapGithub())
+	cmd.AddCommand(bootstrap.NewBootstrapCmd())
 
 	cmd.InitDefaultHelpCmd()
 	return cmd
