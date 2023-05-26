@@ -385,6 +385,8 @@ github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5Kwzbycv
 github.com/flowstack/go-jsonschema v0.1.1/go.mod h1:yL7fNggx1o8rm9RlgXv7hTBWxdBM0rVwpMwimd3F3N0=
 github.com/fluxcd/flux2/v2 v2.0.0-rc.1 h1:zWhM7T89D3QUzzIVkBtE8I1vwaEd2NWXHirOVEiVf7E=
 github.com/fluxcd/flux2/v2 v2.0.0-rc.1/go.mod h1:oZnul9+ttWZGX92yCi6b8f/8oQM917RulUHj3EgSEDA=
+github.com/fluxcd/go-git-providers v0.15.0 h1:WuBw+CcmXi7UhSf8mFNB6tbGelS0kVlgI9wtlWjzimk=
+github.com/fluxcd/go-git-providers v0.15.0/go.mod h1:SgShGfc2rA5Gi7N65CBjMOIolarDZzZCMzEHOoY3P0I=
 github.com/fluxcd/helm-controller/api v0.32.1 h1:b2q0V+cXnqvW24Zy4zY+5Jfn1D3sqBIBTNhbqsD+r9Q=
 github.com/fluxcd/helm-controller/api v0.32.1/go.mod h1:xzQgNoaPOg77zFUqvnaX0Fn3lPA3iGDLoz8q4wiEyLA=
 github.com/fluxcd/image-automation-controller/api v0.32.0 h1:ABRLN+a8jHuOAETf1o1ohVzxxjYhOXxtJglD5YSMuUM=
@@ -537,6 +539,8 @@ github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/google/go-containerregistry v0.5.1/go.mod h1:Ct15B4yir3PLOP5jsy0GNeYVaIZs/MK/Jz5any1wFW0=
 github.com/google/go-github/v45 v45.2.0 h1:5oRLszbrkvxDDqBCNj2hjDZMKmvexaZ1xw/FCD+K3FI=
 github.com/google/go-github/v45 v45.2.0/go.mod h1:FObaZJEDSTa/WGCzZ2Z3eoCDXWJKMenWWTrd8jrta28=
+github.com/google/go-github/v49 v49.1.0 h1:LFkMgawGQ8dfzWLH/rNE0b3u1D3n6/dw7ZmrN3b+YFY=
+github.com/google/go-github/v49 v49.1.0/go.mod h1:MUUzHPrhGniB6vUKa27y37likpipzG+BXXJbG04J334=
 github.com/google/go-intervals v0.0.2/go.mod h1:MkaR3LNRfeKLPmqgJYs4E66z5InYjmCjbbr4TQlcT6Y=
 github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
 github.com/google/go-querystring v1.1.0/go.mod h1:Kcdr2DB4koayq7X8pmAG4sNG59So17icRSOU623lUBU=
