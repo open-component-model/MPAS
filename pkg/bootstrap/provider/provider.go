@@ -17,6 +17,18 @@ const (
 
 // rewrite of https://github.com/fluxcd/flux2/tree/main/pkg/bootstrap/provider
 
+var (
+	// providers is a map of provider names to factory functions.
+	// It is populated by calls to register.
+	providers providerMap
+)
+
+func init() {
+	// Register the default providers
+	providers = make(providerMap)
+	providers.register(ProviderGithub, githubProviderFunc)
+}
+
 // ProviderOptions contains the options for the provider
 type ProviderOptions struct {
 	Provider           string
@@ -27,27 +39,16 @@ type ProviderOptions struct {
 }
 
 // GitProvider is a provider for git repositories
-type GitProvider struct {
-	providerMap providerMap
-}
+type GitProvider struct{}
 
 // New returns a new GitProvider
 func New() *GitProvider {
-	g := &GitProvider{}
-	g.init()
-	return g
-}
-
-// init initializes the GitProvider
-func (g *GitProvider) init() {
-	m := make(providerMap)
-	m.register(ProviderGithub, githubProviderFunc)
-	g.providerMap = m
+	return &GitProvider{}
 }
 
 // Build returns a new gitprovider.Client
 func (g *GitProvider) Build(opts ProviderOptions) (gitprovider.Client, error) {
-	if factory, ok := g.providerMap[opts.Provider]; ok {
+	if factory, ok := providers[opts.Provider]; ok {
 		return factory(opts)
 	}
 	return nil, fmt.Errorf("provider %s not supported", opts.Provider)
