@@ -55,3 +55,15 @@ func (g *GithubConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.BoolVar(&g.Personal, "personal", false, "The personal access token to use to access the Github API")
 	g.BootstrapConfig.AddFlags(flags)
 }
+
+// GiteaConfig is the configuration for the Github bootstrap command.
+type GiteaConfig struct {
+	BootstrapConfig
+	Personal bool
+}
+
+// AddFlags adds the Gitea bootstrap flags to the given flag set.
+func (g *GiteaConfig) AddFlags(flags *pflag.FlagSet) {
+	flags.BoolVar(&g.Personal, "personal", false, "The personal access token to use to access the Gitea API")
+	g.BootstrapConfig.AddFlags(flags)
+}

@@ -8,17 +8,21 @@ import (
 	"os"
 	"testing"
 
+	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/envfuncs"
 )
 
 var (
-	testEnv           env.Environment
-	kindClusterName   string
-	defaultghTokenVar = "GITHUB_TOKEN"
-	ownerVar          = "MPAS_MANAGEMENT_REPO_OWNER"
-	repoVar           = "MPAS_MANAGEMENT_REPO"
+	testEnv               env.Environment
+	kindClusterName       string
+	defaultghTokenVar     = "GITHUB_TOKEN"
+	defaultgiteatTokenVar = "GITEA_TOKEN"
+	ownerVar              = "MPAS_MANAGEMENT_REPO_OWNER"
+	repository            = "mpas-management-test"
+	hostnameVar           = "MPAS_MANAGEMENT_REPO_HOSTNAME"
+	namespace             = "mpas-cli-testns"
 )
 
 func TestMain(m *testing.M) {
@@ -28,11 +32,19 @@ func TestMain(m *testing.M) {
 	testEnv = env.NewWithConfig(cfg)
 	kindClusterName = envconf.RandomName("mpas-e2e-cli", 32)
 
+	stopChannelGitea := make(chan struct{}, 1)
+
 	testEnv.Setup(
 		envfuncs.CreateKindCluster(kindClusterName),
+		envfuncs.CreateNamespace(namespace),
+		shared.StartGitServer(namespace),
+		shared.ForwardPortForAppName("gitea", 3000, stopChannelGitea),
 	)
 
 	testEnv.Finish(
+		shared.RemoveGitServer(namespace),
+		shared.ShutdownPortForward(stopChannelGitea),
+		envfuncs.DeleteNamespace(namespace),
 		envfuncs.DestroyKindCluster(kindClusterName),
 	)
 
