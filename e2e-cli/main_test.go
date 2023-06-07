@@ -30,9 +30,18 @@ func TestBootstrap_github(t *testing.T) {
 }
 
 func TestBootstrap_gitea(t *testing.T) {
-	owner := shared.Owner
-	token := shared.TestUserToken
-	hostname := shared.BaseURL
+	owner := os.Getenv(ownerVar)
+	if owner == "" {
+		owner = shared.Owner
+	}
+	token := os.Getenv(defaultgiteatTokenVar)
+	if token == "" {
+		token = shared.TestUserToken
+	}
+	hostname := os.Getenv(hostnameVar)
+	if hostname == "" {
+		hostname = shared.BaseURL
+	}
 	bootstrapGiteaCmd, err := bootstrapGitea(owner, token, hostname)
 	require.NoError(t, err)
 	assert.NotNil(t, bootstrapGiteaCmd)

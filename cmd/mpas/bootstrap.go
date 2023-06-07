@@ -30,6 +30,7 @@ func NewBootstrap() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewBootstrapGithub())
+	cmd.AddCommand(NewBootstrapGitea())
 
 	return cmd
 }
@@ -84,7 +85,7 @@ func NewBootstrapGithub() *cobra.Command {
 	return cmd
 }
 
-// NewBootstrapGitea returns a new cobra.Command for github bootstrap
+// NewBootstrapGitea returns a new cobra.Command for gitea bootstrap
 func NewBootstrapGitea() *cobra.Command {
 	c := &config.GiteaConfig{}
 	cmd := &cobra.Command{
