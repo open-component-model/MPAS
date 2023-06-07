@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	defaultghTokenVar = "GITHUB_TOKEN"
+	defaultghTokenVar    = "GITHUB_TOKEN"
+	defaultgiteaTokenVar = "GITEA_TOKEN"
 )
 
 func NewBootstrap() *cobra.Command {
@@ -25,22 +26,22 @@ func NewBootstrap() *cobra.Command {
 		Use:     "bootstrap [provider] [flags]",
 		Short:   "Bootstrap the MPAS system into a Kubernetes cluster.",
 		Long:    "Bootstrap the MPAS system into a Kubernetes cluster.",
-		Example: "mpas bootstrap github [flags]",
+		Example: "mpas bootstrap [flags]",
 	}
 
-	cfg.AddFlags(cmd.PersistentFlags())
 	cmd.AddCommand(NewBootstrapGithub())
+	cmd.AddCommand(NewBootstrapGitea())
 
 	return cmd
 }
 
-// New returns a new cobra.Command for github bootstrap
+// NewBootstrapGithub returns a new cobra.Command for github bootstrap
 func NewBootstrapGithub() *cobra.Command {
 	c := &config.GithubConfig{}
 	cmd := &cobra.Command{
 		Use:     "github [flags]",
 		Short:   "Bootstrap an mpas management repository on Github",
-		Example: `  # bootstrapCmd an mpas management repository`,
+		Example: `mpas bootstrap github --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := bootstrap.BootstrapGithubCmd{
 				Owner:      c.Owner,
@@ -64,6 +65,68 @@ func NewBootstrapGithub() *cobra.Command {
 
 			if b.Owner == "" {
 				return fmt.Errorf("owner must be set")
+			}
+
+			if b.Repository == "" {
+				return fmt.Errorf("repository must be set")
+			}
+
+			if b.Registry == "" && b.FromFile == "" {
+				return fmt.Errorf("either registry or from-file must be set")
+			}
+
+			return b.Execute()
+
+		},
+	}
+
+	c.AddFlags(cmd.Flags())
+
+	return cmd
+}
+
+// NewBootstrapGitea returns a new cobra.Command for gitea bootstrap
+func NewBootstrapGitea() *cobra.Command {
+	c := &config.GiteaConfig{}
+	cmd := &cobra.Command{
+		Use:     "gitea [flags]",
+		Short:   "Bootstrap an mpas management repository on Gitea",
+		Example: `mpas bootstrap gitea --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux --hostname gitea.example.com`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b := bootstrap.BootstrapGiteaCmd{
+				Owner:      c.Owner,
+				Personal:   c.Personal,
+				Repository: c.Repository,
+				FromFile:   c.FromFile,
+				Registry:   c.Registry,
+				Hostname:   c.Hostname,
+				Components: append(config.DefaultComponents, c.Components...),
+			}
+
+			token := os.Getenv(defaultgiteaTokenVar)
+			if token != "" {
+				var err error
+				token, err = passwdFromStdin("Gitea token: ")
+				if err != nil {
+					return fmt.Errorf("failed to read token from stdin: %w", err)
+				}
+			}
+			b.Token = token
+
+			if b.Owner == "" {
+				return fmt.Errorf("owner must be set")
+			}
+
+			if b.Hostname == "" {
+				return fmt.Errorf("hostname must be set")
+			}
+
+			if b.Repository == "" {
+				return fmt.Errorf("repository must be set")
+			}
+
+			if b.Registry == "" && b.FromFile == "" {
+				return fmt.Errorf("either registry or from-file must be set")
 			}
 
 			return b.Execute()

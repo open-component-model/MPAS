@@ -7,12 +7,14 @@ package provider
 import (
 	"fmt"
 
+	"github.com/fluxcd/go-git-providers/gitea"
 	"github.com/fluxcd/go-git-providers/github"
 	"github.com/fluxcd/go-git-providers/gitprovider"
 )
 
 const (
 	ProviderGithub = "github"
+	ProviderGitea  = "gitea"
 )
 
 // rewrite of https://github.com/fluxcd/flux2/tree/main/pkg/bootstrap/provider
@@ -27,6 +29,7 @@ func init() {
 	// Register the default providers
 	providers = make(providerMap)
 	providers.register(ProviderGithub, githubProviderFunc)
+	providers.register(ProviderGitea, giteaProviderFunc)
 }
 
 // ProviderOptions contains the options for the provider
@@ -67,6 +70,24 @@ func (m providerMap) register(name string, provider factoryFunc) {
 
 // githubProviderFunc returns a new gitprovider.Client for github
 func githubProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
+	o := makeProviderOpts(opts)
+	client, err := github.NewClient(o...)
+	if err != nil {
+		return nil, err
+	}
+	return client, err
+}
+
+func giteaProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
+	o := makeProviderOpts(opts)
+	client, err := gitea.NewClient(opts.Token, o...)
+	if err != nil {
+		return nil, err
+	}
+	return client, err
+}
+
+func makeProviderOpts(opts ProviderOptions) []gitprovider.ClientOption {
 	o := []gitprovider.ClientOption{
 		gitprovider.WithOAuth2Token(opts.Token),
 		gitprovider.WithDestructiveAPICalls(opts.DestructiveActions),
@@ -74,10 +95,5 @@ func githubProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
 	if opts.Hostname != "" {
 		o = append(o, gitprovider.WithDomain(opts.Hostname))
 	}
-
-	client, err := github.NewClient(o...)
-	if err != nil {
-		return nil, err
-	}
-	return client, err
+	return o
 }

@@ -11,38 +11,54 @@ import (
 	"testing"
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
+	"github.com/open-component-model/ocm-e2e-framework/shared"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBootstrap_github(t *testing.T) {
-	owner, repository, token, err := retrieveBootStrapConfigVars()
-	if err != nil {
-		t.Fatalf("failed to retrieve bootstrap config vars: %v", err)
-	}
+	owner, token, err := retrieveBootStrapConfigVars()
+	require.NoError(t, err)
 	bootstrapGithubCmd, err := bootstrapGithub(owner, repository, token)
-	if err != nil {
-		t.Fatalf("failed to bootstrap mpas-management repository: %v", err)
-	}
-	if bootstrapGithubCmd == nil {
-		t.Fatalf("bootstrapGithubCmd is nil")
-	}
+	require.NoError(t, err)
+	assert.NotNil(t, bootstrapGithubCmd)
 
 	// cleanup
 	ctx := context.Background()
 	err = bootstrapGithubCmd.Cleanup(ctx)
-	if err != nil {
-		t.Fatalf("failed to cleanup mpas-management repository: %v", err)
-	}
-
+	require.NoError(t, err)
 }
 
-func retrieveBootStrapConfigVars() (string, string, string, error) {
+func TestBootstrap_gitea(t *testing.T) {
 	owner := os.Getenv(ownerVar)
-	repository := os.Getenv(repoVar)
-	token := os.Getenv(defaultghTokenVar)
-	if token != "" || owner == "" || repository == "" {
-		return "", "", "", fmt.Errorf("owner, repository and token must be set")
+	if owner == "" {
+		owner = shared.Owner
 	}
-	return owner, repository, token, nil
+	token := os.Getenv(defaultgiteatTokenVar)
+	if token == "" {
+		token = shared.TestUserToken
+	}
+	hostname := os.Getenv(hostnameVar)
+	if hostname == "" {
+		hostname = shared.BaseURL
+	}
+	bootstrapGiteaCmd, err := bootstrapGitea(owner, token, hostname)
+	require.NoError(t, err)
+	assert.NotNil(t, bootstrapGiteaCmd)
+
+	// cleanup
+	ctx := context.Background()
+	err = bootstrapGiteaCmd.Cleanup(ctx)
+	require.NoError(t, err)
+}
+
+func retrieveBootStrapConfigVars() (string, string, error) {
+	owner := os.Getenv(ownerVar)
+	token := os.Getenv(defaultghTokenVar)
+	if token != "" || owner == "" {
+		return "", "", fmt.Errorf("owner and token must be set")
+	}
+	return owner, token, nil
 }
 
 func bootstrapGithub(owner, repository, token string) (*bootstrap.BootstrapGithubCmd, error) {
@@ -58,4 +74,21 @@ func bootstrapGithub(owner, repository, token string) (*bootstrap.BootstrapGithu
 		return nil, fmt.Errorf("failed to execute bootstrapGithubCmd: %w", err)
 	}
 	return &bootstrapGithubCmd, nil
+}
+
+func bootstrapGitea(owner, token, hostname string) (*bootstrap.BootstrapGiteaCmd, error) {
+	bootstrapGiteaCmd := bootstrap.BootstrapGiteaCmd{
+		Owner:              owner,
+		Repository:         repository,
+		Token:              token,
+		Hostname:           hostname,
+		Personal:           true,
+		DestructiveActions: true,
+	}
+
+	err := bootstrapGiteaCmd.Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute bootstrapGiteaCmd: %w", err)
+	}
+	return &bootstrapGiteaCmd, nil
 }
