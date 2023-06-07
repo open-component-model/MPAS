@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  checkout-repos-and-init-workspace:
+  checkout-repos-and-run-test-suite:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout mpas repository
