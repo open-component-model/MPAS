@@ -14,11 +14,13 @@ import (
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
 	"github.com/open-component-model/ocm/pkg/contexts/clictx"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials"
+	"github.com/open-component-model/ocm/pkg/contexts/oci/identity"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	metav1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 )
@@ -69,9 +71,16 @@ type ResourceOptions struct {
 	Type      string
 	InputType string
 	Version   string
+	Image     string
 }
 
 type ResourceOption func(*ResourceOptions)
+
+func WithResourceImage(image string) ResourceOption {
+	return func(o *ResourceOptions) {
+		o.Image = image
+	}
+}
 
 func WithResourceName(name string) ResourceOption {
 	return func(o *ResourceOptions) {
@@ -103,12 +112,12 @@ func WithResourceVersion(version string) ResourceOption {
 	}
 }
 
-func (c *Component) AddResource(opts ...ResourceOption) error {
+func (c *Component) AddResource(username, token string, opts ...ResourceOption) error {
 	resOpt := &ResourceOptions{}
 	for _, opt := range opts {
 		opt(resOpt)
 	}
-	if resOpt.Name == "" || resOpt.Path == "" {
+	if resOpt.Name == "" {
 		return fmt.Errorf("resource name must be set")
 	}
 	arch, err := comparch.Open(c.Context.OCMContext(), accessobj.ACC_WRITABLE, c.ArchivePath, os.ModePerm)
@@ -118,11 +127,23 @@ func (c *Component) AddResource(opts ...ResourceOption) error {
 	defer arch.Close()
 	switch resOpt.Type {
 	case "file":
+		if resOpt.Path == "" {
+			return fmt.Errorf("resource path must be set")
+		}
 		o := &addFileOpts{
 			name: resOpt.Name,
 			path: resOpt.Path,
 		}
 		if err := fileHandler(arch, o); err != nil {
+			return err
+		}
+	case "ociImage":
+		o := &addImageOpts{
+			name:    resOpt.Name,
+			image:   resOpt.Image,
+			version: resOpt.Version,
+		}
+		if err := imageHandler(arch, o); err != nil {
 			return err
 		}
 	default:
@@ -131,7 +152,7 @@ func (c *Component) AddResource(opts ...ResourceOption) error {
 	return nil
 }
 
-func (c *Component) Transfer() error {
+func (c *Component) Transfer(username, token string) error {
 	session := ocm.NewSession(nil)
 	defer session.Close()
 	session.Finalize(c.Context.OCMContext())
@@ -140,12 +161,25 @@ func (c *Component) Transfer() error {
 		return err
 	}
 	session.Closer(arch)
-	target, err := ocm.AssureTargetRepository(session, c.Context.OCMContext(), c.RepositoryURL, ocm.CommonTransportFormat)
+
+	targetSpec := ocireg.NewRepositorySpec(c.RepositoryURL, nil)
+	target, err := c.Context.OCMContext().RepositoryForSpec(targetSpec)
+	if err != nil {
+		return err
+	}
+	defer target.Close()
+
+	handler, err := standard.New(
+		standard.Recursive(true),
+		standard.ResourcesByValue(true),
+		standard.Overwrite(true),
+		standard.Resolver(target))
 	if err != nil {
 		return err
 	}
 
-	handler, err := standard.New()
+	// configure token
+	err = c.configureCredentials(username, token)
 	if err != nil {
 		return err
 	}
@@ -153,27 +187,22 @@ func (c *Component) Transfer() error {
 	return transfer.TransferVersion(common.NewPrinter(c.Context.StdOut()), nil, arch, target, handler)
 }
 
-func (c *Component) ConfigureCredentials(token string) error {
+func (c *Component) configureCredentials(username, token string) error {
 	regURL, err := url.Parse(c.RepositoryURL)
 	if err != nil {
 		return err
 	}
 
-	if regURL.Scheme == "" {
-		regURL, err = url.Parse(fmt.Sprintf("oci://%s", c.RepositoryURL))
-		if err != nil {
-			return err
-		}
+	consumerID := credentials.NewConsumerIdentity(identity.CONSUMER_TYPE,
+		identity.ID_HOSTNAME, regURL.Host,
+		identity.ID_PATHPREFIX, username,
+	)
+
+	creds := credentials.DirectCredentials{
+		credentials.ATTR_USERNAME: username,
+		credentials.ATTR_PASSWORD: token,
 	}
 
-	consumerID := credentials.ConsumerIdentity{
-		"type":     "OCIRegistry",
-		"hostname": regURL.Host,
-	}
-
-	props := make(common.Properties)
-	props.SetNonEmptyValue("token", token)
-	creds := credentials.NewCredentials(props)
 	c.Context.OCMContext().CredentialsContext().SetCredentialsForConsumer(consumerID, creds)
 	return nil
 }
