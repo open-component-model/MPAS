@@ -5,6 +5,7 @@
 package manifestsgen
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -24,7 +25,7 @@ type Flux struct {
 // GenerateFluxManifests generates Flux manifests for the given version.
 // It returns the generated manifests as a Manifest object.
 // If the version is invalid, an error is returned.
-func (f *Flux) GenerateFluxManifests(tmpDir string) error {
+func (f *Flux) GenerateManifests(ctx context.Context, tmpDir string) error {
 	if err := f.validateVersion(); err != nil {
 		return fmt.Errorf("invalid version: %w", err)
 	}

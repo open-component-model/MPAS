@@ -8,6 +8,7 @@ MPAS_MANAGEMENT_REPO_HOSTNAME ?= http://127.0.0.1:3000
 
 # Bootstrap component
 FLUX_VERSION ?= 1.21.0
+OCM_CONTROLLER_VERSION ?= 0.0.1
 MPAS_GITHUB_REPOSITORY ?= ghcr.io/souleb/mpas-bootstrap-component
 
 # Github
@@ -29,5 +30,6 @@ e2e-cli:
 	MPAS_MANAGEMENT_REPO_HOSTNAME=$(MPAS_MANAGEMENT_REPO_HOSTNAME) go test -v ./e2e/... -run TestCli
 
 release-bootstrap-component:
-	go run ./cmd/release-bootstrap-component/main.go --flux-version $(FLUX_VERSION) --repository-url $(MPAS_GITHUB_REPOSITORY) \
+	go run ./cmd/release-bootstrap-component/main.go --flux-version $(FLUX_VERSION) OCM_CONTROLLER_VERSION=$(OCM_CONTROLLER_VERSION) \
+	--repository-url $(MPAS_GITHUB_REPOSITORY) \
 	--username $(GITHUB_USERNAME)

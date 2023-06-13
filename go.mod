@@ -3,6 +3,7 @@ module github.com/open-component-model/mpas
 go 1.20
 
 require (
+	github.com/cyphar/filepath-securejoin v0.2.3
 	github.com/fluxcd/flux2 v0.41.2
 	github.com/fluxcd/go-git-providers v0.16.1-0.20230606145908-251cafbb6567
 	github.com/fluxcd/kustomize-controller/api v1.0.0-rc.1
@@ -66,7 +67,6 @@ require (
 	github.com/containers/ocicrypt v1.1.6 // indirect
 	github.com/containers/storage v1.43.0 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20220623050100-57a0ce2678a7 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v23.0.1+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect

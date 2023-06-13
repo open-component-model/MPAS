@@ -25,15 +25,77 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 )
 
-type Component struct {
-	Context        clictx.Context
-	Name           string
-	Version        string
+type Options struct {
 	Provider       string
 	ProviderLabels metav1.Labels
 	Labels         metav1.Labels
 	ArchivePath    string
 	RepositoryURL  string
+	username       string
+	token          string
+}
+
+type ComponentOption func(*Options)
+type Component struct {
+	Context clictx.Context
+	Name    string
+	Version string
+	Options
+}
+
+func WithProvider(provider string) ComponentOption {
+	return func(o *Options) {
+		o.Provider = provider
+	}
+}
+
+func WithProviderLabels(labels metav1.Labels) ComponentOption {
+	return func(o *Options) {
+		o.ProviderLabels = labels
+	}
+}
+
+func WithLabels(labels metav1.Labels) ComponentOption {
+	return func(o *Options) {
+		o.Labels = labels
+	}
+}
+
+func WithArchivePath(archivePath string) ComponentOption {
+	return func(o *Options) {
+		o.ArchivePath = archivePath
+	}
+}
+
+func WithRepositoryURL(repositoryURL string) ComponentOption {
+	return func(o *Options) {
+		o.RepositoryURL = repositoryURL
+	}
+}
+
+func WithUsername(username string) ComponentOption {
+	return func(o *Options) {
+		o.username = username
+	}
+}
+
+func WithToken(token string) ComponentOption {
+	return func(o *Options) {
+		o.token = token
+	}
+}
+
+func NewComponent(ctx clictx.Context, name, version string, opts ...ComponentOption) *Component {
+	options := &Options{}
+	for _, opt := range opts {
+		opt(options)
+	}
+	return &Component{
+		Context: ctx,
+		Name:    name,
+		Version: version,
+		Options: *options,
+	}
 }
 
 func (c *Component) CreateComponentArchive(opts ...accessio.Option) error {
@@ -152,7 +214,7 @@ func (c *Component) AddResource(username, token string, opts ...ResourceOption) 
 	return nil
 }
 
-func (c *Component) Transfer(username, token string) error {
+func (c *Component) Transfer() error {
 	session := ocm.NewSession(nil)
 	defer session.Close()
 	session.Finalize(c.Context.OCMContext())
@@ -171,7 +233,6 @@ func (c *Component) Transfer(username, token string) error {
 
 	handler, err := standard.New(
 		standard.Recursive(true),
-		standard.ResourcesByValue(true),
 		standard.Overwrite(true),
 		standard.Resolver(target))
 	if err != nil {
@@ -179,7 +240,7 @@ func (c *Component) Transfer(username, token string) error {
 	}
 
 	// configure token
-	err = c.configureCredentials(username, token)
+	err = c.configureCredentials()
 	if err != nil {
 		return err
 	}
@@ -187,7 +248,7 @@ func (c *Component) Transfer(username, token string) error {
 	return transfer.TransferVersion(common.NewPrinter(c.Context.StdOut()), nil, arch, target, handler)
 }
 
-func (c *Component) configureCredentials(username, token string) error {
+func (c *Component) configureCredentials() error {
 	regURL, err := url.Parse(c.RepositoryURL)
 	if err != nil {
 		return err
@@ -195,12 +256,12 @@ func (c *Component) configureCredentials(username, token string) error {
 
 	consumerID := credentials.NewConsumerIdentity(identity.CONSUMER_TYPE,
 		identity.ID_HOSTNAME, regURL.Host,
-		identity.ID_PATHPREFIX, username,
+		identity.ID_PATHPREFIX, c.username,
 	)
 
 	creds := credentials.DirectCredentials{
-		credentials.ATTR_USERNAME: username,
-		credentials.ATTR_PASSWORD: token,
+		credentials.ATTR_USERNAME: c.username,
+		credentials.ATTR_PASSWORD: c.token,
 	}
 
 	c.Context.OCMContext().CredentialsContext().SetCredentialsForConsumer(consumerID, creds)
