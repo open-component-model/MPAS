@@ -26,7 +26,7 @@ type Flux struct {
 // It returns the generated manifests as a Manifest object.
 // If the version is invalid, an error is returned.
 func (f *Flux) GenerateManifests(ctx context.Context, tmpDir string) error {
-	if err := f.validateVersion(); err != nil {
+	if err := validateFluxVersion(f.Version); err != nil {
 		return fmt.Errorf("invalid version: %w", err)
 	}
 
@@ -49,24 +49,6 @@ func (f *Flux) GenerateManifests(ctx context.Context, tmpDir string) error {
 	f.Path = manifest.Path
 	f.Content = &manifest.Content
 
-	return nil
-}
-
-func (f *Flux) validateVersion() error {
-	ver := f.Version
-	if ver == "" {
-		return fmt.Errorf("version is empty")
-	}
-
-	if ver != install.MakeDefaultOptions().Version && !strings.HasPrefix(ver, "v") {
-		return fmt.Errorf("targeted version '%s' must be prefixed with 'v'", ver)
-	}
-
-	if ok, err := install.ExistingVersion(ver); err != nil || !ok {
-		if err == nil {
-			return fmt.Errorf("targeted version '%s' does not exist", ver)
-		}
-	}
 	return nil
 }
 

@@ -10,11 +10,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
-
-	securejoin "github.com/cyphar/filepath-securejoin"
 )
 
 const (
@@ -37,7 +34,7 @@ func (o *OcmController) GenerateManifests(ctx context.Context, tmpDir string) er
 	}
 
 	if err := o.fetch(ctx); err != nil {
-		return fmt.Errorf("✗ failed to download install.yaml file: %w", err)
+		return fmt.Errorf("failed to download install.yaml file: %w", err)
 	}
 
 	if tmpDir != "" {
@@ -54,14 +51,9 @@ func (o *OcmController) GenerateManifests(ctx context.Context, tmpDir string) er
 
 func (o *OcmController) getLatestVersion(ctx context.Context) (string, error) {
 	ghURL := fmt.Sprintf("%s/latest", releaseAPIURL)
-	req, err := http.NewRequest(http.MethodGet, ghURL, nil)
+	resp, err := getFrom(ctx, ghURL)
 	if err != nil {
-		return "", fmt.Errorf("failed to create HTTP request for %s, error: %w", ghURL, err)
-	}
-
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil {
-		return "", fmt.Errorf("failed to download manifests.tar.gz from %s, error: %w", ghURL, err)
+		return "", err
 	}
 
 	if resp.Body != nil {
@@ -99,14 +91,9 @@ func (o *OcmController) validateVersion(ctx context.Context) error {
 	}
 
 	ghURL := fmt.Sprintf(releaseAPIURL+"/tags/%s", ver)
-	req, err := http.NewRequest(http.MethodGet, ghURL, nil)
+	resp, err := getFrom(ctx, ghURL)
 	if err != nil {
-		return fmt.Errorf("failed to create HTTP request for %s, error: %w", ghURL, err)
-	}
-
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil {
-		return fmt.Errorf("failed to download manifests.tar.gz from %s, error: %w", ghURL, err)
+		return err
 	}
 
 	if resp.Body != nil {
@@ -125,14 +112,9 @@ func (o *OcmController) validateVersion(ctx context.Context) error {
 
 func (o *OcmController) fetch(ctx context.Context) error {
 	ghURL := fmt.Sprintf("%s/download/%s/install.yaml", releaseURL, o.Version)
-	req, err := http.NewRequest(http.MethodGet, ghURL, nil)
+	resp, err := getFrom(ctx, ghURL)
 	if err != nil {
-		return fmt.Errorf("failed to create HTTP request for %s, error: %w", ghURL, err)
-	}
-
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil {
-		return fmt.Errorf("failed to download manifests.tar.gz from %s, error: %w", ghURL, err)
+		return err
 	}
 
 	if resp.Body != nil {
@@ -145,7 +127,7 @@ func (o *OcmController) fetch(ctx context.Context) error {
 
 	buf := new(strings.Builder)
 	if _, err := io.Copy(buf, resp.Body); err != nil {
-		return fmt.Errorf("failed to write to temp file: %w", err)
+		return fmt.Errorf("failed to write to buffer: %s", err)
 	}
 
 	data := buf.String()
@@ -155,17 +137,9 @@ func (o *OcmController) fetch(ctx context.Context) error {
 
 func (o *OcmController) writeFile(rootDir string) (string, error) {
 	path := filepath.Join("ocm-controller", "install.yaml")
-	output, err := securejoin.SecureJoin(rootDir, path)
+	err := writeFile(rootDir, path, *o.Content)
 	if err != nil {
 		return "", err
-	}
-
-	if err := os.MkdirAll(filepath.Dir(output), os.ModePerm); err != nil {
-		return "", fmt.Errorf("unable to create dir, error: %w", err)
-	}
-
-	if err := os.WriteFile(output, []byte(*o.Content), os.ModePerm); err != nil {
-		return "", fmt.Errorf("unable to write file, error: %w", err)
 	}
 	return path, nil
 }

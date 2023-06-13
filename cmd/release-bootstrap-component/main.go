@@ -18,18 +18,21 @@ const (
 	tokenVar                = "GITHUB_TOKEN"
 	defaultFluxVer          = "v2.0.0-rc.5"
 	defaultOcmControllerVer = "v0.8.3"
+	defaultOcmCliVer        = "v0.2.0"
 )
 
 var (
 	components = []string{
 		"ocm-controller",
 		"flux",
-		"flux-cli",
-		"ocm-cli",
 		"git-controller",
 		"replication-controller",
 		"mpas-product-controller",
 		"mpas-project-controller",
+	}
+	binaryComponents = []string{
+		"flux-cli",
+		"ocm-cli",
 	}
 )
 
@@ -39,16 +42,25 @@ func main() {
 		fluxVersion string
 		// The version of the ocm-controller component to use.
 		ocmControllerVersion string
+		// The version of the ocm-cli component to use.
+		ocmCliVersion string
 		// The repository URL to use.
 		repositoryURL string
 		// The username to use.
 		username string
+		// The target os.
+		targetOS string
+		// The target arch.
+		targetArch string
 	)
 
 	flag.StringVar(&fluxVersion, "flux-version", defaultFluxVer, "The version of the flux component to use.")
 	flag.StringVar(&ocmControllerVersion, "ocm-controller-version", defaultOcmControllerVer, "The version of the ocm-controller component to use.")
+	flag.StringVar(&ocmCliVersion, "ocm-cli-version", defaultOcmCliVer, "The version of the ocm-cli component to use.")
 	flag.StringVar(&repositoryURL, "repository-url", "", "The repository URL to use.")
 	flag.StringVar(&username, "username", "", "The username to use.")
+	flag.StringVar(&targetOS, "target-os", "linux", "The target OS to use.")
+	flag.StringVar(&targetArch, "target-arch", "amd64", "The target arch to use.")
 
 	flag.Parse()
 
@@ -92,6 +104,24 @@ func main() {
 			component, err = release.ReleaseFluxComponent(ctx, fluxVersion, username, token, tmpDir, repositoryURL, comp)
 			if err != nil {
 				fmt.Println("Failed to release flux component: ", err)
+				os.Exit(1)
+			}
+		}
+		generatedComponents = append(generatedComponents, component)
+	}
+	for _, comp := range binaryComponents {
+		var component *ocm.Component
+		switch comp {
+		case "flux-cli":
+			component, err = release.ReleaseFluxCliComponent(ctx, fluxVersion, username, token, tmpDir, repositoryURL, comp, targetOS, targetArch)
+			if err != nil {
+				fmt.Println("Failed to release flux-cli component: ", err)
+				os.Exit(1)
+			}
+		case "ocm-cli":
+			component, err = release.ReleaseOCMCliComponent(ctx, ocmCliVersion, username, token, tmpDir, repositoryURL, comp, targetOS, targetArch)
+			if err != nil {
+				fmt.Println("Failed to release ocm-cli component: ", err)
 				os.Exit(1)
 			}
 		}

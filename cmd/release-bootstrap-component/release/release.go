@@ -9,24 +9,29 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	mgen "github.com/open-component-model/mpas/pkg/manifestsgen"
 	"github.com/open-component-model/mpas/pkg/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/clictx"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
 	archivePathPrefix = "mpas-bootstrap-component"
+	fluxBinURL        = "https://github.com/fluxcd/flux2/releases/download"
+	ocmBinURL         = "https://github.com/open-component-model/ocm/releases/download"
 )
 
 var (
-	fluxLocalizationTemplate = `- name: %s
+	localizationtemplate = `- name: %s
 file: gotk-components.yaml
 image: spec.template.spec.containers[0].image
 resource:
   name: %s
 `
-	fluxLocalizationTemplateHeader = `apiVersion: config.ocm.software/v1alpha1
+	localizationTemplateHeader = `apiVersion: config.ocm.software/v1alpha1
 kind: ConfigData
 metadata:
   name: ocm-config
@@ -52,7 +57,7 @@ func ReleaseOcmControllerComponent(ctx context.Context, ocmVersion, username, to
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
 
-	tmpl, err := o.GenerateLocalizationFromTemplate(fluxLocalizationTemplateHeader, fluxLocalizationTemplate)
+	tmpl, err := o.GenerateLocalizationFromTemplate(localizationTemplateHeader, localizationtemplate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate localization from template: %w", err)
 	}
@@ -112,7 +117,7 @@ func ReleaseFluxComponent(ctx context.Context, fluxVersion, username, token, tmp
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
 
-	tmpl, err := f.GenerateLocalizationFromTemplate(fluxLocalizationTemplateHeader, fluxLocalizationTemplate)
+	tmpl, err := f.GenerateLocalizationFromTemplate(localizationTemplateHeader, localizationtemplate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate localization from template: %w", err)
 	}
@@ -152,6 +157,100 @@ func ReleaseFluxComponent(ctx context.Context, fluxVersion, username, token, tmp
 	}
 
 	return component, nil
+}
+
+func ReleaseFluxCliComponent(ctx context.Context, fluxVersion, username, token, tmpDir, repositoryURL, comp, targetOS, targetArch string) (*ocm.Component, error) {
+	if fluxVersion == "" {
+		return nil, fmt.Errorf("flux version is empty")
+	}
+	ver := strings.TrimPrefix(fluxVersion, "v")
+
+	binURL := fmt.Sprintf("%s/v%s/flux_%s_%s_%s.tar.gz", fluxBinURL, ver, ver, targetOS, targetArch)
+	hashURL := fmt.Sprintf("%s/v%s/flux_%s_checksums.txt", fluxBinURL, ver, ver)
+	b, err := getBinary(ctx, fluxVersion, tmpDir, binURL, hashURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get flux-cli binary: %v", err)
+	}
+
+	component := ocm.NewComponent(clictx.DefaultContext(),
+		"github.com/souleb/flux-cli",
+		fluxVersion,
+		ocm.WithProvider("fluxcd"),
+		ocm.WithUsername(username),
+		ocm.WithToken(token),
+		ocm.WithArchivePath(path.Join(tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
+		ocm.WithRepositoryURL(repositoryURL))
+
+	if err := component.CreateComponentArchive(); err != nil {
+		return nil, fmt.Errorf("failed to create component archive: %w", err)
+	}
+
+	if err := component.AddResource(username, token, ocm.WithResourceName("flux-cli"),
+		ocm.WithResourcePath(path.Join(tmpDir, b.Path)),
+		ocm.WithResourceType("file"),
+		ocm.WithResourceVersion(component.Version)); err != nil {
+		return nil, fmt.Errorf("failed to add resource flux: %w", err)
+	}
+
+	if err := component.Transfer(); err != nil {
+		return nil, fmt.Errorf("failed to transfer component: %w", err)
+	}
+
+	return component, nil
+}
+
+func ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, username, token, tmpDir, repositoryURL, comp, targetOS, targetArch string) (*ocm.Component, error) {
+	if ocmCliVersion == "" {
+		return nil, fmt.Errorf("ocm version is empty")
+	}
+	ver := strings.TrimPrefix(ocmCliVersion, "v")
+	caseEng := cases.Title(language.Dutch)
+	targetOS = caseEng.String(targetOS)
+	if targetArch == "amd64" {
+		targetArch = "x86_64"
+	}
+	binURL := fmt.Sprintf("%s/v%s/ocm_%s_%s.tar.gz", ocmBinURL, ver, targetOS, targetArch)
+	hashURL := fmt.Sprintf("%s/v%s/checksums.txt", ocmBinURL, ver)
+	b, err := getBinary(ctx, ocmCliVersion, tmpDir, binURL, hashURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ocm-cli binary: %v", err)
+	}
+
+	component := ocm.NewComponent(clictx.DefaultContext(),
+		"github.com/souleb/ocm-cli",
+		ocmCliVersion,
+		ocm.WithProvider("ocm"),
+		ocm.WithUsername(username),
+		ocm.WithToken(token),
+		ocm.WithArchivePath(path.Join(tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
+		ocm.WithRepositoryURL(repositoryURL))
+
+	if err := component.CreateComponentArchive(); err != nil {
+		return nil, fmt.Errorf("failed to create component archive: %w", err)
+	}
+
+	if err := component.AddResource(username, token, ocm.WithResourceName("ocm-cli"),
+		ocm.WithResourcePath(path.Join(tmpDir, b.Path)),
+		ocm.WithResourceType("file"),
+		ocm.WithResourceVersion(component.Version)); err != nil {
+		return nil, fmt.Errorf("failed to add resource flux: %w", err)
+	}
+
+	if err := component.Transfer(); err != nil {
+		return nil, fmt.Errorf("failed to transfer component: %w", err)
+	}
+
+	return component, nil
+}
+
+func getBinary(ctx context.Context, version, tmpDir, binURL, hashURL string) (mgen.Binary, error) {
+	b := mgen.Binary{
+		Version: version,
+		BinURL:  binURL,
+		HashURL: hashURL,
+	}
+	err := b.Get(ctx, tmpDir)
+	return b, err
 }
 
 func generateFlux(ctx context.Context, version, tmpDir string) (mgen.Flux, error) {
