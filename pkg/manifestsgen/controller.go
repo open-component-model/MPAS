@@ -15,22 +15,22 @@ import (
 )
 
 const (
-	releaseAPIURL        = "https://api.github.com/repos/open-component-model/ocm-controller/releases"
-	releaseURL           = "https://github.com/open-component-model/ocm-controller/releases"
-	defaultRegistry      = "ghcr.io/open-component-model"
-	defaultComponentName = "ocm-controller"
+	defaultRegistry = "ghcr.io/open-component-model"
 )
 
-type OcmController struct {
-	Version  string
-	Registry string
-	Path     string
-	Content  *string
+type Controller struct {
+	Name          string
+	Version       string
+	Registry      string
+	Path          string
+	ReleaseURL    string
+	ReleaseAPIURL string
+	Content       *string
 }
 
-func (o *OcmController) GenerateManifests(ctx context.Context, tmpDir string) error {
+func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error {
 	if err := o.validateVersion(ctx); err != nil {
-		return fmt.Errorf("version %s does not exist for ocm-controller: %s", o.Version, err)
+		return fmt.Errorf("version %s does not exist for %s: %s", o.Name, o.Version, err)
 	}
 
 	if err := o.fetch(ctx); err != nil {
@@ -49,8 +49,8 @@ func (o *OcmController) GenerateManifests(ctx context.Context, tmpDir string) er
 	return nil
 }
 
-func (o *OcmController) getLatestVersion(ctx context.Context) (string, error) {
-	ghURL := fmt.Sprintf("%s/latest", releaseAPIURL)
+func (o *Controller) getLatestVersion(ctx context.Context) (string, error) {
+	ghURL := fmt.Sprintf("%s/latest", o.ReleaseAPIURL)
 	resp, err := getFrom(ctx, ghURL)
 	if err != nil {
 		return "", err
@@ -72,7 +72,7 @@ func (o *OcmController) getLatestVersion(ctx context.Context) (string, error) {
 	return m.Tag, err
 }
 
-func (o *OcmController) validateVersion(ctx context.Context) error {
+func (o *Controller) validateVersion(ctx context.Context) error {
 	ver := o.Version
 	if ver == "" {
 		return fmt.Errorf("version is empty")
@@ -85,12 +85,12 @@ func (o *OcmController) validateVersion(ctx context.Context) error {
 	if ver == "latest" {
 		latest, err := o.getLatestVersion(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve latest version for ocm-controller: %s", err)
+			return fmt.Errorf("failed to retrieve latest version for %s: %s", o.Name, err)
 		}
 		o.Version = latest
 	}
 
-	ghURL := fmt.Sprintf(releaseAPIURL+"/tags/%s", ver)
+	ghURL := fmt.Sprintf(o.ReleaseAPIURL+"/tags/%s", ver)
 	resp, err := getFrom(ctx, ghURL)
 	if err != nil {
 		return err
@@ -104,14 +104,14 @@ func (o *OcmController) validateVersion(ctx context.Context) error {
 	case http.StatusOK:
 		return nil
 	case http.StatusNotFound:
-		return fmt.Errorf("target version %s does not exist for ocm-controller", ver)
+		return fmt.Errorf("target version %s does not exist for %s", ver, o.Name)
 	default:
-		return fmt.Errorf("target version %s does not exist for ocm-controller, (%d)", ver, resp.StatusCode)
+		return fmt.Errorf("target version %s does not exist for %s, (%d)", ver, o.Name, resp.StatusCode)
 	}
 }
 
-func (o *OcmController) fetch(ctx context.Context) error {
-	ghURL := fmt.Sprintf("%s/download/%s/install.yaml", releaseURL, o.Version)
+func (o *Controller) fetch(ctx context.Context) error {
+	ghURL := fmt.Sprintf("%s/download/%s/install.yaml", o.ReleaseURL, o.Version)
 	resp, err := getFrom(ctx, ghURL)
 	if err != nil {
 		return err
@@ -135,8 +135,8 @@ func (o *OcmController) fetch(ctx context.Context) error {
 	return nil
 }
 
-func (o *OcmController) writeFile(rootDir string) (string, error) {
-	path := filepath.Join("ocm-controller", "install.yaml")
+func (o *Controller) writeFile(rootDir string) (string, error) {
+	path := filepath.Join(o.Name, "install.yaml")
 	err := writeFile(rootDir, path, *o.Content)
 	if err != nil {
 		return "", err
@@ -144,15 +144,15 @@ func (o *OcmController) writeFile(rootDir string) (string, error) {
 	return path, nil
 }
 
-func (o *OcmController) GenerateLocalizationFromTemplate(tmpl, loc string) (string, error) {
+func (o *Controller) GenerateLocalizationFromTemplate(tmpl, loc string) (string, error) {
 	// add localization
-	tmpl += fmt.Sprintf(loc, defaultComponentName, defaultComponentName)
+	tmpl += fmt.Sprintf(loc, o.Name, o.Name)
 	return tmpl, nil
 }
 
-func (o *OcmController) GenerateImages() (map[string][]string, error) {
+func (o *Controller) GenerateImages() (map[string][]string, error) {
 	var images = make(map[string][]string)
-	index := strings.Index(*o.Content, fmt.Sprintf("%s/%s", o.Registry, defaultComponentName))
+	index := strings.Index(*o.Content, fmt.Sprintf("%s/%s", o.Registry, o.Name))
 	var image string
 	for i := index; i < len(*o.Content); i++ {
 		v := string((*o.Content)[i])
@@ -161,15 +161,20 @@ func (o *OcmController) GenerateImages() (map[string][]string, error) {
 		}
 		image += v
 	}
-	ver := ""
+
 	if im := strings.Split(image, ":"); len(im) != 2 {
-		ver = o.Version
-		image += ":" + ver
+		image += ":" + o.Version
+	} else {
+		image = im[0] + ":" + o.Version
 	}
 	images[image] = []string{
-		defaultComponentName,
-		ver,
+		o.Name,
+		o.Version,
 	}
 
 	return images, nil
+}
+
+func (o *Controller) GetPath() string {
+	return o.Path
 }

@@ -81,3 +81,7 @@ func (f *Flux) GenerateImages() (map[string][]string, error) {
 
 	return images, nil
 }
+
+func (f *Flux) GetPath() string {
+	return f.Path
+}
