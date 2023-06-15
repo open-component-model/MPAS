@@ -5,7 +5,6 @@
 package ocm
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -20,9 +19,10 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	metav1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ctf"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
+	"github.com/open-component-model/ocm/pkg/finalizer"
 )
 
 // options contains the options for creating a component archive.
@@ -30,7 +30,6 @@ type options struct {
 	provider       string
 	providerLabels metav1.Labels
 	labels         metav1.Labels
-	archivePath    string
 	repositoryURL  string
 	username       string
 	token          string
@@ -49,6 +48,8 @@ type Component struct {
 	Name string
 	// Version is the version of the component.
 	Version string
+	// access is the component access.
+	access ocm.ComponentAccess
 	options
 }
 
@@ -70,13 +71,6 @@ func WithProviderLabels(labels metav1.Labels) ComponentOption {
 func WithLabels(labels metav1.Labels) ComponentOption {
 	return func(o *options) {
 		o.labels = labels
-	}
-}
-
-// WithArchivePath configures the archive path of the component.
-func WithArchivePath(archivePath string) ComponentOption {
-	return func(o *options) {
-		o.archivePath = archivePath
 	}
 }
 
@@ -102,59 +96,24 @@ func WithToken(token string) ComponentOption {
 }
 
 // NewComponent creates a new component.
-func NewComponent(ctx om.Context, name, version string, opts ...ComponentOption) *Component {
+func NewComponent(ctx om.Context, name, version string, opts ...ComponentOption) (*Component, error) {
 	options := &options{}
 	for _, opt := range opts {
 		opt(options)
 	}
-	return &Component{
+
+	c := &Component{
 		Context: ctx,
 		Name:    name,
 		Version: version,
 		options: *options,
 	}
-}
 
-// CreateComponentArchive creates a component archive.
-// It accepts options for configuring the component archive.
-func (c *Component) CreateComponentArchive(opts ...accessio.Option) (err error) {
-	obj, err := comparch.Create(c.Context, accessobj.ACC_CREATE, c.archivePath, os.ModePerm, opts...)
-	if err != nil {
-		return err
+	if err := c.configureCredentials(); err != nil {
+		return nil, err
 	}
 
-	defer func() {
-		var remove bool
-		if err != nil {
-			remove = true
-		}
-		er := obj.Close()
-		if err == nil {
-			err = errors.Join(err, er)
-		}
-		if remove {
-			er := os.RemoveAll(c.archivePath)
-			if err == nil {
-				err = errors.Join(err, er)
-			}
-		}
-	}()
-
-	desc := obj.GetDescriptor()
-	desc.Name = c.Name
-	desc.Version = c.Version
-	desc.Provider.Name = metav1.ProviderName(c.provider)
-	desc.Provider.Labels = c.providerLabels
-	desc.Labels = c.labels
-	if !compatattr.Get(c.Context) {
-		desc.CreationTime = metav1.NewTimestampP()
-	}
-
-	err = compdesc.Validate(desc)
-	if err != nil {
-		return fmt.Errorf("invalid component info: %s", err)
-	}
-	return nil
+	return c, nil
 }
 
 // ResourceOptions contains the options for adding a resource to a component archive.
@@ -226,7 +185,9 @@ func WithResourceVersion(version string) ResourceOption {
 // - file
 // - ociImage
 // - componentReference
-func (c *Component) AddResource(opts ...ResourceOption) error {
+func (c *Component) AddResource(opts ...ResourceOption) (rerr error) {
+	var finalize finalizer.Finalizer
+	defer finalize.FinalizeWithErrorPropagation(&rerr)
 	resOpt := &ResourceOptions{}
 	for _, opt := range opts {
 		opt(resOpt)
@@ -234,11 +195,13 @@ func (c *Component) AddResource(opts ...ResourceOption) error {
 	if resOpt.name == "" {
 		return fmt.Errorf("resource name must be set")
 	}
-	arch, err := comparch.Open(c.Context, accessobj.ACC_WRITABLE, c.archivePath, os.ModePerm)
+	cv, err := c.access.LookupVersion(c.Version)
 	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
-	defer arch.Close()
+	defer finalize.Close(cv)
 	switch resOpt.typ {
 	case "file":
 		if resOpt.path == "" {
@@ -249,7 +212,7 @@ func (c *Component) AddResource(opts ...ResourceOption) error {
 			path:    resOpt.path,
 			version: resOpt.version,
 		}
-		if err := fileHandler(arch, c.Context, o); err != nil {
+		if err := fileHandler(cv, c.Context, o); err != nil {
 			return err
 		}
 	case "ociImage":
@@ -258,7 +221,7 @@ func (c *Component) AddResource(opts ...ResourceOption) error {
 			image:   resOpt.image,
 			version: resOpt.version,
 		}
-		if err := imageHandler(arch, o); err != nil {
+		if err := imageHandler(cv, o); err != nil {
 			return err
 		}
 	case "componentReference":
@@ -267,52 +230,145 @@ func (c *Component) AddResource(opts ...ResourceOption) error {
 			version:   resOpt.version,
 			component: resOpt.componentName,
 		}
-		if err := referenceHandler(arch, o); err != nil {
+		if err := referenceHandler(cv, o); err != nil {
 			return err
 		}
 	default:
 		return fmt.Errorf("unsupported resource type: %s", resOpt.typ)
 	}
+
+	if err := c.access.AddVersion(cv); err != nil {
+		return err
+	}
 	return nil
+}
+
+// CreateCTF creates a new ctf repository.
+func CreateCTF(ctx om.Context, repoPath string, opts ...accessio.Option) (ocm.Repository, error) {
+	ctf, err := ctf.Open(ctx, accessobj.ACC_CREATE, repoPath, os.ModePerm, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return ctf, nil
+}
+
+// AddComponentToCTF adds a component to a ctf repository.
+func (c *Component) AddComponentToCTF(repo ocm.Repository) (rerr error) {
+	var finalize finalizer.Finalizer
+	defer finalize.FinalizeWithErrorPropagation(&rerr)
+
+	var err error
+	c.access, err = repo.LookupComponent(c.Name)
+	if err != nil {
+		return err
+	}
+
+	cv, err := c.access.LookupVersion(c.Version)
+	if err != nil {
+		cv, err = c.access.NewVersion(c.Version)
+		if err != nil {
+			return fmt.Errorf("failed to create component version %s: %w", c.Version, err)
+		}
+	}
+	finalize.Close(cv)
+
+	desc := cv.GetDescriptor()
+	desc.Name = c.Name
+	desc.Version = c.Version
+	desc.Provider.Name = metav1.ProviderName(c.provider)
+	desc.Provider.Labels = c.providerLabels
+	desc.Labels = c.labels
+	if !compatattr.Get(c.Context) {
+		desc.CreationTime = metav1.NewTimestampP()
+	}
+
+	err = compdesc.Validate(desc)
+	if err != nil {
+		return fmt.Errorf("cannot add component to ctf: %s", err)
+	}
+
+	err = c.access.AddVersion(cv)
+	if err != nil {
+		return fmt.Errorf("cannot add component to ctf: %s", err)
+	}
+	return nil
+}
+
+// Close closes the component access.
+func (c *Component) Close() error {
+	return c.access.Close()
 }
 
 // Transfer transfers a component to a repository.
 // It accepts a target corresponding to the repository.
-func (c *Component) Transfer(target om.Repository) error {
-	session := ocm.NewSession(nil)
-	defer session.Close()
-	session.Finalize(c.Context)
-	arch, err := comparch.Open(c.Context, accessobj.ACC_READONLY, c.archivePath, 0)
+func Transfer(octx ocm.Context, repo, target om.Repository) (rerr error) {
+	var finalize finalizer.Finalizer
+	defer finalize.FinalizeWithErrorPropagation(&rerr)
+
+	lister := repo.ComponentLister()
+	if lister == nil {
+		return fmt.Errorf("repo does not support lister")
+	}
+	comps, err := lister.GetComponents("", true)
+	if rerr != nil {
+		return fmt.Errorf("failed to list components: %w", err)
+	}
+
+	printer := common.NewPrinter(os.Stdout)
+	closure := transfer.TransportClosure{}
+	transferHandler, err := standard.New(standard.Overwrite())
 	if err != nil {
 		return err
 	}
-	session.Closer(arch)
+	for _, cname := range comps {
+		loop := finalize.Nested()
 
+		c, err := repo.LookupComponent(cname)
+		if err != nil {
+			return fmt.Errorf("cannot get component %s", cname)
+		}
+		loop.Close(c)
+
+		vnames, err := c.ListVersions()
+		if err != nil {
+			return fmt.Errorf("cannot list versions for component %s", cname)
+		}
+
+		for _, vname := range vnames {
+			loop := loop.Nested()
+
+			cv, err := c.LookupVersion(vname)
+			if err != nil {
+				return fmt.Errorf("cannot get version %s for component %s", vname, cname)
+			}
+			loop.Close(cv)
+
+			err = transfer.TransferVersion(printer, closure, cv, target, transferHandler)
+			if err != nil {
+				return fmt.Errorf("cannot transfer version %s for component %s: %w", vname, cname, err)
+			}
+
+			if err := loop.Finalize(); err != nil {
+				return err
+			}
+		}
+		if err := loop.Finalize(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Component) configureCredentials() error {
 	regURL, err := ParseURL(c.repositoryURL)
 	if err != nil {
 		return err
 	}
 
-	handler, err := standard.New(
-		standard.Recursive(true),
-		standard.Overwrite(true),
-		standard.Resolver(target))
-	if err != nil {
-		return err
-	}
-
-	// configure token
-	err = c.configureCredentials(regURL.Host)
-	if err != nil {
-		return err
-	}
-
-	return transfer.TransferVersion(common.NewPrinter(os.Stdout), nil, arch, target, handler)
-}
-
-func (c *Component) configureCredentials(host string) error {
 	consumerID := credentials.NewConsumerIdentity(identity.CONSUMER_TYPE,
-		identity.ID_HOSTNAME, host,
+		identity.ID_HOSTNAME, regURL.Host,
 		identity.ID_PATHPREFIX, c.username,
 	)
 

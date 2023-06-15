@@ -12,6 +12,7 @@ import (
 
 	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/release"
 	"github.com/open-component-model/mpas/pkg/ocm"
+	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
@@ -118,7 +119,15 @@ func main() {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	r := release.New(octx, username, token, tmpDir, repositoryURL, target)
+	// create transfert archive
+	ctf, err := ocm.CreateCTF(octx, fmt.Sprintf("%s/%s", tmpDir, "ctf"), accessio.FormatDirectory)
+	if err != nil {
+		fmt.Println("Failed to create CTF: ", err)
+		os.Exit(1)
+	}
+	defer ctf.Close()
+
+	r := release.New(octx, username, token, tmpDir, repositoryURL, ctf)
 
 	generatedComponents := make(map[string]*ocm.Component)
 	for _, comp := range components {
@@ -184,6 +193,11 @@ func main() {
 
 	if err := r.ReleaseBootstrapComponent(ctx, generatedComponents, Version); err != nil {
 		fmt.Println("Failed to release bootstrap component: ", err)
+		os.Exit(1)
+	}
+
+	if err := ocm.Transfer(octx, ctf, target); err != nil {
+		fmt.Println("Failed to transfer CTF: ", err)
 		os.Exit(1)
 	}
 
