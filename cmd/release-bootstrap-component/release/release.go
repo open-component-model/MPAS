@@ -11,7 +11,7 @@ import (
 	"path"
 	"strings"
 
-	mgen "github.com/open-component-model/mpas/pkg/manifestsgen"
+	cgen "github.com/open-component-model/mpas/pkg/componentsgen"
 	"github.com/open-component-model/mpas/pkg/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/clictx"
 	"golang.org/x/text/cases"
@@ -41,7 +41,33 @@ localization:
 	releaseURL    = "https://github.com/open-component-model/%s/releases"
 )
 
-func ReleaseBootstrapComponent(ctx context.Context, components []*ocm.Component, bootstrapVersion, username, token, tmpDir, repositoryURL string) error {
+func ReleaseBootstrapComponent(ctx context.Context, components map[string]*ocm.Component, bootstrapVersion, username, token, tmpDir, repositoryURL string) error {
+	component := ocm.NewComponent(clictx.DefaultContext(),
+		"github.com/mpas/bootstrap",
+		bootstrapVersion,
+		ocm.WithProvider("ocm"),
+		ocm.WithUsername(username),
+		ocm.WithToken(token),
+		ocm.WithArchivePath(path.Join(tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, "bootstrap"))),
+		ocm.WithRepositoryURL(repositoryURL))
+
+	if err := component.CreateComponentArchive(); err != nil {
+		return fmt.Errorf("failed to create component archive: %w", err)
+	}
+
+	for ref, comp := range components {
+		if err := component.AddResource(username, token, ocm.WithResourceName(ref),
+			ocm.WithResourceType("componentReference"),
+			ocm.WithComponentName(comp.Name),
+			ocm.WithResourceVersion(comp.Version)); err != nil {
+			return fmt.Errorf("failed to add resource flux: %w", err)
+		}
+	}
+
+	if err := component.Transfer(); err != nil {
+		return fmt.Errorf("failed to transfer component: %w", err)
+	}
+
 	return nil
 }
 
@@ -255,7 +281,7 @@ func ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, username, token,
 	return component, nil
 }
 
-func release(ctx context.Context, component *ocm.Component, gen mgen.Generator, username, token, tmpDir, name string) error {
+func release(ctx context.Context, component *ocm.Component, gen cgen.Generator, username, token, tmpDir, name string) error {
 	if err := component.CreateComponentArchive(); err != nil {
 		return fmt.Errorf("failed to create component archive: %w", err)
 	}
@@ -302,8 +328,8 @@ func release(ctx context.Context, component *ocm.Component, gen mgen.Generator, 
 	return nil
 }
 
-func getBinary(ctx context.Context, version, tmpDir, binURL, hashURL string) (mgen.Binary, error) {
-	b := mgen.Binary{
+func getBinary(ctx context.Context, version, tmpDir, binURL, hashURL string) (cgen.Binary, error) {
+	b := cgen.Binary{
 		Version: version,
 		BinURL:  binURL,
 		HashURL: hashURL,
@@ -312,22 +338,22 @@ func getBinary(ctx context.Context, version, tmpDir, binURL, hashURL string) (mg
 	return b, err
 }
 
-func generateFlux(ctx context.Context, version, tmpDir string) (mgen.Flux, error) {
+func generateFlux(ctx context.Context, version, tmpDir string) (cgen.Flux, error) {
 	if version == "" {
-		return mgen.Flux{}, fmt.Errorf("flux version is empty")
+		return cgen.Flux{}, fmt.Errorf("flux version is empty")
 	}
 
-	f := mgen.Flux{Version: version}
+	f := cgen.Flux{Version: version}
 	err := f.GenerateManifests(ctx, tmpDir)
 	return f, err
 }
 
-func generateController(ctx context.Context, name, version, tmpDir string) (mgen.Controller, error) {
+func generateController(ctx context.Context, name, version, tmpDir string) (cgen.Controller, error) {
 	if version == "" {
-		return mgen.Controller{}, fmt.Errorf("contoller version is empty")
+		return cgen.Controller{}, fmt.Errorf("contoller version is empty")
 	}
 
-	o := mgen.Controller{
+	o := cgen.Controller{
 		Name:          name,
 		Version:       version,
 		ReleaseURL:    fmt.Sprintf(releaseURL, name),

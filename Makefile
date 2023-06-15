@@ -1,4 +1,5 @@
 VERSION?="0.0.0-dev.0"
+BOOTSTRAP_RELEASE_VERSION?="v0.0.1"
 DEV_VERSION?=0.0.0-$(shell git rev-parse --abbrev-ref HEAD)-$(shell git rev-parse --short HEAD)-$(shell date +%s)
 
 # gitea e2e test
@@ -21,6 +22,10 @@ build:
 build-dev:
 # omit debug info wih -s -w
 	go build -ldflags="-s -w -X main.Version=$(DEV_VERSION)" -o ./bin/mpas ./cmd/mpas
+
+build-release-bootstrap-component:
+# omit debug info wih -s -w
+	go build -ldflags="-s -w -X main.Version=$(BOOTSTRAP_RELEASE_VERSION)" -o ./bin/mpas ./cmd/release-bootstrap-component
 
 e2e:
 	go test -v ./e2e/...

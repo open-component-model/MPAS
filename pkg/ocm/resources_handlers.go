@@ -26,7 +26,6 @@ import (
 type addFileOpts struct {
 	name     string
 	path     string
-	labels   map[string]string
 	fileType string
 }
 
@@ -48,8 +47,7 @@ func fileHandler(c *comparch.ComponentArchive, opts *addFileOpts) error {
 
 	r := &compdesc.ResourceMeta{
 		ElementMeta: compdesc.ElementMeta{
-			Name:          opts.name,
-			ExtraIdentity: opts.labels,
+			Name: opts.name,
 		},
 		Relation: metav1.LocalRelation,
 		Type:     ftype,
@@ -68,7 +66,6 @@ func fileHandler(c *comparch.ComponentArchive, opts *addFileOpts) error {
 
 type addImageOpts struct {
 	name    string
-	labels  map[string]string
 	image   string
 	version string
 }
@@ -76,9 +73,8 @@ type addImageOpts struct {
 func imageHandler(c *comparch.ComponentArchive, opts *addImageOpts) error {
 	r := &compdesc.ResourceMeta{
 		ElementMeta: compdesc.ElementMeta{
-			Name:          opts.name,
-			ExtraIdentity: opts.labels,
-			Version:       opts.version,
+			Name:    opts.name,
+			Version: opts.version,
 		},
 		Relation: metav1.ExternalRelation,
 		Type:     ociimage.TYPE,
@@ -88,6 +84,32 @@ func imageHandler(c *comparch.ComponentArchive, opts *addImageOpts) error {
 
 	if err := c.SetResource(r, spec); err != nil {
 		return fmt.Errorf("failed to add image: %w", err)
+	}
+
+	if err := c.Update(); err != nil {
+		return fmt.Errorf("failed to update component archive: %w", err)
+	}
+
+	return nil
+}
+
+type addReferenceOpts struct {
+	name      string
+	version   string
+	component string
+}
+
+func referenceHandler(c *comparch.ComponentArchive, opts *addReferenceOpts) error {
+	r := &compdesc.ComponentReference{
+		ElementMeta: compdesc.ElementMeta{
+			Name:    opts.name,
+			Version: opts.version,
+		},
+		ComponentName: opts.component,
+	}
+
+	if err := c.SetReference(r); err != nil {
+		return fmt.Errorf("failed to add reference: %w", err)
 	}
 
 	if err := c.Update(); err != nil {

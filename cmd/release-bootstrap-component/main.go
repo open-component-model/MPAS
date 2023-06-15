@@ -23,7 +23,7 @@ const (
 	defaultMpasProductControllerVer = "v0.1.0"
 	defaultMpasProjectControllerVer = "v0.1.1"
 	defaultOcmCliVer                = "v0.2.0"
-	defaultBoostrapVer              = "v0..O.O-dev.0"
+	Version                         = "v0.1.0"
 )
 
 var (
@@ -57,8 +57,6 @@ func main() {
 		mpasProjectControllerVersion string
 		// The version of the ocm-cli component to use.
 		ocmCliVersion string
-		// The version of the bootstrap component to use.
-		bootstrapVersion string
 		// The repository URL to use.
 		repositoryURL string
 		// The username to use.
@@ -76,7 +74,6 @@ func main() {
 	flag.StringVar(&mpasProductControllerVersion, "mpas-product-controller-version", defaultMpasProductControllerVer, "The version of the mpas-product-controller component to use.")
 	flag.StringVar(&mpasProjectControllerVersion, "mpas-project-controller-version", defaultMpasProjectControllerVer, "The version of the mpas-project-controller component to use.")
 	flag.StringVar(&ocmCliVersion, "ocm-cli-version", defaultOcmCliVer, "The version of the ocm-cli component to use.")
-	flag.StringVar(&bootstrapVersion, "bootstrap-version", defaultBoostrapVer, "The version of the bootstrap component to use.")
 	flag.StringVar(&repositoryURL, "repository-url", "", "The repository URL to use.")
 	flag.StringVar(&username, "username", "", "The username to use.")
 	flag.StringVar(&targetOS, "target-os", "linux", "The target OS to use.")
@@ -110,7 +107,7 @@ func main() {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	var generatedComponents []*ocm.Component
+	generatedComponents := make(map[string]*ocm.Component)
 	for _, comp := range components {
 		var component *ocm.Component
 		switch comp {
@@ -151,7 +148,7 @@ func main() {
 				os.Exit(1)
 			}
 		}
-		generatedComponents = append(generatedComponents, component)
+		generatedComponents[comp] = component
 	}
 	for _, comp := range binaryComponents {
 		var component *ocm.Component
@@ -169,10 +166,10 @@ func main() {
 				os.Exit(1)
 			}
 		}
-		generatedComponents = append(generatedComponents, component)
+		generatedComponents[comp] = component
 	}
 
-	if err := release.ReleaseBootstrapComponent(ctx, generatedComponents, bootstrapVersion, username, token, tmpDir, repositoryURL); err != nil {
+	if err := release.ReleaseBootstrapComponent(ctx, generatedComponents, Version, username, token, tmpDir, repositoryURL); err != nil {
 		fmt.Println("Failed to release bootstrap component: ", err)
 		os.Exit(1)
 	}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/open-component-model/ocm/pkg/common"
 	"github.com/open-component-model/ocm/pkg/common/accessio"
@@ -128,15 +129,22 @@ func (c *Component) CreateComponentArchive(opts ...accessio.Option) error {
 }
 
 type ResourceOptions struct {
-	Name      string
-	Path      string
-	Type      string
-	InputType string
-	Version   string
-	Image     string
+	Name          string
+	Path          string
+	Type          string
+	InputType     string
+	Version       string
+	Image         string
+	ComponentName string
 }
 
 type ResourceOption func(*ResourceOptions)
+
+func WithComponentName(component string) ResourceOption {
+	return func(o *ResourceOptions) {
+		o.ComponentName = component
+	}
+}
 
 func WithResourceImage(image string) ResourceOption {
 	return func(o *ResourceOptions) {
@@ -208,6 +216,15 @@ func (c *Component) AddResource(username, token string, opts ...ResourceOption) 
 		if err := imageHandler(arch, o); err != nil {
 			return err
 		}
+	case "componentReference":
+		o := &addReferenceOpts{
+			name:      resOpt.Name,
+			version:   resOpt.Version,
+			component: resOpt.ComponentName,
+		}
+		if err := referenceHandler(arch, o); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("unsupported resource type: %s", resOpt.Type)
 	}
@@ -224,7 +241,13 @@ func (c *Component) Transfer() error {
 	}
 	session.Closer(arch)
 
-	targetSpec := ocireg.NewRepositorySpec(c.RepositoryURL, nil)
+	regURL, err := parseURL(c.RepositoryURL)
+	if err != nil {
+		return err
+	}
+
+	meta := ocireg.NewComponentRepositoryMeta(strings.TrimPrefix(regURL.Path, "/"), ocireg.OCIRegistryURLPathMapping)
+	targetSpec := ocireg.NewRepositorySpec(regURL.Host, meta)
 	target, err := c.Context.OCMContext().RepositoryForSpec(targetSpec)
 	if err != nil {
 		return err
@@ -240,7 +263,7 @@ func (c *Component) Transfer() error {
 	}
 
 	// configure token
-	err = c.configureCredentials()
+	err = c.configureCredentials(regURL.Host)
 	if err != nil {
 		return err
 	}
@@ -248,22 +271,32 @@ func (c *Component) Transfer() error {
 	return transfer.TransferVersion(common.NewPrinter(c.Context.StdOut()), nil, arch, target, handler)
 }
 
-func (c *Component) configureCredentials() error {
-	regURL, err := url.Parse(c.RepositoryURL)
-	if err != nil {
-		return err
-	}
-
+func (c *Component) configureCredentials(host string) error {
 	consumerID := credentials.NewConsumerIdentity(identity.CONSUMER_TYPE,
-		identity.ID_HOSTNAME, regURL.Host,
+		identity.ID_HOSTNAME, host,
 		identity.ID_PATHPREFIX, c.username,
 	)
 
 	creds := credentials.DirectCredentials{
-		credentials.ATTR_USERNAME: c.username,
-		credentials.ATTR_PASSWORD: c.token,
+		credentials.ATTR_USERNAME:       c.username,
+		credentials.ATTR_IDENTITY_TOKEN: c.token,
 	}
 
 	c.Context.OCMContext().CredentialsContext().SetCredentialsForConsumer(consumerID, creds)
 	return nil
+}
+
+func parseURL(target string) (*url.URL, error) {
+	u, err := url.Parse(target)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse url %s: %w", target, err)
+	}
+	if u.Host == "" {
+		target = fmt.Sprintf("https://%s", target)
+		u, err = url.Parse(target)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse url %s: %w", target, err)
+		}
+	}
+	return u, nil
 }
