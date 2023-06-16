@@ -12,26 +12,30 @@ import (
 	"github.com/fluxcd/flux2/pkg/manifestgen/install"
 )
 
-// Flux is a version of Flux.
-// It is used to generate Flux manifests.
+// Flux generates Flux manifests based on the given version.
 type Flux struct {
-	Version    string
-	Registry   string
+	// Version is the version of Flux.
+	Version string
+	// Registry is the registry to get the controller images from.
+	Registry string
+	// Components are the components of Flux.
 	Components []string
-	Path       string
-	Content    *string
+	// Path is the path to the manifests.
+	Path string
+	// Content is the content of the install.yaml file.
+	Content *string
 }
 
 // GenerateFluxManifests generates Flux manifests for the given version.
-// It returns the generated manifests as a Manifest object.
 // If the version is invalid, an error is returned.
 func (f *Flux) GenerateManifests(ctx context.Context, tmpDir string) error {
-	if err := validateFluxVersion(f.Version); err != nil {
+	if err := f.validateFluxVersion(f.Version); err != nil {
 		return fmt.Errorf("invalid version: %w", err)
 	}
 
 	o := install.MakeDefaultOptions()
 	o.Version = f.Version
+	o.Components = append(o.Components, o.ComponentsExtra...)
 
 	manifest, err := install.Generate(o, "")
 	if err != nil {
@@ -52,6 +56,7 @@ func (f *Flux) GenerateManifests(ctx context.Context, tmpDir string) error {
 	return nil
 }
 
+// GenerateLocalizationFromTemplate generates localization files from a template.
 func (f *Flux) GenerateLocalizationFromTemplate(tmpl, loc string) (string, error) {
 	for _, c := range f.Components {
 		// add localization
@@ -61,6 +66,7 @@ func (f *Flux) GenerateLocalizationFromTemplate(tmpl, loc string) (string, error
 	return tmpl, nil
 }
 
+// GenerateImages returns a map of images from the components.
 func (f *Flux) GenerateImages() (map[string][]string, error) {
 	var images = make(map[string][]string)
 	for _, c := range f.Components {
@@ -84,4 +90,22 @@ func (f *Flux) GenerateImages() (map[string][]string, error) {
 
 func (f *Flux) GetPath() string {
 	return f.Path
+}
+
+func (f *Flux) validateFluxVersion(version string) error {
+	ver := version
+	if ver == "" {
+		return fmt.Errorf("version is empty")
+	}
+
+	if ver != install.MakeDefaultOptions().Version && !strings.HasPrefix(ver, "v") {
+		return fmt.Errorf("targeted version '%s' must be prefixed with 'v'", ver)
+	}
+
+	if ok, err := install.ExistingVersion(ver); err != nil || !ok {
+		if err == nil {
+			return fmt.Errorf("targeted version '%s' does not exist", ver)
+		}
+	}
+	return nil
 }

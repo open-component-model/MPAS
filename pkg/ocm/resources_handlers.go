@@ -12,8 +12,8 @@ import (
 	"github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/file"
 	"github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/ociimage"
 	"github.com/open-component-model/ocm/pkg/common/accessio"
-	"github.com/open-component-model/ocm/pkg/contexts/clictx"
 	"github.com/open-component-model/ocm/pkg/contexts/datacontext/attrs/tmpcache"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	metav1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
@@ -22,15 +22,15 @@ import (
 
 // from https://github.com/phoban01/gitops-component-cli/blob/main/pkg/component/handlers.go
 
-// addFileOpts contains the options for adding a file to a component archive.
 type addFileOpts struct {
 	name     string
+	version  string
 	path     string
 	fileType string
 }
 
-func fileHandler(c *comparch.ComponentArchive, opts *addFileOpts) error {
-	tmpcache.Set(clictx.DefaultContext(), &tmpcache.Attribute{Path: "/tmp"})
+func fileHandler(c *comparch.ComponentArchive, octx ocm.Context, opts *addFileOpts) error {
+	tmpcache.Set(octx, &tmpcache.Attribute{Path: "/tmp"})
 
 	mtype, err := mimetype.DetectFile(opts.path)
 	if err != nil {
@@ -47,7 +47,8 @@ func fileHandler(c *comparch.ComponentArchive, opts *addFileOpts) error {
 
 	r := &compdesc.ResourceMeta{
 		ElementMeta: compdesc.ElementMeta{
-			Name: opts.name,
+			Name:    opts.name,
+			Version: opts.version,
 		},
 		Relation: metav1.LocalRelation,
 		Type:     ftype,

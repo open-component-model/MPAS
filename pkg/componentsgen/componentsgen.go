@@ -6,6 +6,8 @@ package componentsgen
 
 import "context"
 
+// Generator is a component that generates manifests.
+// It can also generate localization files from a template, and images.
 type Generator interface {
 	GenerateManifests(ctx context.Context, tmpDir string) error
 	GenerateLocalizationFromTemplate(tmpl, loc string) (string, error)

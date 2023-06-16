@@ -7,6 +7,7 @@ package componentsgen
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"strings"
 
 	securejoin "github.com/cyphar/filepath-securejoin"
-	"github.com/fluxcd/flux2/pkg/manifestgen/install"
 )
 
 func getFrom(ctx context.Context, ghURL string) (*http.Response, error) {
@@ -30,22 +30,39 @@ func getFrom(ctx context.Context, ghURL string) (*http.Response, error) {
 	return resp, nil
 }
 
-func validateFluxVersion(version string) error {
+func validateVersion(version string) error {
 	ver := version
-	if ver == "" {
-		return fmt.Errorf("version is empty")
+	if ver == "" || ver == "latest" {
+		return fmt.Errorf("version must not be empty or latest")
 	}
 
-	if ver != install.MakeDefaultOptions().Version && !strings.HasPrefix(ver, "v") {
-		return fmt.Errorf("targeted version '%s' must be prefixed with 'v'", ver)
-	}
-
-	if ok, err := install.ExistingVersion(ver); err != nil || !ok {
-		if err == nil {
-			return fmt.Errorf("targeted version '%s' does not exist", ver)
-		}
+	if !strings.HasPrefix(ver, "v") {
+		return fmt.Errorf("version must start with v")
 	}
 	return nil
+}
+
+func getLatestVersion(ctx context.Context, releaseAPIURL string) (string, error) {
+	ghURL := fmt.Sprintf("%s/latest", releaseAPIURL)
+	resp, err := getFrom(ctx, ghURL)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+
+	type meta struct {
+		Tag string `json:"tag_name"`
+	}
+
+	var m meta
+	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		return "", fmt.Errorf("failed to decode response body: %s", err)
+	}
+
+	return m.Tag, err
 }
 
 func computeHash(payload []byte) (string, error) {

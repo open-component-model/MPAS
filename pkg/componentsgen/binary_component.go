@@ -13,16 +13,23 @@ import (
 	"strings"
 )
 
+// Binary is a component that contains a binary file.
 type Binary struct {
+	// Version is the version of the binary.
 	Version string
+	// Path is the path to the binary file.
 	Path    string
+	// Content is the content of the binary file as bytes.
 	Content []byte
+	// BinURL is the URL to the binary file.
 	BinURL  string
+	// HashURL is the URL to the checksum file.
 	HashURL string
 }
 
+// Get downloads the binary file and the checksum file and validates the checksum.
 func (b *Binary) Get(ctx context.Context, tmpDir string) error {
-	if err := validateFluxVersion(b.Version); err != nil {
+	if err := validateVersion(b.Version); err != nil {
 		return fmt.Errorf("invalid version: %w", err)
 	}
 
@@ -71,7 +78,7 @@ func (b *Binary) fetchBinary(ctx context.Context) ([]byte, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to download manifests.tar.gz from %s, status: %s", b.BinURL, resp.Status)
+		return nil, fmt.Errorf("failed to download binary from %s, status: %s", b.BinURL, resp.Status)
 	}
 
 	buf := new(bytes.Buffer)
@@ -94,7 +101,7 @@ func (b *Binary) fetchHash(ctx context.Context) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to download manifests.tar.gz from %s, status: %s", b.HashURL, resp.Status)
+		return "", fmt.Errorf("failed to download binary from %s, status: %s", b.HashURL, resp.Status)
 	}
 
 	buf := new(strings.Builder)

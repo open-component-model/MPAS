@@ -1,6 +1,7 @@
 VERSION?="0.0.0-dev.0"
 BOOTSTRAP_RELEASE_VERSION?="v0.0.1"
 DEV_VERSION?=0.0.0-$(shell git rev-parse --abbrev-ref HEAD)-$(shell git rev-parse --short HEAD)-$(shell date +%s)
+GO_TEST_ARGS ?= -race
 
 # gitea e2e test
 GITEA_TOKEN ?=
@@ -38,3 +39,6 @@ release-bootstrap-component:
 	go run ./cmd/release-bootstrap-component/main.go --flux-version $(FLUX_VERSION) OCM_CONTROLLER_VERSION=$(OCM_CONTROLLER_VERSION) \
 	--repository-url $(MPAS_GITHUB_REPOSITORY) \
 	--username $(GITHUB_USERNAME)
+
+test:
+	go test -v ./pkg/... $(GO_TEST_ARGS) -coverprofile cover.out

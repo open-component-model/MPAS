@@ -8,9 +8,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/release"
 	"github.com/open-component-model/mpas/pkg/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
+	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	flag "github.com/spf13/pflag"
 )
 
@@ -98,8 +102,15 @@ func main() {
 	}
 
 	ctx := context.Background()
+	octx := om.New(datacontext.MODE_SHARED)
+	target, err := makeTarget(octx, repositoryURL)
+	if err != nil {
+		fmt.Println("Failed to create target: ", err)
+		os.Exit(1)
+	}
+	defer target.Close()
 
-	fmt.Println("We are going to package the bootstrap component and ship it as an OCM component.")
+	fmt.Println("Releasing bootstrap component...")
 	tmpDir, err := os.MkdirTemp("", "mpas-bootstrap")
 	if err != nil {
 		fmt.Println("Failed to create temporary directory: ", err)
@@ -107,42 +118,44 @@ func main() {
 	}
 	defer os.RemoveAll(tmpDir)
 
+	r := release.New(octx, username, token, tmpDir, repositoryURL, target)
+
 	generatedComponents := make(map[string]*ocm.Component)
 	for _, comp := range components {
 		var component *ocm.Component
 		switch comp {
 		case "ocm-controller":
-			component, err = release.ReleaseOcmControllerComponent(ctx, ocmControllerVersion, username, token, tmpDir, repositoryURL, comp)
+			component, err = r.ReleaseOcmControllerComponent(ctx, ocmControllerVersion, comp)
 			if err != nil {
 				fmt.Println("Failed to release ocm-controller component: ", err)
 				os.Exit(1)
 			}
 		case "flux":
-			component, err = release.ReleaseFluxComponent(ctx, fluxVersion, username, token, tmpDir, repositoryURL, comp)
+			component, err = r.ReleaseFluxComponent(ctx, fluxVersion, comp)
 			if err != nil {
 				fmt.Println("Failed to release flux component: ", err)
 				os.Exit(1)
 			}
 		case "git-controller":
-			component, err = release.ReleaseGitControllerComponent(ctx, gitControllerVersion, username, token, tmpDir, repositoryURL, comp)
+			component, err = r.ReleaseGitControllerComponent(ctx, gitControllerVersion, comp)
 			if err != nil {
 				fmt.Println("Failed to release git-controller component: ", err)
 				os.Exit(1)
 			}
 		case "replication-controller":
-			component, err = release.ReleaseReplicationControllerComponent(ctx, replicationControllerVersion, username, token, tmpDir, repositoryURL, comp)
+			component, err = r.ReleaseReplicationControllerComponent(ctx, replicationControllerVersion, comp)
 			if err != nil {
 				fmt.Println("Failed to release replication-controller component: ", err)
 				os.Exit(1)
 			}
 		case "mpas-product-controller":
-			component, err = release.ReleaseMpasProductControllerComponent(ctx, mpasProductControllerVersion, username, token, tmpDir, repositoryURL, comp)
+			component, err = r.ReleaseMpasProductControllerComponent(ctx, mpasProductControllerVersion, comp)
 			if err != nil {
 				fmt.Println("Failed to release mpas-product-controller component: ", err)
 				os.Exit(1)
 			}
 		case "mpas-project-controller":
-			component, err = release.ReleaseMpasProjectControllerComponent(ctx, mpasProjectControllerVersion, username, token, tmpDir, repositoryURL, comp)
+			component, err = r.ReleaseMpasProjectControllerComponent(ctx, mpasProjectControllerVersion, comp)
 			if err != nil {
 				fmt.Println("Failed to release mpas-project-controller component: ", err)
 				os.Exit(1)
@@ -154,13 +167,13 @@ func main() {
 		var component *ocm.Component
 		switch comp {
 		case "flux-cli":
-			component, err = release.ReleaseFluxCliComponent(ctx, fluxVersion, username, token, tmpDir, repositoryURL, comp, targetOS, targetArch)
+			component, err = r.ReleaseFluxCliComponent(ctx, fluxVersion, comp, targetOS, targetArch)
 			if err != nil {
 				fmt.Println("Failed to release flux-cli component: ", err)
 				os.Exit(1)
 			}
 		case "ocm-cli":
-			component, err = release.ReleaseOCMCliComponent(ctx, ocmCliVersion, username, token, tmpDir, repositoryURL, comp, targetOS, targetArch)
+			component, err = r.ReleaseOCMCliComponent(ctx, ocmCliVersion, comp, targetOS, targetArch)
 			if err != nil {
 				fmt.Println("Failed to release ocm-cli component: ", err)
 				os.Exit(1)
@@ -169,10 +182,25 @@ func main() {
 		generatedComponents[comp] = component
 	}
 
-	if err := release.ReleaseBootstrapComponent(ctx, generatedComponents, Version, username, token, tmpDir, repositoryURL); err != nil {
+	if err := r.ReleaseBootstrapComponent(ctx, generatedComponents, Version); err != nil {
 		fmt.Println("Failed to release bootstrap component: ", err)
 		os.Exit(1)
 	}
 
 	fmt.Println("Release of bootstrap component successful.")
+}
+
+func makeTarget(octx om.Context, repositoryURL string) (om.Repository, error) {
+	regURL, err := ocm.ParseURL(repositoryURL)
+	if err != nil {
+		return nil, err
+	}
+
+	meta := ocireg.NewComponentRepositoryMeta(strings.TrimPrefix(regURL.Path, "/"), ocireg.OCIRegistryURLPathMapping)
+	targetSpec := ocireg.NewRepositorySpec(regURL.Host, meta)
+	target, err := octx.RepositoryForSpec(targetSpec)
+	if err != nil {
+		return nil, err
+	}
+	return target, nil
 }

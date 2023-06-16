@@ -6,7 +6,6 @@ package componentsgen
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,19 +17,30 @@ const (
 	defaultRegistry = "ghcr.io/open-component-model"
 )
 
+// Controller is a component that generates manifests for a controller,
+// localization files from a template, and images for a given controller.
 type Controller struct {
-	Name          string
-	Version       string
-	Registry      string
-	Path          string
-	ReleaseURL    string
+	// Name is the name of the controller.
+	Name string
+	// Version is the version of the controller.
+	Version string
+	// Registry is the registry to get the controller image from.
+	Registry string
+	// Path is the path to the manifests.
+	Path string
+	// ReleaseURL is the URL to the release page.
+	ReleaseURL string
+	// ReleaseAPIURL is the URL to the release API.
 	ReleaseAPIURL string
-	Content       *string
+	// Content is the content of the install.yaml file.
+	Content *string
 }
 
+// GenerateManifests downloads the install.yaml file and writes it to a temporary directory.
+// It validates the version and returns an error if the version does not exist.
 func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error {
 	if err := o.validateVersion(ctx); err != nil {
-		return fmt.Errorf("version %s does not exist for %s: %s", o.Name, o.Version, err)
+		return fmt.Errorf("version %s does not exist for %s: %s", o.Version, o.Name, err)
 	}
 
 	if err := o.fetch(ctx); err != nil {
@@ -49,45 +59,23 @@ func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error
 	return nil
 }
 
-func (o *Controller) getLatestVersion(ctx context.Context) (string, error) {
-	ghURL := fmt.Sprintf("%s/latest", o.ReleaseAPIURL)
-	resp, err := getFrom(ctx, ghURL)
-	if err != nil {
-		return "", err
-	}
-
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	type meta struct {
-		Tag string `json:"tag_name"`
-	}
-
-	var m meta
-	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		return "", fmt.Errorf("failed to decode response body: %s", err)
-	}
-
-	return m.Tag, err
-}
-
 func (o *Controller) validateVersion(ctx context.Context) error {
 	ver := o.Version
 	if ver == "" {
 		return fmt.Errorf("version is empty")
 	}
 
-	if !strings.HasPrefix(ver, "v") {
+	if !strings.HasPrefix(ver, "v") && ver != "latest" {
 		ver = "v" + ver
 	}
 
 	if ver == "latest" {
-		latest, err := o.getLatestVersion(ctx)
+		latest, err := getLatestVersion(ctx, o.ReleaseAPIURL)
 		if err != nil {
 			return fmt.Errorf("failed to retrieve latest version for %s: %s", o.Name, err)
 		}
 		o.Version = latest
+		return nil
 	}
 
 	ghURL := fmt.Sprintf(o.ReleaseAPIURL+"/tags/%s", ver)
@@ -144,12 +132,14 @@ func (o *Controller) writeFile(rootDir string) (string, error) {
 	return path, nil
 }
 
+// GenerateLocalizationFromTemplate generates localization files from a template.
 func (o *Controller) GenerateLocalizationFromTemplate(tmpl, loc string) (string, error) {
 	// add localization
 	tmpl += fmt.Sprintf(loc, o.Name, o.Name)
 	return tmpl, nil
 }
 
+// GenerateImages returns a map of images from the install.yaml file.
 func (o *Controller) GenerateImages() (map[string][]string, error) {
 	var images = make(map[string][]string)
 	index := strings.Index(*o.Content, fmt.Sprintf("%s/%s", o.Registry, o.Name))
@@ -175,6 +165,7 @@ func (o *Controller) GenerateImages() (map[string][]string, error) {
 	return images, nil
 }
 
+// GetPath returns the path to the manifests.
 func (o *Controller) GetPath() string {
 	return o.Path
 }
