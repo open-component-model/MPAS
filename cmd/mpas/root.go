@@ -24,8 +24,10 @@ func New(args []string) *cobra.Command {
 		Printer: printer.Newprinter("", defaultOutput),
 	}
 	cmd := &cobra.Command{
-		Use:  "mpas",
-		Long: `mpas is a CLI tool for managing (MPAS) multi platform automation system.`,
+		Use:           "mpas",
+		Long:          `mpas is a CLI tool for managing (MPAS) multi platform automation system.`,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		CompletionOptions: cobra.CompletionOptions{
 			HiddenDefaultCmd: true,
 		},

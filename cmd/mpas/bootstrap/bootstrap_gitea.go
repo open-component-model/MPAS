@@ -48,7 +48,7 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		return err
 	}
 
-	b.bootstrapper = bootstrap.New(ctx, providerClient,
+	b.bootstrapper = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
 		bootstrap.WithPersonal(b.Personal),
@@ -57,7 +57,7 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithPrinter(cfg.Printer),
 	)
 
-	return b.bootstrapper.Run()
+	return b.bootstrapper.Run(ctx)
 }
 
 // Cleanup cleans up the resources created by the command.

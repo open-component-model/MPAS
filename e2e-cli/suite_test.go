@@ -30,7 +30,6 @@ var (
 
 func TestMain(m *testing.M) {
 	// "starting e2e-cli test suite"
-
 	cfg, _ := envconf.NewFromFlags()
 	testEnv = env.NewWithConfig(cfg)
 	kindClusterName = envconf.RandomName("mpas-e2e-cli", 32)

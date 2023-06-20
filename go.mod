@@ -5,10 +5,12 @@ go 1.20
 replace oras.land/oras-go => oras.land/oras-go v1.2.3
 
 require (
+	github.com/Masterminds/semver/v3 v3.2.0
+	github.com/containers/image/v5 v5.23.0
 	github.com/cyphar/filepath-securejoin v0.2.3
 	github.com/fatih/color v1.13.0
 	github.com/fluxcd/flux2 v0.41.2
-	github.com/fluxcd/go-git-providers v0.16.1-0.20230606145908-251cafbb6567
+	github.com/fluxcd/go-git-providers v0.18.0
 	github.com/fluxcd/kustomize-controller/api v1.0.0-rc.1
 	github.com/fluxcd/pkg/apis/meta v1.0.0
 	github.com/fluxcd/pkg/runtime v0.35.0
@@ -18,7 +20,7 @@ require (
 	github.com/open-component-model/git-controller v0.2.1-0.20230420095143-61f3c56dd194
 	github.com/open-component-model/mpas-product-controller v0.0.0-20230421151404-988973070ec7
 	github.com/open-component-model/mpas-project-controller v0.0.0-20230419141522-bec22e3fe0eb
-	github.com/open-component-model/ocm v0.3.0-rc.2
+	github.com/open-component-model/ocm v0.3.0-rc.1.0.20230408161516-7bac90d616ab
 	github.com/open-component-model/ocm-controller v0.5.0
 	github.com/open-component-model/ocm-e2e-framework v0.3.1
 	github.com/open-component-model/replication-controller v0.2.1-0.20230420172740-670e1238a8c7
@@ -40,7 +42,6 @@ require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
-	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.17.7 // indirect
@@ -71,7 +72,6 @@ require (
 	github.com/containers/libtrust v0.0.0-20200511145503-9c3a6c22cd9a // indirect
 	github.com/containers/ocicrypt v1.1.6 // indirect
 	github.com/containers/storage v1.43.0 // indirect
-	github.com/cyberphone/json-canonicalization v0.0.0-20220623050100-57a0ce2678a7 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v23.0.1+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect

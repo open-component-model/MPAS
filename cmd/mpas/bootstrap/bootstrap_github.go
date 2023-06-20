@@ -57,16 +57,17 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 		return err
 	}
 
-	b.bootstrapper = bootstrap.New(ctx, providerClient,
+	b.bootstrapper = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
 		bootstrap.WithPersonal(b.Personal),
 		bootstrap.WithFromFile(b.FromFile),
 		bootstrap.WithRegistry(b.Registry),
 		bootstrap.WithPrinter(cfg.Printer),
+		bootstrap.WithComponents(b.Components),
 	)
 
-	return b.bootstrapper.Run()
+	return b.bootstrapper.Run(ctx)
 }
 
 // Cleanup cleans up the resources created by the command.

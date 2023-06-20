@@ -12,6 +12,7 @@ import (
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
 	"github.com/open-component-model/mpas/pkg/printer"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 )
 
 var (
@@ -29,6 +30,7 @@ type options struct {
 	fromFile       string
 	registry       string
 	transportType  string
+	components     []string
 	printer        *printer.Printer
 }
 
@@ -45,9 +47,17 @@ type Bootstrap struct {
 	options
 }
 
+// WithPrinter sets the printer to use for printing messages
 func WithPrinter(printer *printer.Printer) Option {
 	return func(o *options) {
 		o.printer = printer
+	}
+}
+
+// WithComponents sets the components to include in the management repository
+func WithComponents(components []string) Option {
+	return func(o *options) {
+		o.components = components
 	}
 }
 
@@ -115,7 +125,7 @@ func WithTransportType(transportType string) Option {
 }
 
 // New returns a new Bootstrap. It accepts a gitprovider.Client and a list of options.
-func New(ctx context.Context, ProviderClient gitprovider.Client, opts ...Option) *Bootstrap {
+func New(ProviderClient gitprovider.Client, opts ...Option) *Bootstrap {
 	b := &Bootstrap{
 		ProviderClient: ProviderClient,
 	}
@@ -130,10 +140,41 @@ func New(ctx context.Context, ProviderClient gitprovider.Client, opts ...Option)
 }
 
 // Run runs the bootstrap of mpas and returns an error if it fails.
-func (b *Bootstrap) Run() error {
-	if err := b.reconcileManagementRepository(context.Background()); err != nil {
+func (b *Bootstrap) Run(ctx context.Context) error {
+	if err := b.reconcileManagementRepository(ctx); err != nil {
 		return err
 	}
+
+	octx := ocm.DefaultContext()
+	ociRepo, err := makeOCIRepository(octx, b.registry)
+	if err != nil {
+		return err
+	}
+
+	refs, err := b.fetchBootstrapComponentReferences(ociRepo)
+	if err != nil {
+		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
+	}
+	fmt.Println(refs)
+
+	for comp, ref := range refs {
+		b.printer.Printf("Component %s with version %s is going to be installed\n",
+			printer.BoldBlue(comp),
+			printer.BoldBlue(ref.GetVersion()))
+
+		switch comp {
+		case "flux":
+			inst := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo)
+			if err := inst.Install(ctx); err != nil {
+				return err
+			}
+		case "ocm-controller":
+		default:
+			return fmt.Errorf("unknown component %q", comp)
+		}
+	}
+
+	b.printer.Printf("Bootstrap of management repository %s is done!\n", printer.BoldBlue(b.repositoryName))
 
 	return nil
 }
