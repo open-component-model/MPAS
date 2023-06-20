@@ -5,6 +5,9 @@
 package config
 
 import (
+	"context"
+
+	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/spf13/pflag"
 )
 
@@ -17,11 +20,28 @@ var DefaultComponents = []string{
 // MpasConfig is the global configuration for the mpas CLI.
 type MpasConfig struct {
 	Kubeconfig string
+	Printer    *printer.Printer
+	Timeout    string
+	ctx        context.Context
+}
+
+// SetContext sets the context to use for operations.
+func (m *MpasConfig) SetContext(ctx context.Context) {
+	m.ctx = ctx
+}
+
+// Context returns the context to use for operations.
+func (m *MpasConfig) Context() context.Context {
+	if m.ctx == nil {
+		return context.Background()
+	}
+	return m.ctx
 }
 
 // AddFlags adds the global flags to the given flag set.
 func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig file")
+	flags.StringVar(&m.Timeout, "timeout", "5m", "The timeout to use for operations")
 }
 
 // BootstrapConfig is the configuration shared by the bootstrap commands.

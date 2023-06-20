@@ -5,11 +5,24 @@
 package main
 
 import (
+	"os"
+
+	"github.com/open-component-model/mpas/cmd/mpas/config"
+	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/spf13/cobra"
 )
 
+const (
+	defaultKubeconfig = "~/.kube/config"
+)
+
+var defaultOutput = os.Stdout
+
 // New returns a new cobra.Command for mpas
 func New(args []string) *cobra.Command {
+	cfg := &config.MpasConfig{
+		Printer: printer.Newprinter("", defaultOutput),
+	}
 	cmd := &cobra.Command{
 		Use:  "mpas",
 		Long: `mpas is a CLI tool for managing (MPAS) multi platform automation system.`,
@@ -21,7 +34,11 @@ func New(args []string) *cobra.Command {
 
 	cfg.AddFlags(cmd.PersistentFlags())
 
-	cmd.AddCommand(NewBootstrap())
+	if cfg.Kubeconfig != "" {
+		cfg.Kubeconfig = defaultKubeconfig
+	}
+
+	cmd.AddCommand(NewBootstrap(cfg))
 
 	cmd.InitDefaultHelpCmd()
 	return cmd

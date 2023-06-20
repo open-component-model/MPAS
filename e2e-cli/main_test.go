@@ -69,7 +69,7 @@ func bootstrapGithub(owner, repository, token string) (*bootstrap.BootstrapGithu
 		DestructiveActions: true,
 	}
 
-	err := bootstrapGithubCmd.Execute()
+	err := bootstrapGithubCmd.Execute(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute bootstrapGithubCmd: %w", err)
 	}
@@ -86,7 +86,7 @@ func bootstrapGitea(owner, token, hostname string) (*bootstrap.BootstrapGiteaCmd
 		DestructiveActions: true,
 	}
 
-	err := bootstrapGiteaCmd.Execute()
+	err := bootstrapGiteaCmd.Execute(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute bootstrapGiteaCmd: %w", err)
 	}

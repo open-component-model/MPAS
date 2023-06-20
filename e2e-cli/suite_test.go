@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/open-component-model/mpas/cmd/mpas/config"
+	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -23,6 +25,7 @@ var (
 	repository            = "mpas-management-test"
 	hostnameVar           = "MPAS_MANAGEMENT_REPO_HOSTNAME"
 	namespace             = "mpas-cli-testns"
+	cfg                   = config.MpasConfig{Printer: printer.Newprinter("", nil), Timeout: "5m"}
 )
 
 func TestMain(m *testing.M) {

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
+	"github.com/open-component-model/mpas/pkg/printer"
 )
 
 var (
@@ -28,6 +29,7 @@ type options struct {
 	fromFile       string
 	registry       string
 	transportType  string
+	printer        *printer.Printer
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -41,6 +43,12 @@ type Bootstrap struct {
 	repository     gitprovider.UserRepository
 	url            string
 	options
+}
+
+func WithPrinter(printer *printer.Printer) Option {
+	return func(o *options) {
+		o.printer = printer
+	}
 }
 
 // WithDescription sets the description of the management repository
@@ -123,9 +131,6 @@ func New(ctx context.Context, ProviderClient gitprovider.Client, opts ...Option)
 
 // Run runs the bootstrap of mpas and returns an error if it fails.
 func (b *Bootstrap) Run() error {
-	// TODO: add support for logging output to stdout
-	fmt.Println("Reconciling management repository")
-
 	if err := b.reconcileManagementRepository(context.Background()); err != nil {
 		return err
 	}
@@ -139,6 +144,11 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 	if err != nil && !errors.Is(err, errReconciledWithWarning) {
 		return err
 	}
+
+	b.printer.Printf("Management repository %s with branch %s and visibility %s is ready!\n",
+		printer.BoldBlue(b.repositoryName),
+		printer.BoldBlue(b.defaultBranch),
+		printer.BoldBlue(b.visibility))
 
 	cloneURL, err := b.getCloneURL(repo, gitprovider.TransportType(b.transportType))
 	if err != nil {
@@ -202,9 +212,7 @@ func (b *Bootstrap) reconcileRepository(ctx context.Context, personal bool) (git
 		}
 	}
 
-	fmt.Println("Reconciled Git repository", repoName)
 	return repo, nil
-
 }
 
 func (b *Bootstrap) getOrganization(ctx context.Context, subOrgs []string) (*gitprovider.OrganizationRef, error) {

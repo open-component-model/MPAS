@@ -21,7 +21,7 @@ const (
 	defaultgiteaTokenVar = "GITEA_TOKEN"
 )
 
-func NewBootstrap() *cobra.Command {
+func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "bootstrap [provider] [flags]",
 		Short:   "Bootstrap the MPAS system into a Kubernetes cluster.",
@@ -29,14 +29,14 @@ func NewBootstrap() *cobra.Command {
 		Example: "mpas bootstrap [flags]",
 	}
 
-	cmd.AddCommand(NewBootstrapGithub())
-	cmd.AddCommand(NewBootstrapGitea())
+	cmd.AddCommand(NewBootstrapGithub(cfg))
+	cmd.AddCommand(NewBootstrapGitea(cfg))
 
 	return cmd
 }
 
 // NewBootstrapGithub returns a new cobra.Command for github bootstrap
-func NewBootstrapGithub() *cobra.Command {
+func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 	c := &config.GithubConfig{}
 	cmd := &cobra.Command{
 		Use:     "github [flags]",
@@ -75,7 +75,7 @@ func NewBootstrapGithub() *cobra.Command {
 				return fmt.Errorf("either registry or from-file must be set")
 			}
 
-			return b.Execute()
+			return b.Execute(cfg)
 
 		},
 	}
@@ -86,7 +86,7 @@ func NewBootstrapGithub() *cobra.Command {
 }
 
 // NewBootstrapGitea returns a new cobra.Command for gitea bootstrap
-func NewBootstrapGitea() *cobra.Command {
+func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 	c := &config.GiteaConfig{}
 	cmd := &cobra.Command{
 		Use:     "gitea [flags]",
@@ -104,7 +104,7 @@ func NewBootstrapGitea() *cobra.Command {
 			}
 
 			token := os.Getenv(defaultgiteaTokenVar)
-			if token != "" {
+			if token == "" {
 				var err error
 				token, err = passwdFromStdin("Gitea token: ")
 				if err != nil {
@@ -129,7 +129,7 @@ func NewBootstrapGitea() *cobra.Command {
 				return fmt.Errorf("either registry or from-file must be set")
 			}
 
-			return b.Execute()
+			return b.Execute(cfg)
 
 		},
 	}
@@ -153,7 +153,11 @@ func passwdFromStdin(prompt string) (string, error) {
 		<-signalChan
 		fmt.Println("\n^C received, exiting")
 		// Restore the terminal to its initial state.
-		term.Restore(syscall.Stdin, initialTermState)
+		err := term.Restore(syscall.Stdin, initialTermState)
+		if err != nil {
+			fmt.Printf("failed to restore terminal state: %v\n", err)
+		}
+		os.Exit(1)
 	}()
 
 	fmt.Print(prompt)
