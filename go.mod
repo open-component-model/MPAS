@@ -3,14 +3,19 @@ module github.com/open-component-model/mpas
 go 1.20
 
 require (
+	github.com/cyphar/filepath-securejoin v0.2.3
+	github.com/fluxcd/flux2 v0.41.2
 	github.com/fluxcd/go-git-providers v0.16.1-0.20230606145908-251cafbb6567
 	github.com/fluxcd/kustomize-controller/api v1.0.0-rc.1
 	github.com/fluxcd/pkg/apis/meta v1.0.0
 	github.com/fluxcd/pkg/runtime v0.35.0
 	github.com/fluxcd/source-controller/api v1.0.0-rc.1
+	github.com/gabriel-vasile/mimetype v1.4.2
+	github.com/mandelsoft/vfs v0.0.0-20230114230722-fb9b39ce80b9
 	github.com/open-component-model/git-controller v0.2.1-0.20230420095143-61f3c56dd194
 	github.com/open-component-model/mpas-product-controller v0.0.0-20230421151404-988973070ec7
 	github.com/open-component-model/mpas-project-controller v0.0.0-20230419141522-bec22e3fe0eb
+	github.com/open-component-model/ocm v0.3.0-rc.2
 	github.com/open-component-model/ocm-controller v0.5.0
 	github.com/open-component-model/ocm-e2e-framework v0.3.1
 	github.com/open-component-model/replication-controller v0.2.1-0.20230420172740-670e1238a8c7
@@ -20,6 +25,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	golang.org/x/term v0.7.0
+	golang.org/x/text v0.9.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.26.3
 	k8s.io/apimachinery v0.26.3
@@ -61,7 +67,7 @@ require (
 	github.com/containers/libtrust v0.0.0-20200511145503-9c3a6c22cd9a // indirect
 	github.com/containers/ocicrypt v1.1.6 // indirect
 	github.com/containers/storage v1.43.0 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
+	github.com/cyberphone/json-canonicalization v0.0.0-20220623050100-57a0ce2678a7 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/cli v23.0.1+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
@@ -119,10 +125,9 @@ require (
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mandelsoft/filepath v0.0.0-20220503095057-4432a2285b68 // indirect
+	github.com/mandelsoft/filepath v0.0.0-20230412200429-36b1eb66bd27 // indirect
 	github.com/mandelsoft/logging v0.0.0-20230331123830-36542ef18f6f // indirect
-	github.com/mandelsoft/spiff v1.7.0-beta-4 // indirect
-	github.com/mandelsoft/vfs v0.0.0-20230114230722-fb9b39ce80b9 // indirect
+	github.com/mandelsoft/spiff v1.7.0-beta-5 // indirect
 	github.com/marstr/guid v1.1.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
@@ -138,7 +143,6 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/onsi/gomega v1.27.6 // indirect
-	github.com/open-component-model/ocm v0.3.0-rc.1.0.20230408161516-7bac90d616ab // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
@@ -169,7 +173,6 @@ require (
 	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
