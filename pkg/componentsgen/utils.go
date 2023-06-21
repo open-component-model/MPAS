@@ -31,12 +31,11 @@ func getFrom(ctx context.Context, ghURL string) (*http.Response, error) {
 }
 
 func validateVersion(version string) error {
-	ver := version
-	if ver == "" || ver == "latest" {
+	if version == "" || version == "latest" {
 		return fmt.Errorf("version must not be empty or latest")
 	}
 
-	if !strings.HasPrefix(ver, "v") {
+	if !strings.HasPrefix(version, "v") {
 		return fmt.Errorf("version must start with v")
 	}
 	return nil

@@ -54,7 +54,7 @@ func NewBootstrapGithub() *cobra.Command {
 			}
 
 			token := os.Getenv(defaultghTokenVar)
-			if token != "" {
+			if token == "" {
 				var err error
 				token, err = passwdFromStdin("Github token: ")
 				if err != nil {

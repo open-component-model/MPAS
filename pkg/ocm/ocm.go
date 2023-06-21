@@ -5,6 +5,7 @@
 package ocm
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -116,11 +117,28 @@ func NewComponent(ctx om.Context, name, version string, opts ...ComponentOption)
 
 // CreateComponentArchive creates a component archive.
 // It accepts options for configuring the component archive.
-func (c *Component) CreateComponentArchive(opts ...accessio.Option) error {
+func (c *Component) CreateComponentArchive(opts ...accessio.Option) (err error) {
 	obj, err := comparch.Create(c.Context, accessobj.ACC_CREATE, c.archivePath, os.ModePerm, opts...)
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		var remove bool
+		if err != nil {
+			remove = true
+		}
+		er := obj.Close()
+		if err == nil {
+			err = errors.Join(err, er)
+		}
+		if remove {
+			er := os.RemoveAll(c.archivePath)
+			if err == nil {
+				err = errors.Join(err, er)
+			}
+		}
+	}()
 
 	desc := obj.GetDescriptor()
 	desc.Name = c.Name
@@ -134,15 +152,9 @@ func (c *Component) CreateComponentArchive(opts ...accessio.Option) error {
 
 	err = compdesc.Validate(desc)
 	if err != nil {
-		obj.Close()
-		os.RemoveAll(c.archivePath)
 		return fmt.Errorf("invalid component info: %s", err)
 	}
-	err = obj.Close()
-	if err != nil {
-		os.RemoveAll(c.archivePath)
-	}
-	return err
+	return nil
 }
 
 // ResourceOptions contains the options for adding a resource to a component archive.

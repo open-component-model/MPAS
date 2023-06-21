@@ -78,7 +78,7 @@ func main() {
 	flag.StringVar(&mpasProductControllerVersion, "mpas-product-controller-version", defaultMpasProductControllerVer, "The version of the mpas-product-controller component to use.")
 	flag.StringVar(&mpasProjectControllerVersion, "mpas-project-controller-version", defaultMpasProjectControllerVer, "The version of the mpas-project-controller component to use.")
 	flag.StringVar(&ocmCliVersion, "ocm-cli-version", defaultOcmCliVer, "The version of the ocm-cli component to use.")
-	flag.StringVar(&repositoryURL, "repository-url", "", "The repository URL to use.")
+	flag.StringVar(&repositoryURL, "repository-url", "", "The oci repository URL to use.Must be of format <host>/<path>.")
 	flag.StringVar(&username, "username", "", "The username to use.")
 	flag.StringVar(&targetOS, "target-os", "linux", "The target OS to use.")
 	flag.StringVar(&targetArch, "target-arch", "amd64", "The target arch to use.")
