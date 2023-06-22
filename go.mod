@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/cyphar/filepath-securejoin v0.2.3
+	github.com/fatih/color v1.13.0
 	github.com/fluxcd/flux2 v0.41.2
 	github.com/fluxcd/go-git-providers v0.16.1-0.20230606145908-251cafbb6567
 	github.com/fluxcd/kustomize-controller/api v1.0.0-rc.1
@@ -129,6 +130,8 @@ require (
 	github.com/mandelsoft/logging v0.0.0-20230331123830-36542ef18f6f // indirect
 	github.com/mandelsoft/spiff v1.7.0-beta-5 // indirect
 	github.com/marstr/guid v1.1.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect

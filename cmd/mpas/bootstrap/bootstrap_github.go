@@ -8,6 +8,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/open-component-model/mpas/cmd/mpas/config"
 	"github.com/open-component-model/mpas/pkg/bootstrap"
 	"github.com/open-component-model/mpas/pkg/bootstrap/provider"
 )
@@ -31,8 +32,12 @@ type BootstrapGithubCmd struct {
 }
 
 // Execute executes the command and returns an error if one occurred.
-func (b *BootstrapGithubCmd) Execute() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
+	t, err := time.ParseDuration(cfg.Timeout)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(cfg.Context(), t)
 	defer cancel()
 
 	hostname := githubDefaultHostname
@@ -58,6 +63,7 @@ func (b *BootstrapGithubCmd) Execute() error {
 		bootstrap.WithPersonal(b.Personal),
 		bootstrap.WithFromFile(b.FromFile),
 		bootstrap.WithRegistry(b.Registry),
+		bootstrap.WithPrinter(cfg.Printer),
 	)
 
 	return b.bootstrapper.Run()

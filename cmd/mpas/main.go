@@ -5,21 +5,30 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-
-	"github.com/open-component-model/mpas/cmd/mpas/config"
+	"os/signal"
+	"syscall"
 )
 
 var (
-	cfg     config.MpasConfig
 	Version = "0.0.0-dev.0"
 )
 
 func main() {
-	cmd := New(os.Args[1:])
-	if err := cmd.Execute(); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	if err := run(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
 		os.Exit(1)
 	}
+}
+
+func run(ctx context.Context) error {
+	cmd := New(os.Args[1:])
+	if err := cmd.Execute(); err != nil {
+		return err
+	}
+	return nil
 }
