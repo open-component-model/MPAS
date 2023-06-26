@@ -44,13 +44,15 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 		Example: `mpas bootstrap github --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := bootstrap.BootstrapGithubCmd{
-				Owner:      c.Owner,
-				Personal:   c.Personal,
-				Repository: c.Repository,
-				FromFile:   c.FromFile,
-				Registry:   c.Registry,
-				Hostname:   c.Hostname,
-				Components: append(config.DefaultComponents, c.Components...),
+				Owner:            c.Owner,
+				Personal:         c.Personal,
+				Repository:       c.Repository,
+				FromFile:         c.FromFile,
+				Registry:         c.Registry,
+				DockerconfigPath: cfg.DockerconfigPath,
+				Target:           c.Target,
+				Hostname:         c.Hostname,
+				Components:       append(config.DefaultComponents, c.Components...),
 			}
 
 			token := os.Getenv(defaultghTokenVar)
@@ -94,13 +96,15 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 		Example: `mpas bootstrap gitea --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux --hostname gitea.example.com`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := bootstrap.BootstrapGiteaCmd{
-				Owner:      c.Owner,
-				Personal:   c.Personal,
-				Repository: c.Repository,
-				FromFile:   c.FromFile,
-				Registry:   c.Registry,
-				Hostname:   c.Hostname,
-				Components: append(config.DefaultComponents, c.Components...),
+				Owner:            c.Owner,
+				Personal:         c.Personal,
+				Repository:       c.Repository,
+				FromFile:         c.FromFile,
+				Registry:         c.Registry,
+				DockerconfigPath: cfg.DockerconfigPath,
+				Target:           c.Target,
+				Hostname:         c.Hostname,
+				Components:       append(config.DefaultComponents, c.Components...),
 			}
 
 			token := os.Getenv(defaultgiteaTokenVar)

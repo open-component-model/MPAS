@@ -19,10 +19,11 @@ var DefaultComponents = []string{
 
 // MpasConfig is the global configuration for the mpas CLI.
 type MpasConfig struct {
-	Kubeconfig string
-	Printer    *printer.Printer
-	Timeout    string
-	ctx        context.Context
+	Kubeconfig       string
+	Printer          *printer.Printer
+	Timeout          string
+	DockerconfigPath string
+	ctx              context.Context
 }
 
 // SetContext sets the context to use for operations.
@@ -42,6 +43,7 @@ func (m *MpasConfig) Context() context.Context {
 func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig file")
 	flags.StringVar(&m.Timeout, "timeout", "5m", "The timeout to use for operations")
+	flags.StringVar(&m.DockerconfigPath, "dockerconfig", "~/.docker/config.json", "The path to the docker config file")
 }
 
 // BootstrapConfig is the configuration shared by the bootstrap commands.
@@ -52,6 +54,7 @@ type BootstrapConfig struct {
 	FromFile   string
 	Registry   string
 	Hostname   string
+	Target     string
 }
 
 // AddFlags adds the bootstrap flags to the given flag set.
@@ -60,8 +63,9 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")
 	flags.StringVar(&m.Repository, "repository", "", "The name of the management repository")
 	flags.StringVar(&m.FromFile, "from-file", "", "The path to a file containing the bootstrap component in archive format")
-	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component")
+	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas")
 	flags.StringVar(&m.Hostname, "hostname", "", "The hostname of the Git provider")
+	flags.StringVar(&m.Target, "target", ".", "The target path to use in the management repository to store the bootstrap component")
 }
 
 // GithubConfig is the configuration for the Github bootstrap command.

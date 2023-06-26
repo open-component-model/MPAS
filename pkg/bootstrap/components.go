@@ -65,7 +65,7 @@ func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo ocm.Repository) (m
 
 }
 
-func makeOCIRepository(octx ocm.Context, repositoryURL string) (ocm.Repository, error) {
+func makeOCIRepository(octx ocm.Context, repositoryURL, dockerconfigPath string) (ocm.Repository, error) {
 	if !strings.Contains(repositoryURL, "https://") && !strings.Contains(repositoryURL, "http://") {
 		repositoryURL = "https://" + repositoryURL
 	}
@@ -74,7 +74,7 @@ func makeOCIRepository(octx ocm.Context, repositoryURL string) (ocm.Repository, 
 		return nil, err
 	}
 
-	spec := dockerconfig.NewRepositorySpec("~/.docker/config.json", true)
+	spec := dockerconfig.NewRepositorySpec(dockerconfigPath, true)
 	// attach the repository to the context, this propagates the consumer ids.
 	_, err = octx.CredentialsContext().RepositoryForSpec(spec)
 	if err != nil {

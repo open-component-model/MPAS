@@ -22,6 +22,8 @@ type BootstrapGiteaCmd struct {
 	Repository         string
 	FromFile           string
 	Registry           string
+	DockerconfigPath   string
+	Target             string
 	Components         []string
 	DestructiveActions bool
 	bootstrapper       *bootstrap.Bootstrap
@@ -55,6 +57,10 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithFromFile(b.FromFile),
 		bootstrap.WithRegistry(b.Registry),
 		bootstrap.WithPrinter(cfg.Printer),
+		bootstrap.WithToken(b.Token),
+		bootstrap.WithTransportType("https"),
+		bootstrap.WithDockerConfigPath(b.DockerconfigPath),
+		bootstrap.WithTarget(b.Target),
 	)
 
 	return b.bootstrapper.Run(ctx)

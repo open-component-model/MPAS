@@ -26,6 +26,8 @@ type BootstrapGithubCmd struct {
 	Repository         string
 	FromFile           string
 	Registry           string
+	DockerconfigPath   string
+	Target             string
 	Components         []string
 	DestructiveActions bool
 	bootstrapper       *bootstrap.Bootstrap
@@ -65,6 +67,10 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithRegistry(b.Registry),
 		bootstrap.WithPrinter(cfg.Printer),
 		bootstrap.WithComponents(b.Components),
+		bootstrap.WithToken(b.Token),
+		bootstrap.WithTransportType("https"),
+		bootstrap.WithDockerConfigPath(b.DockerconfigPath),
+		bootstrap.WithTarget(b.Target),
 	)
 
 	return b.bootstrapper.Run(ctx)

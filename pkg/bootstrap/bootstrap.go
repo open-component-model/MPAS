@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
@@ -21,17 +22,20 @@ var (
 
 // options contains the options to be used during bootstrap
 type options struct {
-	description    string
-	defaultBranch  string
-	visibility     string
-	personal       bool
-	owner          string
-	repositoryName string
-	fromFile       string
-	registry       string
-	transportType  string
-	components     []string
-	printer        *printer.Printer
+	description      string
+	defaultBranch    string
+	visibility       string
+	personal         bool
+	owner            string
+	token            string
+	repositoryName   string
+	target           string
+	fromFile         string
+	registry         string
+	dockerConfigPath string
+	transportType    string
+	components       []string
+	printer          *printer.Printer
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -45,6 +49,20 @@ type Bootstrap struct {
 	repository     gitprovider.UserRepository
 	url            string
 	options
+}
+
+func WithDockerConfigPath(dockerConfigPath string) Option {
+	return func(o *options) {
+		o.dockerConfigPath = dockerConfigPath
+	}
+}
+
+// WithTarget sets the target of the bootstrap component
+func WithTarget(target string) Option {
+	return func(o *options) {
+		target = strings.TrimSuffix(target, "/")
+		o.target = target
+	}
 }
 
 // WithPrinter sets the printer to use for printing messages
@@ -93,6 +111,13 @@ func WithPersonal(personal bool) Option {
 func WithOwner(owner string) Option {
 	return func(o *options) {
 		o.owner = owner
+	}
+}
+
+// WithToken sets the token of the management repository
+func WithToken(token string) Option {
+	return func(o *options) {
+		o.token = token
 	}
 }
 
@@ -146,7 +171,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	}
 
 	octx := ocm.DefaultContext()
-	ociRepo, err := makeOCIRepository(octx, b.registry)
+	ociRepo, err := makeOCIRepository(octx, b.registry, b.dockerConfigPath)
 	if err != nil {
 		return err
 	}
@@ -164,7 +189,16 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 
 		switch comp {
 		case "flux":
-			inst := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo)
+			dir, err := os.MkdirTemp("", "flux-install")
+			if err != nil {
+				return err
+			}
+
+			defer os.RemoveAll(dir)
+			inst, err := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, b.url, b.defaultBranch, b.owner, b.token, dir, b.target)
+			if err != nil {
+				return err
+			}
 			if err := inst.Install(ctx); err != nil {
 				return err
 			}
@@ -198,6 +232,7 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 
 	b.repository = repo
 	b.url = cloneURL
+	fmt.Print("url: ", b.url)
 
 	return nil
 }

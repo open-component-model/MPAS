@@ -7,18 +7,32 @@ package bootstrap
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
+	syncOpts "github.com/fluxcd/flux2/v2/pkg/manifestgen/sync"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/containers/image/v5/pkg/compression"
+	flux "github.com/fluxcd/flux2/v2/pkg/bootstrap"
+	"github.com/fluxcd/pkg/git"
+	"github.com/fluxcd/pkg/git/gogit"
+	"github.com/fluxcd/pkg/git/repository"
+	"github.com/fluxcd/pkg/kustomize"
 	cfd "github.com/open-component-model/ocm-controller/pkg/configdata"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/kustomize/api/konfig"
 	kustypes "sigs.k8s.io/kustomize/api/types"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
 	"sigs.k8s.io/yaml"
 )
 
@@ -38,55 +52,63 @@ type FluxInstall struct {
 	componentName string
 	version       string
 	repository    ocm.Repository
+
+	gitClient repository.Client
+
+	url    string
+	branch string
+	target string
+
+	dir string
+
+	signature             git.Signature
+	commitMessageAppendix string
+	gpgKeyRing            openpgp.EntityList
+	gpgPassphrase         string
+	gpgKeyID              string
+
+	*flux.PlainGitBootstrapper
+
+	// mu is used to synchronize access to the kustomization file
+	mu sync.Mutex
 }
 
-func NewFluxInstall(name, version string, repository ocm.Repository) *FluxInstall {
-	return &FluxInstall{
-		componentName: name,
-		version:       version,
-		repository:    repository,
+func NewFluxInstall(name, version string, repository ocm.Repository, url, branch, owner, token, dir, target string) (*FluxInstall, error) {
+	clientOpts := []gogit.ClientOption{gogit.WithDiskStorage(), gogit.WithFallbackToDefaultKnownHosts()}
+	gitClient, err := gogit.NewClient(dir, &git.AuthOptions{
+		Transport: git.HTTPS,
+		Username:  owner,
+		Password:  token,
+	}, clientOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a Git client: %w", err)
 	}
+	p, err := flux.NewPlainGitProvider(gitClient, nil,
+		flux.WithBranch(branch),
+		flux.WithRepositoryURL(url))
+	if err != nil {
+		return nil, err
+	}
+	f := &FluxInstall{
+		componentName:        name,
+		version:              version,
+		repository:           repository,
+		PlainGitBootstrapper: p,
+		dir:                  dir,
+		gitClient:            gitClient,
+		url:                  url,
+		branch:               branch,
+		target:               target,
+	}
+	return f, nil
 }
 
 func (f *FluxInstall) Install(ctx context.Context) error {
 	fmt.Println("Installing Flux...", f.componentName)
-	c, err := f.repository.LookupComponent(f.componentName)
+	cv, err := GetComponentVersion(f.repository, f.componentName, f.version)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get component version: %w", err)
 	}
-	vnames, err := c.ListVersions()
-	if err != nil {
-		return err
-	}
-	constraint, err := semver.NewConstraint(f.version)
-	if err != nil {
-		return err
-	}
-	var (
-		ver   *semver.Version
-		valid bool
-	)
-	for _, vname := range vnames {
-		v, err := semver.NewVersion(vname)
-		if err != nil {
-			return err
-		}
-		if constraint.Check(v) {
-			ver = v
-			valid = true
-			break
-		}
-	}
-
-	if !valid {
-		return fmt.Errorf("no matching version found for constraint %q", f.version)
-	}
-
-	cv, err := c.LookupVersion(ver.Original())
-	if err != nil {
-		return err
-	}
-
 	resources := cv.GetResources()
 	var (
 		fluxResource    []byte
@@ -109,13 +131,15 @@ func (f *FluxInstall) Install(ctx context.Context) error {
 				return err
 			}
 		default:
-			name, version := getResourceRef(resource)
-			imagesResources[resource.Meta().GetName()] = struct {
-				Name string
-				Tag  string
-			}{
-				Name: name,
-				Tag:  version,
+			if resource.Meta().GetType() == "ociImage" {
+				name, version := getResourceRef(resource)
+				imagesResources[resource.Meta().GetName()] = struct {
+					Name string
+					Tag  string
+				}{
+					Name: name,
+					Tag:  version,
+				}
 			}
 		}
 	}
@@ -124,18 +148,11 @@ func (f *FluxInstall) Install(ctx context.Context) error {
 		return fmt.Errorf("flux or ocm-config resource not found")
 	}
 
-	dir, err := os.MkdirTemp("", "flux-install")
-	if err != nil {
+	if err := os.WriteFile(filepath.Join(f.dir, "gotk-components.yaml"), fluxResource, os.ModePerm); err != nil {
 		return err
 	}
 
-	defer os.RemoveAll(dir)
-
-	if err := os.WriteFile(filepath.Join(dir, "gotk-components.yaml"), fluxResource, os.ModePerm); err != nil {
-		return err
-	}
-
-	kfile, err := generateKustomizationFile(dir, "gotk-components.yaml")
+	kfile, err := generateKustomizationFile(f.dir, "./gotk-components.yaml")
 	if err != nil {
 		return err
 	}
@@ -165,7 +182,7 @@ func (f *FluxInstall) Install(ctx context.Context) error {
 		image := imagesResources[loc.Resource.Name]
 		kus.Images = append(kus.Images, kustypes.Image{
 			Name:    fmt.Sprintf("%s/%s", defaultFluxHost, loc.Resource.Name),
-			NewName: fmt.Sprintf("%s/%s", defaultFluxHost, image.Name),
+			NewName: image.Name,
 			NewTag:  image.Tag,
 		})
 	}
@@ -175,13 +192,182 @@ func (f *FluxInstall) Install(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Println(string(manifest))
+	err = os.WriteFile(kfile, manifest, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	fs := filesys.MakeFsOnDisk()
+
+	// acuire the lock
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	m, err := kustomize.Build(fs, f.dir)
+	if err != nil {
+		return fmt.Errorf("kustomize build failed: %w", err)
+	}
+
+	res, err := m.AsYaml()
+	if err != nil {
+		return fmt.Errorf("kustomize build failed: %w", err)
+	}
+
+	err = f.ReconcileComponents(ctx, f.target+"/flux-system/gotk-components.yaml", string(res))
+	if err != nil {
+		return fmt.Errorf("failed to reconcile components: %w", err)
+	}
+
+	syncOpts := syncOpts.Options{
+		Interval:          5 * time.Minute,
+		Name:              "flux-system",
+		Namespace:         "flux-system",
+		Branch:            f.branch,
+		Secret:            "test-secret",
+		TargetPath:        f.target + "/flux-system/gotk-sync.yaml",
+		ManifestFile:      syncOpts.MakeDefaultOptions().ManifestFile,
+		RecurseSubmodules: false,
+	}
+	if err := f.ReconcileSyncConfig(ctx, syncOpts); err != nil {
+		return fmt.Errorf("failed to reconcile sync config: %w", err)
+	}
 
 	return nil
 }
 
+// GetComponentVersion returns the component version matching the given version constraint.
+func GetComponentVersion(repository ocm.Repository, componentName, version string) (ocm.ComponentVersionAccess, error) {
+	c, err := repository.LookupComponent(componentName)
+	if err != nil {
+		return nil, err
+	}
+	vnames, err := c.ListVersions()
+	if err != nil {
+		return nil, err
+	}
+	constraint, err := semver.NewConstraint(version)
+	if err != nil {
+		return nil, err
+	}
+	var ver *semver.Version
+	for _, vname := range vnames {
+		v, err := semver.NewVersion(vname)
+		if err != nil {
+			return nil, err
+		}
+		if constraint.Check(v) {
+			ver = v
+			break
+		}
+	}
+
+	if ver == nil {
+		return nil, errors.New("no matching version found")
+	}
+
+	cv, err := c.LookupVersion(ver.Original())
+	if err != nil {
+		return nil, err
+	}
+	return cv, nil
+}
+
 func (f *FluxInstall) Cleanup(ctx context.Context) error {
 	return nil
+}
+
+func (f *FluxInstall) ReconcileComponents(ctx context.Context, path, content string) error {
+	cloned, err := f.cloneRepository(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to clone repository: %w", err)
+	}
+	if cloned {
+		fmt.Println("Repository cloned")
+	}
+	// Write generated files and make a commit
+	err = f.commitAndPushComponents(path, content, ctx)
+	if err != nil {
+		return fmt.Errorf("failed to commit and push components: %w", err)
+	}
+	return nil
+}
+
+func (f *FluxInstall) commitAndPushComponents(path string, content string, ctx context.Context) (err error) {
+	var signer *openpgp.Entity
+	if f.gpgKeyRing != nil {
+		signer, err = getOpenPgpEntity(f.gpgKeyRing, f.gpgPassphrase, f.gpgKeyID)
+		if err != nil {
+			return fmt.Errorf("failed to generate OpenPGP entity: %w", err)
+		}
+	}
+	commitMsg := fmt.Sprintf("Add Flux %s component manifests", f.version)
+	if f.commitMessageAppendix != "" {
+		commitMsg = commitMsg + "\n\n" + f.commitMessageAppendix
+	}
+
+	_, err = f.gitClient.Commit(git.Commit{
+		Author:  f.signature,
+		Message: commitMsg,
+	}, repository.WithFiles(map[string]io.Reader{
+		path: strings.NewReader(content),
+	}), repository.WithSigner(signer))
+	if err != nil && err != git.ErrNoStagedFiles {
+		return fmt.Errorf("failed to commit sync manifests: %w", err)
+	}
+
+	if err == nil {
+		if err = f.gitClient.Push(ctx, repository.PushConfig{}); err != nil {
+			return fmt.Errorf("failed to push manifests: %w", err)
+		}
+	}
+	return nil
+}
+
+func (f *FluxInstall) cloneRepository(ctx context.Context) (bool, error) {
+	if _, err := f.gitClient.Head(); err != nil {
+		if err != git.ErrNoGitRepository {
+			return true, err
+		}
+		var cloned bool
+		if err = retry(1, 2*time.Second, func() error {
+			if err := f.cleanGitRepoDir(); err != nil {
+				return fmt.Errorf("failed to clean git repository directory: %w", err)
+			}
+			_, err = f.gitClient.Clone(ctx, f.url, repository.CloneConfig{
+				CheckoutStrategy: repository.CheckoutStrategy{
+					Branch: f.branch,
+				},
+			})
+			if err != nil {
+				return err
+			}
+			if err == nil {
+				cloned = true
+			}
+			return nil
+		}); err != nil {
+			return false, fmt.Errorf("failed to clone repository: %w", err)
+		}
+		if cloned {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// cleanGitRepoDir cleans the directory meant for the Git repo.
+func (f *FluxInstall) cleanGitRepoDir() (err error) {
+	dirs, er := os.ReadDir(f.gitClient.Path())
+	if er != nil {
+		return er
+	}
+
+	for _, dir := range dirs {
+		if er := os.RemoveAll(filepath.Join(f.gitClient.Path(), dir.Name())); er != nil {
+			err = errors.Join(err, er)
+		}
+	}
+	return
 }
 
 func generateKustomizationFile(path, resource string) (string, error) {
@@ -229,13 +415,17 @@ func getResourceContent(resource ocm.ResourceAccess) ([]byte, error) {
 }
 
 func getResourceRef(resource ocm.ResourceAccess) (string, string) {
-	name := resource.Meta().Name
-	version := resource.Meta().Version
+	a, err := resource.Access()
+	if err != nil {
+		return "", ""
+	}
+	spec := a.(*ociartifact.AccessSpec)
+	im := spec.ImageReference
+	name, version := strings.Split(im, ":")[0], strings.Split(im, ":")[1]
 	return name, version
 }
 
 func unMarshallConfig(data []byte) (*cfd.ConfigData, error) {
-	fmt.Println(string(data))
 	k := &cfd.ConfigData{}
 	decoder := k8syaml.NewYAMLOrJSONDecoder(bytes.NewBuffer(data), len(data))
 	err := decoder.Decode(k)
@@ -243,4 +433,57 @@ func unMarshallConfig(data []byte) (*cfd.ConfigData, error) {
 		return nil, fmt.Errorf("failed to decode config data: %w", err)
 	}
 	return k, nil
+}
+
+func getOpenPgpEntity(keyRing openpgp.EntityList, passphrase, keyID string) (*openpgp.Entity, error) {
+	if len(keyRing) == 0 {
+		return nil, fmt.Errorf("empty GPG key ring")
+	}
+
+	var entity *openpgp.Entity
+	if keyID != "" {
+		if strings.HasPrefix(keyID, "0x") {
+			keyID = strings.TrimPrefix(keyID, "0x")
+		}
+		if len(keyID) != 16 {
+			return nil, fmt.Errorf("invalid GPG key id length; expected %d, got %d", 16, len(keyID))
+		}
+		keyID = strings.ToUpper(keyID)
+
+		for _, ent := range keyRing {
+			if ent.PrimaryKey.KeyIdString() == keyID {
+				entity = ent
+			}
+		}
+
+		if entity == nil {
+			return nil, fmt.Errorf("no GPG keyring matching key id '%s' found", keyID)
+		}
+		if entity.PrivateKey == nil {
+			return nil, fmt.Errorf("keyring does not contain private key for key id '%s'", keyID)
+		}
+	} else {
+		entity = keyRing[0]
+	}
+
+	err := entity.PrivateKey.Decrypt([]byte(passphrase))
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt GPG private key: %w", err)
+	}
+
+	return entity, nil
+}
+
+func retry(retries int, wait time.Duration, fn func() error) (err error) {
+	for i := 0; ; i++ {
+		err = fn()
+		if err == nil {
+			return
+		}
+		if i >= retries {
+			break
+		}
+		time.Sleep(wait)
+	}
+	return err
 }
