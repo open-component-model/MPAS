@@ -119,7 +119,7 @@ func main() {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// create transfert archive
+	// create transport archive
 	ctf, err := ocm.CreateCTF(octx, fmt.Sprintf("%s/%s", tmpDir, "ctf"), accessio.FormatDirectory)
 	if err != nil {
 		fmt.Println("Failed to create CTF: ", err)

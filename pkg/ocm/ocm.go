@@ -243,8 +243,10 @@ func (c *Component) AddResource(opts ...ResourceOption) (rerr error) {
 	return nil
 }
 
+type CTF ocm.Repository
+
 // CreateCTF creates a new ctf repository.
-func CreateCTF(ctx om.Context, repoPath string, opts ...accessio.Option) (ocm.Repository, error) {
+func CreateCTF(ctx om.Context, repoPath string, opts ...accessio.Option) (CTF, error) {
 	ctf, err := ctf.Open(ctx, accessobj.ACC_CREATE, repoPath, os.ModePerm, opts...)
 	if err != nil {
 		return nil, err
@@ -253,8 +255,8 @@ func CreateCTF(ctx om.Context, repoPath string, opts ...accessio.Option) (ocm.Re
 	return ctf, nil
 }
 
-// AddComponentToCTF adds a component to a ctf repository.
-func (c *Component) AddComponentToCTF(repo ocm.Repository) (rerr error) {
+// AddToCTF adds a component to a ctf repository.
+func (c *Component) AddToCTF(repo ocm.Repository) (rerr error) {
 	var finalize finalizer.Finalizer
 	defer finalize.FinalizeWithErrorPropagation(&rerr)
 

@@ -83,7 +83,7 @@ func (r *Releaser) ReleaseBootstrapComponent(ctx context.Context, components map
 		return fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := component.AddComponentToCTF(r.ctf); err != nil {
+	if err := component.AddToCTF(r.ctf); err != nil {
 		return fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
@@ -122,7 +122,7 @@ func (r *Releaser) ReleaseOcmControllerComponent(ctx context.Context, ocmVersion
 		return nil, fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := r.release(ctx, r.octx, component, r.ctf, &o, "ocm-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "ocm-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release ocm-controller component: %w", err)
 	}
 
@@ -146,7 +146,7 @@ func (r *Releaser) ReleaseGitControllerComponent(ctx context.Context, gitVersion
 		return nil, fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := r.release(ctx, r.octx, component, r.ctf, &o, "git-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "git-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release git-controller component: %w", err)
 	}
 
@@ -170,7 +170,7 @@ func (r *Releaser) ReleaseReplicationControllerComponent(ctx context.Context, re
 		return nil, fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := r.release(ctx, r.octx, component, r.ctf, &o, "replication-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "replication-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release replication-controller component: %w", err)
 	}
 
@@ -194,7 +194,7 @@ func (r *Releaser) ReleaseMpasProductControllerComponent(ctx context.Context, mp
 		return nil, fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := r.release(ctx, r.octx, component, r.ctf, &o, "mpas-product-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "mpas-product-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release mpas-product-controller component: %w", err)
 	}
 
@@ -218,7 +218,7 @@ func (r *Releaser) ReleaseMpasProjectControllerComponent(ctx context.Context, mp
 		return nil, fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := r.release(ctx, r.octx, component, r.ctf, &o, "mpas-project-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "mpas-project-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release mpas-project-controller component: %w", err)
 	}
 
@@ -274,7 +274,7 @@ func (r *Releaser) ReleaseFluxCliComponent(ctx context.Context, fluxVersion, com
 		return nil, fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := component.AddComponentToCTF(r.ctf); err != nil {
+	if err := component.AddToCTF(r.ctf); err != nil {
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
@@ -323,7 +323,7 @@ func (r *Releaser) ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, co
 		return nil, fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := component.AddComponentToCTF(r.ctf); err != nil {
+	if err := component.AddToCTF(r.ctf); err != nil {
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
@@ -344,7 +344,7 @@ func (r *Releaser) ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, co
 }
 
 func (r *Releaser) release(ctx context.Context, octx om.Context, component *ocm.Component, ctf om.Repository, gen cgen.Generator, name, loc string) (err error) {
-	if err := component.AddComponentToCTF(ctf); err != nil {
+	if err := component.AddToCTF(ctf); err != nil {
 		return fmt.Errorf("failed to create ctf: %w", err)
 	}
 	defer func() {

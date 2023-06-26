@@ -36,7 +36,7 @@ func Test_OCM(t *testing.T) {
 	defer ctf.Close()
 
 	// add component to transfert archive
-	err = comp.AddComponentToCTF(ctf)
+	err = comp.AddToCTF(ctf)
 	require.NoError(t, err)
 	defer comp.Close()
 
