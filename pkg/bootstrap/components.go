@@ -59,10 +59,7 @@ func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo ocm.Repository) (m
 		references[component] = ref
 	}
 
-	b.printer.Printf("Components references have been fetched successfully\n")
-
 	return references, nil
-
 }
 
 func makeOCIRepository(octx ocm.Context, repositoryURL, dockerconfigPath string) (ocm.Repository, error) {

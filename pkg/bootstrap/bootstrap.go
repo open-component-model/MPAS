@@ -9,11 +9,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -34,7 +38,11 @@ type options struct {
 	registry         string
 	dockerConfigPath string
 	transportType    string
+	kubeclient       client.Client
+	restClientGetter genericclioptions.RESTClientGetter
 	components       []string
+	interval         time.Duration
+	timeout          time.Duration
 	printer          *printer.Printer
 }
 
@@ -49,6 +57,34 @@ type Bootstrap struct {
 	repository     gitprovider.UserRepository
 	url            string
 	options
+}
+
+// WithInterval sets the interval to use for the bootstrap component
+func WithInterval(interval time.Duration) Option {
+	return func(o *options) {
+		o.interval = interval
+	}
+}
+
+// WithTimeout sets the timeout to use for the bootstrap component
+func WithTimeout(timeout time.Duration) Option {
+	return func(o *options) {
+		o.timeout = timeout
+	}
+}
+
+// WithRESTClientGetter sets the RESTClientGetter to use for the bootstrap component
+func WithRESTClientGetter(restClientGetter genericclioptions.RESTClientGetter) Option {
+	return func(o *options) {
+		o.restClientGetter = restClientGetter
+	}
+}
+
+// WithKubeClient sets the kubeclient to use for the bootstrap component
+func WithKubeClient(kubeclient client.Client) Option {
+	return func(o *options) {
+		o.kubeclient = kubeclient
+	}
 }
 
 func WithDockerConfigPath(dockerConfigPath string) Option {
@@ -166,6 +202,13 @@ func New(ProviderClient gitprovider.Client, opts ...Option) *Bootstrap {
 
 // Run runs the bootstrap of mpas and returns an error if it fails.
 func (b *Bootstrap) Run(ctx context.Context) error {
+	if b.fromFile != "" {
+		return fmt.Errorf("bootstrap from file is not supported yet")
+	}
+
+	b.printer.Printf("Running %s ...\n",
+		printer.BoldBlue("mpas bootstrap"))
+
 	if err := b.reconcileManagementRepository(ctx); err != nil {
 		return err
 	}
@@ -180,22 +223,31 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
 	}
-	fmt.Println(refs)
 
 	for comp, ref := range refs {
-		b.printer.Printf("Component %s with version %s is going to be installed\n",
+		b.printer.Printf("Installing %s with version %s\n",
 			printer.BoldBlue(comp),
 			printer.BoldBlue(ref.GetVersion()))
 
 		switch comp {
 		case "flux":
-			dir, err := os.MkdirTemp("", "flux-install")
+			dir, err := mkdirTempDir("flux-install")
 			if err != nil {
 				return err
 			}
-
 			defer os.RemoveAll(dir)
-			inst, err := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, b.url, b.defaultBranch, b.owner, b.token, dir, b.target)
+			inst, err := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo,
+				withBranch(b.defaultBranch),
+				withTarget(b.target),
+				withKubeClient(b.kubeclient),
+				withKubeConfig(b.restClientGetter),
+				withURL(b.url),
+				withNamespace("flux-system"),
+				withDir(dir),
+				withInterval(b.interval),
+				withTimeout(b.timeout),
+				withToken(b.token),
+			)
 			if err != nil {
 				return err
 			}
@@ -208,7 +260,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 	}
 
-	b.printer.Printf("Bootstrap of management repository %s is done!\n", printer.BoldBlue(b.repositoryName))
+	b.printer.Printf("Bootstrap completed successfully\n")
 
 	return nil
 }
@@ -220,7 +272,7 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 		return err
 	}
 
-	b.printer.Printf("Management repository %s with branch %s and visibility %s is ready!\n",
+	b.printer.Printf("Preparing Management repository %s with branch %s and visibility %s\n",
 		printer.BoldBlue(b.repositoryName),
 		printer.BoldBlue(b.defaultBranch),
 		printer.BoldBlue(b.visibility))
@@ -232,7 +284,6 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 
 	b.repository = repo
 	b.url = cloneURL
-	fmt.Print("url: ", b.url)
 
 	return nil
 }
@@ -375,4 +426,17 @@ func setDefaults(b *Bootstrap) {
 	if b.transportType == "" {
 		b.transportType = "https"
 	}
+}
+
+func mkdirTempDir(pattern string) (string, error) {
+	dir, err := os.MkdirTemp("", pattern)
+	if err != nil {
+		return "", err
+	}
+
+	dir, err = filepath.EvalSymlinks(dir)
+	if err != nil {
+		return "", err
+	}
+	return dir, nil
 }

@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
@@ -42,7 +43,7 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 		Use:     "github [flags]",
 		Short:   "Bootstrap an mpas management repository on Github",
 		Example: `mpas bootstrap github --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.BootstrapGithubCmd{
 				Owner:            c.Owner,
 				Personal:         c.Personal,
@@ -57,7 +58,6 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 
 			token := os.Getenv(defaultghTokenVar)
 			if token == "" {
-				var err error
 				token, err = passwdFromStdin("Github token: ")
 				if err != nil {
 					return fmt.Errorf("failed to read token from stdin: %w", err)
@@ -77,6 +77,16 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				return fmt.Errorf("either registry or from-file must be set")
 			}
 
+			b.Timeout, err = time.ParseDuration(cfg.Timeout)
+			if err != nil {
+				return err
+			}
+
+			b.Interval, err = time.ParseDuration(c.Interval)
+			if err != nil {
+				return err
+			}
+
 			return b.Execute(cfg)
 
 		},
@@ -94,7 +104,7 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 		Use:     "gitea [flags]",
 		Short:   "Bootstrap an mpas management repository on Gitea",
 		Example: `mpas bootstrap gitea --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux --hostname gitea.example.com`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.BootstrapGiteaCmd{
 				Owner:            c.Owner,
 				Personal:         c.Personal,
@@ -109,7 +119,6 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 
 			token := os.Getenv(defaultgiteaTokenVar)
 			if token == "" {
-				var err error
 				token, err = passwdFromStdin("Gitea token: ")
 				if err != nil {
 					return fmt.Errorf("failed to read token from stdin: %w", err)
@@ -131,6 +140,16 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 
 			if b.Registry == "" && b.FromFile == "" {
 				return fmt.Errorf("either registry or from-file must be set")
+			}
+
+			b.Timeout, err = time.ParseDuration(cfg.Timeout)
+			if err != nil {
+				return err
+			}
+
+			b.Interval, err = time.ParseDuration(c.Interval)
+			if err != nil {
+				return err
 			}
 
 			return b.Execute(cfg)

@@ -11,6 +11,7 @@ import (
 	"github.com/open-component-model/mpas/cmd/mpas/config"
 	"github.com/open-component-model/mpas/pkg/bootstrap"
 	"github.com/open-component-model/mpas/pkg/bootstrap/provider"
+	"github.com/open-component-model/mpas/pkg/kubeutils"
 )
 
 const (
@@ -29,6 +30,8 @@ type BootstrapGithubCmd struct {
 	DockerconfigPath   string
 	Target             string
 	Components         []string
+	Interval           time.Duration
+	Timeout            time.Duration
 	DestructiveActions bool
 	bootstrapper       *bootstrap.Bootstrap
 }
@@ -59,6 +62,11 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 		return err
 	}
 
+	kubeClient, err := kubeutils.KubeClient(cfg.KubeConfigArgs)
+	if err != nil {
+		return err
+	}
+
 	b.bootstrapper = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
@@ -71,6 +79,10 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithTransportType("https"),
 		bootstrap.WithDockerConfigPath(b.DockerconfigPath),
 		bootstrap.WithTarget(b.Target),
+		bootstrap.WithKubeClient(kubeClient),
+		bootstrap.WithRESTClientGetter(cfg.KubeConfigArgs),
+		bootstrap.WithInterval(b.Interval),
+		bootstrap.WithTimeout(b.Timeout),
 	)
 
 	return b.bootstrapper.Run(ctx)

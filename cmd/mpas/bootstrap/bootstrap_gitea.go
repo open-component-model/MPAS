@@ -6,11 +6,13 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/open-component-model/mpas/cmd/mpas/config"
 	"github.com/open-component-model/mpas/pkg/bootstrap"
 	"github.com/open-component-model/mpas/pkg/bootstrap/provider"
+	"github.com/open-component-model/mpas/pkg/kubeutils"
 )
 
 // BootstrapGiteaCmd is a command for bootstrapping a Gitea repository
@@ -24,6 +26,8 @@ type BootstrapGiteaCmd struct {
 	Registry           string
 	DockerconfigPath   string
 	Target             string
+	Interval           time.Duration
+	Timeout            time.Duration
 	Components         []string
 	DestructiveActions bool
 	bootstrapper       *bootstrap.Bootstrap
@@ -38,6 +42,10 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 	ctx, cancel := context.WithTimeout(cfg.Context(), t)
 	defer cancel()
 
+	if b.Hostname == "" {
+		return fmt.Errorf("hostname must be specified")
+	}
+
 	providerOpts := provider.ProviderOptions{
 		Provider:           provider.ProviderGitea,
 		Hostname:           b.Hostname,
@@ -50,6 +58,11 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		return err
 	}
 
+	kubeClient, err := kubeutils.KubeClient(cfg.KubeConfigArgs)
+	if err != nil {
+		return err
+	}
+
 	b.bootstrapper = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
@@ -57,10 +70,15 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithFromFile(b.FromFile),
 		bootstrap.WithRegistry(b.Registry),
 		bootstrap.WithPrinter(cfg.Printer),
+		bootstrap.WithComponents(b.Components),
 		bootstrap.WithToken(b.Token),
 		bootstrap.WithTransportType("https"),
 		bootstrap.WithDockerConfigPath(b.DockerconfigPath),
 		bootstrap.WithTarget(b.Target),
+		bootstrap.WithKubeClient(kubeClient),
+		bootstrap.WithRESTClientGetter(cfg.KubeConfigArgs),
+		bootstrap.WithInterval(b.Interval),
+		bootstrap.WithTimeout(b.Timeout),
 	)
 
 	return b.bootstrapper.Run(ctx)

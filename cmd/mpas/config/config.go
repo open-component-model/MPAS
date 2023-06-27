@@ -9,6 +9,7 @@ import (
 
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/spf13/pflag"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 // DefaultComponents is the list of components to include in the management repository by default.
@@ -19,10 +20,10 @@ var DefaultComponents = []string{
 
 // MpasConfig is the global configuration for the mpas CLI.
 type MpasConfig struct {
-	Kubeconfig       string
 	Printer          *printer.Printer
 	Timeout          string
 	DockerconfigPath string
+	KubeConfigArgs   *genericclioptions.ConfigFlags
 	ctx              context.Context
 }
 
@@ -41,7 +42,6 @@ func (m *MpasConfig) Context() context.Context {
 
 // AddFlags adds the global flags to the given flag set.
 func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
-	flags.StringVar(&m.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig file")
 	flags.StringVar(&m.Timeout, "timeout", "5m", "The timeout to use for operations")
 	flags.StringVar(&m.DockerconfigPath, "dockerconfig", "~/.docker/config.json", "The path to the docker config file")
 }
@@ -55,6 +55,7 @@ type BootstrapConfig struct {
 	Registry   string
 	Hostname   string
 	Target     string
+	Interval   string
 }
 
 // AddFlags adds the bootstrap flags to the given flag set.
@@ -66,6 +67,7 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas")
 	flags.StringVar(&m.Hostname, "hostname", "", "The hostname of the Git provider")
 	flags.StringVar(&m.Target, "target", ".", "The target path to use in the management repository to store the bootstrap component")
+	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")
 }
 
 // GithubConfig is the configuration for the Github bootstrap command.
