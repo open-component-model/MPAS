@@ -13,13 +13,9 @@ import (
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
-)
-
-const (
-	defaultghTokenVar    = "GITHUB_TOKEN"
-	defaultgiteaTokenVar = "GITEA_TOKEN"
 )
 
 func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
@@ -53,10 +49,10 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				DockerconfigPath: cfg.DockerconfigPath,
 				Target:           c.Target,
 				Hostname:         c.Hostname,
-				Components:       append(config.DefaultComponents, c.Components...),
+				Components:       append(env.Components, c.Components...),
 			}
 
-			token := os.Getenv(defaultghTokenVar)
+			token := os.Getenv(env.GithubTokenVar)
 			if token == "" {
 				token, err = passwdFromStdin("Github token: ")
 				if err != nil {
@@ -114,10 +110,10 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				DockerconfigPath: cfg.DockerconfigPath,
 				Target:           c.Target,
 				Hostname:         c.Hostname,
-				Components:       append(config.DefaultComponents, c.Components...),
+				Components:       append(env.Components, c.Components...),
 			}
 
-			token := os.Getenv(defaultgiteaTokenVar)
+			token := os.Getenv(env.GiteaTokenVar)
 			if token == "" {
 				token, err = passwdFromStdin("Gitea token: ")
 				if err != nil {

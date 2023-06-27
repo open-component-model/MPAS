@@ -10,14 +10,11 @@ import (
 	"os"
 
 	"github.com/open-component-model/mpas/cmd/mpas/config"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-)
-
-const (
-	defaultsNamespace = "mpas-system"
 )
 
 var (
@@ -53,7 +50,7 @@ func New(ctx context.Context, args []string) *cobra.Command {
 }
 
 func setDefaultNamespace(kubeConfigArgs *genericclioptions.ConfigFlags) error {
-	*kubeConfigArgs.Namespace = defaultsNamespace
+	*kubeConfigArgs.Namespace = env.DefaultsNamespace
 	fromEnv := os.Getenv("MPAS_SYSTEM_NAMESPACE")
 	if fromEnv != "" {
 		if e := validation.IsDNS1123Label(fromEnv); len(e) > 0 {

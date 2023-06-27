@@ -14,8 +14,10 @@ import (
 	"time"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
+	"github.com/open-component-model/mpas/pkg/kubeutils"
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -224,36 +226,28 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
 	}
 
+	fluxRef, ok := refs["flux"]
+	if !ok {
+		return fmt.Errorf("flux component not found")
+	}
+
+	b.printer.Printf("Installing %s with version %s\n",
+		printer.BoldBlue("flux"),
+		printer.BoldBlue(fluxRef.GetVersion()))
+	if err := b.installFlux(ctx, ociRepo, fluxRef); err != nil {
+		return fmt.Errorf("failed to install flux: %w", err)
+	}
+
+	delete(refs, "flux")
+
+	compNs := make(map[string][]string)
+
 	for comp, ref := range refs {
-		b.printer.Printf("Installing %s with version %s\n",
+		b.printer.Printf("Generating %s manifest with version %s\n",
 			printer.BoldBlue(comp),
 			printer.BoldBlue(ref.GetVersion()))
 
 		switch comp {
-		case "flux":
-			dir, err := mkdirTempDir("flux-install")
-			if err != nil {
-				return err
-			}
-			defer os.RemoveAll(dir)
-			inst, err := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo,
-				withBranch(b.defaultBranch),
-				withTarget(b.target),
-				withKubeClient(b.kubeclient),
-				withKubeConfig(b.restClientGetter),
-				withURL(b.url),
-				withNamespace("flux-system"),
-				withDir(dir),
-				withInterval(b.interval),
-				withTimeout(b.timeout),
-				withToken(b.token),
-			)
-			if err != nil {
-				return err
-			}
-			if err := inst.Install(ctx, comp); err != nil {
-				return err
-			}
 		case "ocm-controller":
 			dir, err := mkdirTempDir("ocm-controller-install")
 			if err != nil {
@@ -266,20 +260,155 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 				withComponentKubeClient(b.kubeclient),
 				withComponentNamespace("ocm-system"),
 				withComponentDir(dir),
+				withComponentGitRepository(b.repository),
+				withComponentKubeConfig(b.restClientGetter),
+				withComponentTimeout(b.timeout),
 			)
 			if err != nil {
 				return err
 			}
-			if err := inst.Install(ctx, "ocm-contoller-file"); err != nil {
+			if err := inst.Install(ctx, "ocm-controller-file"); err != nil {
 				return err
 			}
+			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
+		case "git-controller":
+			dir, err := mkdirTempDir("git-controller-install")
+			if err != nil {
+				return err
+			}
+			defer os.RemoveAll(dir)
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+				withComponentBranch(b.defaultBranch),
+				withComponentTarget(b.target),
+				withComponentKubeClient(b.kubeclient),
+				withComponentNamespace("ocm-system"),
+				withComponentDir(dir),
+				withComponentGitRepository(b.repository),
+				withComponentKubeConfig(b.restClientGetter),
+				withComponentTimeout(b.timeout),
+			)
+			if err != nil {
+				return err
+			}
+			if err := inst.Install(ctx, "git-controller-file"); err != nil {
+				return err
+			}
+			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
+		case "replication-controller":
+			dir, err := mkdirTempDir("replication-controller-install")
+			if err != nil {
+				return err
+			}
+			defer os.RemoveAll(dir)
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+				withComponentBranch(b.defaultBranch),
+				withComponentTarget(b.target),
+				withComponentKubeClient(b.kubeclient),
+				withComponentNamespace("ocm-system"),
+				withComponentDir(dir),
+				withComponentGitRepository(b.repository),
+				withComponentKubeConfig(b.restClientGetter),
+				withComponentTimeout(b.timeout),
+			)
+			if err != nil {
+				return err
+			}
+			if err := inst.Install(ctx, "replication-controller-file"); err != nil {
+				return err
+			}
+			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
+		case "mpas-product-controller":
+			dir, err := mkdirTempDir("mpas-product-controller-install")
+			if err != nil {
+				return err
+			}
+			defer os.RemoveAll(dir)
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+				withComponentBranch(b.defaultBranch),
+				withComponentTarget(b.target),
+				withComponentKubeClient(b.kubeclient),
+				withComponentNamespace("mpas-system"),
+				withComponentDir(dir),
+				withComponentGitRepository(b.repository),
+				withComponentKubeConfig(b.restClientGetter),
+				withComponentTimeout(b.timeout),
+			)
+			if err != nil {
+				return err
+			}
+			if err := inst.Install(ctx, "mpas-product-controller-file"); err != nil {
+				return err
+			}
+			compNs["mpas-system"] = append(compNs["mpas-system"], comp)
+		case "mpas-project-controller":
+			dir, err := mkdirTempDir("mpas-project-controller-install")
+			if err != nil {
+				return err
+			}
+			defer os.RemoveAll(dir)
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+				withComponentBranch(b.defaultBranch),
+				withComponentTarget(b.target),
+				withComponentKubeClient(b.kubeclient),
+				withComponentNamespace("mpas-system"),
+				withComponentDir(dir),
+				withComponentGitRepository(b.repository),
+				withComponentKubeConfig(b.restClientGetter),
+				withComponentTimeout(b.timeout),
+			)
+			if err != nil {
+				return err
+			}
+			if err := inst.Install(ctx, "mpas-project-controller-file"); err != nil {
+				return err
+			}
+			compNs["mpas-system"] = append(compNs["mpas-system"], comp)
 		default:
 			return fmt.Errorf("unknown component %q", comp)
 		}
 	}
 
-	b.printer.Printf("Bootstrap completed successfully\n")
+	if err := kubeutils.ReconcileKustomization(ctx, b.kubeclient, "flux-system", "flux-system"); err != nil {
+		return fmt.Errorf("failed to reconcile kustomization: %w", err)
+	}
 
+	b.printer.Printf("Waiting for components to be ready ...\n")
+	for ns, comps := range compNs {
+		if err := kubeutils.ReportHealth(ctx, b.restClientGetter, b.timeout, comps, ns); err != nil {
+			return fmt.Errorf("failed to report health: %w", err)
+		}
+	}
+
+	b.printer.Printf("\n")
+	b.printer.Printf("Bootstrap completed successfully!\n")
+
+	return nil
+}
+
+func (b *Bootstrap) installFlux(ctx context.Context, ociRepo ocm.Repository, ref compdesc.ComponentReference) error {
+	dir, err := mkdirTempDir("flux-install")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+	inst, err := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo,
+		withBranch(b.defaultBranch),
+		withTarget(b.target),
+		withKubeClient(b.kubeclient),
+		withKubeConfig(b.restClientGetter),
+		withURL(b.url),
+		withNamespace("flux-system"),
+		withDir(dir),
+		withInterval(b.interval),
+		withTimeout(b.timeout),
+		withToken(b.token),
+	)
+	if err != nil {
+		return err
+	}
+	if err := inst.Install(ctx, "flux"); err != nil {
+		return err
+	}
 	return nil
 }
 

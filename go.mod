@@ -18,6 +18,7 @@ require (
 	github.com/fluxcd/pkg/git/gogit v0.12.0
 	github.com/fluxcd/pkg/kustomize v1.3.3
 	github.com/fluxcd/pkg/runtime v0.38.1
+	github.com/fluxcd/pkg/ssa v0.28.2
 	github.com/fluxcd/source-controller/api v1.0.0-rc.5
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/mandelsoft/vfs v0.0.0-20230114230722-fb9b39ce80b9
@@ -36,8 +37,13 @@ require (
 	golang.org/x/term v0.8.0
 	golang.org/x/text v0.9.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.27.2
-	k8s.io/apimachinery v0.27.2
+	k8s.io/api v0.27.3
+	k8s.io/apiextensions-apiserver v0.27.3
+	k8s.io/apimachinery v0.27.3
+	k8s.io/cli-runtime v0.27.2
+	k8s.io/client-go v0.27.3
+	sigs.k8s.io/cli-utils v0.34.0
+	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/e2e-framework v0.1.0
 	sigs.k8s.io/kustomize/api v0.13.4
 	sigs.k8s.io/kustomize/kyaml v0.14.2
@@ -101,7 +107,6 @@ require (
 	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
 	github.com/fluxcd/pkg/apis/kustomize v1.1.0 // indirect
 	github.com/fluxcd/pkg/sourceignore v0.3.4 // indirect
-	github.com/fluxcd/pkg/ssa v0.28.1 // indirect
 	github.com/fluxcd/pkg/ssh v0.7.4 // indirect
 	github.com/fluxcd/pkg/tar v0.2.0 // indirect
 	github.com/fluxcd/pkg/version v0.2.2 // indirect
@@ -214,16 +219,11 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/apiextensions-apiserver v0.27.2 // indirect
-	k8s.io/cli-runtime v0.27.2 // indirect
-	k8s.io/client-go v0.27.2 // indirect
-	k8s.io/component-base v0.27.2 // indirect
+	k8s.io/component-base v0.27.3 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	k8s.io/kubectl v0.27.2 // indirect
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106 // indirect
-	sigs.k8s.io/cli-utils v0.34.0 // indirect
-	sigs.k8s.io/controller-runtime v0.15.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )

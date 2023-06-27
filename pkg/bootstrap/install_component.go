@@ -9,23 +9,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/fluxcd/go-git-providers/gitprovider"
 	"github.com/fluxcd/pkg/git"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/kubeutils"
 	cfd "github.com/open-component-model/ocm-controller/pkg/configdata"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	kustypes "sigs.k8s.io/kustomize/api/types"
-)
-
-var (
-	defaultOCMHost        = "ghcr.io/open-component-model/ocm"
-	defaultOCMInstallPath = "ocm-system"
 )
 
 type componentOptions struct {
@@ -36,15 +33,12 @@ type componentOptions struct {
 
 	gitRepository gitprovider.UserRepository
 
-	url       string
 	branch    string
 	target    string
 	namespace string
-	token     string
 	dir       string
 
-	interval time.Duration
-	timeout  time.Duration
+	timeout time.Duration
 
 	signature             git.Signature
 	commitMessageAppendix string
@@ -73,12 +67,6 @@ func withComponentTimeout(timeout time.Duration) componentOption {
 	}
 }
 
-func withComponentToken(token string) componentOption {
-	return func(o *componentOptions) {
-		o.token = token
-	}
-}
-
 func withComponentKubeConfig(kubeconfig genericclioptions.RESTClientGetter) componentOption {
 	return func(o *componentOptions) {
 		o.restClientGetter = kubeconfig
@@ -94,12 +82,6 @@ func withComponentKubeClient(kubeClient client.Client) componentOption {
 func withComponentGitRepository(gitRepository gitprovider.UserRepository) componentOption {
 	return func(o *componentOptions) {
 		o.gitRepository = gitRepository
-	}
-}
-
-func withComponentURL(url string) componentOption {
-	return func(o *componentOptions) {
-		o.url = url
 	}
 }
 
@@ -168,7 +150,7 @@ func (c *componentInstall) Install(ctx context.Context, component string) error 
 		return fmt.Errorf("failed to get component resource or ocm config")
 	}
 
-	kfile, kus, err := c.generateKustomization(componentResource, ocmConfig, component)
+	kfile, kus, err := c.generateKustomization(componentResource, ocmConfig)
 	if err != nil {
 		return fmt.Errorf("failed to generate kustomization: %w", err)
 	}
@@ -183,7 +165,7 @@ func (c *componentInstall) Install(ctx context.Context, component string) error 
 		return fmt.Errorf("failed to generate component yaml: %w", err)
 	}
 
-	err = c.reconcileComponents(ctx, string(res))
+	err = c.reconcileComponents(ctx, res)
 	if err != nil {
 		return fmt.Errorf("failed to reconcile components: %w", err)
 	}
@@ -191,35 +173,29 @@ func (c *componentInstall) Install(ctx context.Context, component string) error 
 	return nil
 }
 
-func (c *componentInstall) reconcileComponents(ctx context.Context, content string) error {
-	if c.mustInstallNS(ctx) {
-		path := filepath.Join(c.target, c.namespace, "namespace.yaml")
-		nsContent := fmt.Sprintf(`apiVersion: v1
-kind: Namespace
-metadata:
-	name: %s
-`, c.namespace)
-		if _, err := c.gitRepository.Commits().Create(ctx,
-			c.branch,
-			c.commitMessageAppendix,
-			[]gitprovider.CommitFile{
-				{
-					Path:    &path,
-					Content: &nsContent,
-				},
-			}); err != nil {
-			return fmt.Errorf("failed to create namespace: %w", err)
+func (c *componentInstall) reconcileComponents(ctx context.Context, content []byte) error {
+	if !c.mustInstallNS(ctx) {
+		// remove ns from content
+		objects, err := kubeutils.YamlToUnstructructured(content)
+		if err != nil {
+			return fmt.Errorf("failed to convert yaml to unstructured: %w", err)
+		}
+
+		content, err = kubeutils.UnstructuredToYaml(kubeutils.FilterUnstructured(objects, kubeutils.NSFilter(c.namespace)))
+		if err != nil {
+			return fmt.Errorf("failed to convert unstructured to yaml: %w", err)
 		}
 	}
 
-	path := filepath.Join(c.target, c.namespace, fmt.Sprintf("%s.yaml", c.componentName))
+	data := string(content)
+	path := filepath.Join(c.target, c.namespace, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2]))
 	if _, err := c.gitRepository.Commits().Create(ctx,
 		c.branch,
 		c.commitMessageAppendix,
 		[]gitprovider.CommitFile{
 			{
 				Path:    &path,
-				Content: &content,
+				Content: &data,
 			},
 		}); err != nil {
 		return fmt.Errorf("failed to create component: %w", err)
@@ -232,19 +208,19 @@ func (c *componentInstall) mustInstallNS(ctx context.Context) bool {
 	return kubeutils.MustInstallNS(ctx, c.kubeClient, c.namespace)
 }
 
-func (c *componentInstall) generateKustomization(componentResource []byte, ocmConfig []byte, name string) (string, kustypes.Kustomization, error) {
-	if err := os.WriteFile(filepath.Join(c.dir, fmt.Sprintf("%s.yaml", name)), componentResource, os.ModePerm); err != nil {
+func (c *componentInstall) generateKustomization(componentResource []byte, ocmConfig []byte) (string, kustypes.Kustomization, error) {
+	if err := os.WriteFile(filepath.Join(c.dir, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2])), componentResource, os.ModePerm); err != nil {
 		return "", kustypes.Kustomization{}, err
 	}
 
-	return genKus(c.dir, ocmConfig, fmt.Sprintf("./%s.yaml", name))
+	return genKus(c.dir, ocmConfig, fmt.Sprintf("./%s.yaml", strings.Split(c.componentName, "/")[2]))
 }
 
 func (c *componentInstall) generateComponentYaml(kconfig *cfd.ConfigData, imagesResources map[string]nameTag, kus kustypes.Kustomization, kfile string) ([]byte, error) {
 	for _, loc := range kconfig.Localization {
 		image := imagesResources[loc.Resource.Name]
 		kus.Images = append(kus.Images, kustypes.Image{
-			Name:    fmt.Sprintf("%s/%s", defaultOCMHost, loc.Resource.Name),
+			Name:    fmt.Sprintf("%s/%s", env.DefaultOCMHost, loc.Resource.Name),
 			NewName: image.Name,
 			NewTag:  image.Tag,
 		})

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
@@ -18,20 +19,15 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 )
 
-const (
-	// DefaultBootstrapComponents is the default bootstrap components
-	defaultBootstrapComponent = "ocm.software/mpas/bootstrap"
-)
-
 func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo ocm.Repository) (map[string]compdesc.ComponentReference, error) {
 	var references map[string]compdesc.ComponentReference
-	c, err := ociRepo.LookupComponent(defaultBootstrapComponent)
+	c, err := ociRepo.LookupComponent(env.DefaultBootstrapComponent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookup component %q: %w", defaultBootstrapComponent, err)
+		return nil, fmt.Errorf("failed to lookup component %q: %w", env.DefaultBootstrapComponent, err)
 	}
 	vnames, err := c.ListVersions()
 	if err != nil {
-		return nil, fmt.Errorf("failed to list versions of component %q: %w", defaultBootstrapComponent, err)
+		return nil, fmt.Errorf("failed to list versions of component %q: %w", env.DefaultBootstrapComponent, err)
 	}
 	vs := make([]*semver.Version, len(vnames))
 	for i, vname := range vnames {
@@ -45,7 +41,7 @@ func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo ocm.Repository) (m
 	ver := vs[len(vs)-1]
 	cv, err := c.LookupVersion(ver.Original())
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookup version %q of component %q: %w", ver.String(), defaultBootstrapComponent, err)
+		return nil, fmt.Errorf("failed to lookup version %q of component %q: %w", ver.String(), env.DefaultBootstrapComponent, err)
 	}
 
 	references = make(map[string]compdesc.ComponentReference, len(b.components))

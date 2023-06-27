@@ -13,16 +13,11 @@ import (
 	"strings"
 
 	cgen "github.com/open-component-model/mpas/pkg/componentsgen"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/ocm"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-)
-
-const (
-	componentNamePrefix = "ocm.software/mpas"
-	fluxBinURL          = "https://github.com/fluxcd/flux2/releases/download"
-	ocmBinURL           = "https://github.com/open-component-model/ocm/releases/download"
 )
 
 var (
@@ -73,7 +68,7 @@ func New(octx om.Context, username, token, tmpDir, repositoryURL string, ctf om.
 // ReleaseBootstrapComponent releases the bootstrap component.
 func (r *Releaser) ReleaseBootstrapComponent(ctx context.Context, components map[string]*ocm.Component, bootstrapVersion string) error {
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/bootstrap", componentNamePrefix),
+		fmt.Sprintf("%s/bootstrap", env.ComponentNamePrefix),
 		bootstrapVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -112,7 +107,7 @@ func (r *Releaser) ReleaseOcmControllerComponent(ctx context.Context, ocmVersion
 		return nil, fmt.Errorf("failed to generate ocm-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/ocm-controller", componentNamePrefix),
+		fmt.Sprintf("%s/ocm-controller", env.ComponentNamePrefix),
 		ocmVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -136,7 +131,7 @@ func (r *Releaser) ReleaseGitControllerComponent(ctx context.Context, gitVersion
 		return nil, fmt.Errorf("failed to generate git-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/git-controller", componentNamePrefix),
+		fmt.Sprintf("%s/git-controller", env.ComponentNamePrefix),
 		gitVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -160,7 +155,7 @@ func (r *Releaser) ReleaseReplicationControllerComponent(ctx context.Context, re
 		return nil, fmt.Errorf("failed to generate replication-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/replication-controller", componentNamePrefix),
+		fmt.Sprintf("%s/replication-controller", env.ComponentNamePrefix),
 		replicationVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -184,7 +179,7 @@ func (r *Releaser) ReleaseMpasProductControllerComponent(ctx context.Context, mp
 		return nil, fmt.Errorf("failed to generate mpas-product-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/mpas-product-controller", componentNamePrefix),
+		fmt.Sprintf("%s/mpas-product-controller", env.ComponentNamePrefix),
 		mpasProductVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -208,7 +203,7 @@ func (r *Releaser) ReleaseMpasProjectControllerComponent(ctx context.Context, mp
 		return nil, fmt.Errorf("failed to generate mpas-project-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/mpas-project-controller", componentNamePrefix),
+		fmt.Sprintf("%s/mpas-project-controller", env.ComponentNamePrefix),
 		mpasProjectVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -232,7 +227,7 @@ func (r *Releaser) ReleaseFluxComponent(ctx context.Context, fluxVersion, comp s
 		return nil, fmt.Errorf("failed to generate flux manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/flux", componentNamePrefix),
+		fmt.Sprintf("%s/flux", env.ComponentNamePrefix),
 		fluxVersion,
 		ocm.WithProvider("fluxcd"),
 		ocm.WithUsername(r.username),
@@ -256,15 +251,15 @@ func (r *Releaser) ReleaseFluxCliComponent(ctx context.Context, fluxVersion, com
 	}
 	ver := strings.TrimPrefix(fluxVersion, "v")
 
-	binURL := fmt.Sprintf("%s/v%s/flux_%s_%s_%s.tar.gz", fluxBinURL, ver, ver, targetOS, targetArch)
-	hashURL := fmt.Sprintf("%s/v%s/flux_%s_checksums.txt", fluxBinURL, ver, ver)
+	binURL := fmt.Sprintf("%s/v%s/flux_%s_%s_%s.tar.gz", env.FluxBinURL, ver, ver, targetOS, targetArch)
+	hashURL := fmt.Sprintf("%s/v%s/flux_%s_checksums.txt", env.FluxBinURL, ver, ver)
 	b, err := getBinary(ctx, fluxVersion, r.tmpDir, binURL, hashURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get flux-cli binary: %v", err)
 	}
 
 	component, err = ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/flux-cli", componentNamePrefix),
+		fmt.Sprintf("%s/flux-cli", env.ComponentNamePrefix),
 		fluxVersion,
 		ocm.WithProvider("fluxcd"),
 		ocm.WithUsername(r.username),
@@ -305,15 +300,15 @@ func (r *Releaser) ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, co
 	if targetArch == "amd64" {
 		targetArch = "x86_64"
 	}
-	binURL := fmt.Sprintf("%s/v%s/ocm_%s_%s.tar.gz", ocmBinURL, ver, targetOS, targetArch)
-	hashURL := fmt.Sprintf("%s/v%s/checksums.txt", ocmBinURL, ver)
+	binURL := fmt.Sprintf("%s/v%s/ocm_%s_%s.tar.gz", env.OcmBinURL, ver, targetOS, targetArch)
+	hashURL := fmt.Sprintf("%s/v%s/checksums.txt", env.OcmBinURL, ver)
 	b, err := getBinary(ctx, ocmCliVersion, r.tmpDir, binURL, hashURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ocm-cli binary: %v", err)
 	}
 
 	component, err = ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/ocm-cli", componentNamePrefix),
+		fmt.Sprintf("%s/ocm-cli", env.ComponentNamePrefix),
 		ocmCliVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),

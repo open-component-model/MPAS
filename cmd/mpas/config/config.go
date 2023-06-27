@@ -12,12 +12,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-// DefaultComponents is the list of components to include in the management repository by default.
-var DefaultComponents = []string{
-	"ocm-controller",
-	"flux",
-}
-
 // MpasConfig is the global configuration for the mpas CLI.
 type MpasConfig struct {
 	Printer          *printer.Printer

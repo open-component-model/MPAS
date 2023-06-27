@@ -29,6 +29,7 @@ import (
 	"github.com/fluxcd/pkg/git/repository"
 	"github.com/fluxcd/pkg/kustomize"
 	rateoption "github.com/fluxcd/pkg/runtime/client"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/kubeutils"
 	cfd "github.com/open-component-model/ocm-controller/pkg/configdata"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
@@ -40,16 +41,6 @@ import (
 	kustypes "sigs.k8s.io/kustomize/api/types"
 	"sigs.k8s.io/kustomize/kyaml/filesys"
 	"sigs.k8s.io/yaml"
-)
-
-const (
-	defaultFluxHost = "ghrc.io/fluxcd"
-)
-
-var (
-	_                   Installer = &fluxInstall{}
-	defaultKubeAPIQPS             = 50.0
-	defaultKubeAPIBurst           = 300
 )
 
 type fluxOptions struct {
@@ -209,7 +200,7 @@ func NewFluxInstall(name, version, owner string, repository ocm.Repository, opts
 		flux.WithBranch(f.branch),
 		flux.WithRepositoryURL(f.url),
 		flux.WithLogger(log.NopLogger{}),
-		flux.WithKubeconfig(f.restClientGetter, &rateoption.Options{QPS: float32(defaultKubeAPIQPS), Burst: defaultKubeAPIBurst}),
+		flux.WithKubeconfig(f.restClientGetter, &rateoption.Options{QPS: float32(env.DefaultKubeAPIQPS), Burst: env.DefaultKubeAPIBurst}),
 	)
 	if err != nil {
 		return nil, err
@@ -310,7 +301,7 @@ func (f *fluxInstall) generateGOTKComponent(kconfig *cfd.ConfigData, imagesResou
 	for _, loc := range kconfig.Localization {
 		image := imagesResources[loc.Resource.Name]
 		kus.Images = append(kus.Images, kustypes.Image{
-			Name:    fmt.Sprintf("%s/%s", defaultFluxHost, loc.Resource.Name),
+			Name:    fmt.Sprintf("%s/%s", env.DefaultFluxHost, loc.Resource.Name),
 			NewName: image.Name,
 			NewTag:  image.Tag,
 		})
@@ -560,14 +551,9 @@ func getResources(cv ocm.ComponentVersionAccess, componentName string) ([]byte, 
 	for _, resource := range resources {
 		switch resource.Meta().GetName() {
 		case componentName:
-			fmt.Println("type", resource.Meta().GetType())
-			fmt.Println("name", resource.Meta().GetName())
-			if resource.Meta().GetType() == "file" {
-				fmt.Println("component name", componentName)
-				componentResource, err = getResourceContent(resource)
-				if err != nil {
-					return nil, nil, nil, nil, err
-				}
+			componentResource, err = getResourceContent(resource)
+			if err != nil {
+				return nil, nil, nil, nil, err
 			}
 		case "ocm-config":
 			ocmConfig, err = getResourceContent(resource)
