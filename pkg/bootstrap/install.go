@@ -7,6 +7,6 @@ package bootstrap
 import "context"
 
 type Installer interface {
-	Install(ctx context.Context) error
+	Install(ctx context.Context, component string) error
 	Cleanup(ctx context.Context) error
 }

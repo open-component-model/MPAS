@@ -24,7 +24,6 @@ import (
 	"github.com/fluxcd/flux2/v2/pkg/manifestgen/install"
 	"github.com/fluxcd/flux2/v2/pkg/manifestgen/sourcesecret"
 	syncOpts "github.com/fluxcd/flux2/v2/pkg/manifestgen/sync"
-	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1"
 	"github.com/fluxcd/pkg/git"
 	"github.com/fluxcd/pkg/git/gogit"
 	"github.com/fluxcd/pkg/git/repository"
@@ -34,7 +33,6 @@ import (
 	cfd "github.com/open-component-model/ocm-controller/pkg/configdata"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
-	"k8s.io/apimachinery/pkg/types"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,11 +43,7 @@ import (
 )
 
 const (
-	defaultFluxHost   = "ghrc.io/fluxcd"
-	localizationField = "localization"
-	fileField         = "file"
-	imageField        = "image"
-	resourceField     = "resource/name"
+	defaultFluxHost = "ghrc.io/fluxcd"
 )
 
 var (
@@ -226,13 +220,13 @@ func NewFluxInstall(name, version, owner string, repository ocm.Repository, opts
 	return f, nil
 }
 
-func (f *fluxInstall) Install(ctx context.Context) error {
+func (f *fluxInstall) Install(ctx context.Context, component string) error {
 	cv, err := GetComponentVersion(f.repository, f.componentName, f.version)
 	if err != nil {
 		return fmt.Errorf("failed to get component version: %w", err)
 	}
 
-	fluxResource, ocmConfig, imagesResources, comps, err := getResources(cv)
+	fluxResource, ocmConfig, imagesResources, comps, err := getResources(cv, component)
 	if err != nil {
 		return fmt.Errorf("failed to get resources: %w", err)
 	}
@@ -243,7 +237,12 @@ func (f *fluxInstall) Install(ctx context.Context) error {
 		return fmt.Errorf("flux or ocm-config resource not found")
 	}
 
-	kfile, kus, kconfig, err := f.generateKustomization(fluxResource, ocmConfig)
+	kfile, kus, err := f.generateKustomization(fluxResource, ocmConfig)
+	if err != nil {
+		return err
+	}
+
+	kconfig, err := unMarshallConfig(ocmConfig)
 	if err != nil {
 		return err
 	}
@@ -317,6 +316,10 @@ func (f *fluxInstall) generateGOTKComponent(kconfig *cfd.ConfigData, imagesResou
 		})
 	}
 
+	return buildKustomization(kus, kfile, f.dir, &f.mu)
+}
+
+func buildKustomization(kus kustypes.Kustomization, kfile, dir string, mu sync.Locker) ([]byte, error) {
 	manifest, err := yaml.Marshal(kus)
 	if err != nil {
 		return nil, err
@@ -329,10 +332,10 @@ func (f *fluxInstall) generateGOTKComponent(kconfig *cfd.ConfigData, imagesResou
 
 	fs := filesys.MakeFsOnDisk()
 
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 
-	m, err := kustomize.Build(fs, f.dir)
+	m, err := kustomize.Build(fs, dir)
 	if err != nil {
 		return nil, fmt.Errorf("kustomize build failed: %w", err)
 	}
@@ -344,37 +347,12 @@ func (f *fluxInstall) generateGOTKComponent(kconfig *cfd.ConfigData, imagesResou
 	return res, nil
 }
 
-func (f *fluxInstall) generateKustomization(fluxResource []byte, ocmConfig []byte) (string, kustypes.Kustomization, *cfd.ConfigData, error) {
+func (f *fluxInstall) generateKustomization(fluxResource []byte, ocmConfig []byte) (string, kustypes.Kustomization, error) {
 	if err := os.WriteFile(filepath.Join(f.dir, "gotk-components.yaml"), fluxResource, os.ModePerm); err != nil {
-		return "", kustypes.Kustomization{}, nil, err
+		return "", kustypes.Kustomization{}, err
 	}
 
-	kfile, err := generateKustomizationFile(f.dir, "./gotk-components.yaml")
-	if err != nil {
-		return "", kustypes.Kustomization{}, nil, err
-	}
-
-	data, err := os.ReadFile(kfile)
-	if err != nil {
-		return "", kustypes.Kustomization{}, nil, err
-	}
-
-	kus := kustypes.Kustomization{
-		TypeMeta: kustypes.TypeMeta{
-			APIVersion: kustypes.KustomizationVersion,
-			Kind:       kustypes.KustomizationKind,
-		},
-	}
-
-	if err := yaml.Unmarshal(data, &kus); err != nil {
-		return "", kustypes.Kustomization{}, nil, err
-	}
-
-	kconfig, err := unMarshallConfig(ocmConfig)
-	if err != nil {
-		return "", kustypes.Kustomization{}, nil, err
-	}
-	return kfile, kus, kconfig, nil
+	return genKus(f.dir, ocmConfig, "./gotk-components.yaml")
 }
 
 func (f *fluxInstall) Cleanup(ctx context.Context) error {
@@ -412,15 +390,7 @@ func (f *fluxInstall) reconcileComponents(ctx context.Context, path, content str
 }
 
 func (f *fluxInstall) mustInstallManifests(ctx context.Context) bool {
-	namespacedName := types.NamespacedName{
-		Namespace: f.namespace,
-		Name:      f.namespace,
-	}
-	var k kustomizev1.Kustomization
-	if err := f.kubeClient.Get(ctx, namespacedName, &k); err != nil {
-		return true
-	}
-	return k.Status.LastAppliedRevision == ""
+	return kubeutils.MustInstallKustomization(ctx, f.kubeClient, f.namespace, f.namespace)
 }
 
 func (f *fluxInstall) commitAndPushComponents(ctx context.Context, path string, content string) (err error) {
@@ -494,6 +464,31 @@ func (f *fluxInstall) cleanGitRepoDir() (err error) {
 	return
 }
 
+func genKus(dir string, ocmConfig []byte, resourceName string) (string, kustypes.Kustomization, error) {
+	kfile, err := generateKustomizationFile(dir, resourceName)
+	if err != nil {
+		return "", kustypes.Kustomization{}, err
+	}
+
+	data, err := os.ReadFile(kfile)
+	if err != nil {
+		return "", kustypes.Kustomization{}, err
+	}
+
+	kus := kustypes.Kustomization{
+		TypeMeta: kustypes.TypeMeta{
+			APIVersion: kustypes.KustomizationVersion,
+			Kind:       kustypes.KustomizationKind,
+		},
+	}
+
+	if err := yaml.Unmarshal(data, &kus); err != nil {
+		return "", kustypes.Kustomization{}, err
+	}
+
+	return kfile, kus, nil
+}
+
 func generateKustomizationFile(path, resource string) (string, error) {
 	kfile := filepath.Join(path, konfig.DefaultKustomizationFileName())
 	f, err := os.Create(kfile)
@@ -553,21 +548,26 @@ func GetComponentVersion(repository ocm.Repository, componentName, version strin
 	return cv, nil
 }
 
-func getResources(cv ocm.ComponentVersionAccess) ([]byte, []byte, map[string]nameTag, []string, error) {
+func getResources(cv ocm.ComponentVersionAccess, componentName string) ([]byte, []byte, map[string]nameTag, []string, error) {
 	resources := cv.GetResources()
 	var (
-		fluxResource    []byte
-		ocmConfig       []byte
-		imagesResources = make(map[string]nameTag, 0)
-		comps           = make([]string, 0)
-		err             error
+		componentResource []byte
+		ocmConfig         []byte
+		imagesResources   = make(map[string]nameTag, 0)
+		comps             = make([]string, 0)
+		err               error
 	)
 	for _, resource := range resources {
 		switch resource.Meta().GetName() {
-		case "flux":
-			fluxResource, err = getResourceContent(resource)
-			if err != nil {
-				return nil, nil, nil, nil, err
+		case componentName:
+			fmt.Println("type", resource.Meta().GetType())
+			fmt.Println("name", resource.Meta().GetName())
+			if resource.Meta().GetType() == "file" {
+				fmt.Println("component name", componentName)
+				componentResource, err = getResourceContent(resource)
+				if err != nil {
+					return nil, nil, nil, nil, err
+				}
 			}
 		case "ocm-config":
 			ocmConfig, err = getResourceContent(resource)
@@ -588,7 +588,7 @@ func getResources(cv ocm.ComponentVersionAccess) ([]byte, []byte, map[string]nam
 			}
 		}
 	}
-	return fluxResource, ocmConfig, imagesResources, comps, nil
+	return componentResource, ocmConfig, imagesResources, comps, nil
 }
 
 func getResourceContent(resource ocm.ResourceAccess) ([]byte, error) {

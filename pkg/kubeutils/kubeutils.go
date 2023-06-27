@@ -5,6 +5,7 @@
 package kubeutils
 
 import (
+	"context"
 	"fmt"
 
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1"
@@ -18,6 +19,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,4 +69,27 @@ func KubeClient(rcg genericclioptions.RESTClientGetter) (client.WithWatch, error
 	}
 
 	return kubeClient, nil
+}
+
+func MustInstallKustomization(ctx context.Context, kubeClient client.Client, name, namespace string) bool {
+	namespacedName := types.NamespacedName{
+		Namespace: namespace,
+		Name:      name,
+	}
+	var k kustomizev1.Kustomization
+	if err := kubeClient.Get(ctx, namespacedName, &k); err != nil {
+		return true
+	}
+	return k.Status.LastAppliedRevision == ""
+}
+
+func MustInstallNS(ctx context.Context, kubeClient client.Client, namespace string) bool {
+	namespacedName := types.NamespacedName{
+		Name: namespace,
+	}
+	var ns corev1.Namespace
+	if err := kubeClient.Get(ctx, namespacedName, &ns); err != nil {
+		return true
+	}
+	return false
 }

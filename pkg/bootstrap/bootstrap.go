@@ -251,10 +251,28 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			if err := inst.Install(ctx); err != nil {
+			if err := inst.Install(ctx, comp); err != nil {
 				return err
 			}
 		case "ocm-controller":
+			dir, err := mkdirTempDir("ocm-controller-install")
+			if err != nil {
+				return err
+			}
+			defer os.RemoveAll(dir)
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+				withComponentBranch(b.defaultBranch),
+				withComponentTarget(b.target),
+				withComponentKubeClient(b.kubeclient),
+				withComponentNamespace("ocm-system"),
+				withComponentDir(dir),
+			)
+			if err != nil {
+				return err
+			}
+			if err := inst.Install(ctx, "ocm-contoller-file"); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("unknown component %q", comp)
 		}
