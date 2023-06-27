@@ -5,11 +5,12 @@
 package ocm
 
 import (
+	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
+	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/stretchr/testify/assert"
@@ -19,20 +20,25 @@ import (
 func Test_OCM(t *testing.T) {
 	tmpdir := t.TempDir()
 	name := "github.com/ocm/test"
-	archivePath := path.Join(tmpdir, "ocm-test")
 	octx := om.New(datacontext.MODE_SHARED)
-	comp := NewComponent(octx, name, "v0.8.3",
+	comp, err := NewComponent(octx, name, "v0.8.3",
 		WithProvider("ocm"),
-		WithArchivePath(archivePath),
 		WithRepositoryURL("ghcr.io/ocm/test"),
 		WithUsername("my-user"),
 		WithToken("my-token"))
+	require.NoError(t, err)
 	assert.Equal(t, name, comp.Name)
 	assert.Equal(t, "v0.8.3", comp.Version)
-	assert.Equal(t, archivePath, comp.archivePath)
 
-	err := comp.CreateComponentArchive()
+	// create transfert archive
+	ctf, err := CreateCTF(octx, fmt.Sprintf("%s/%s", tmpdir, "ctf"), accessio.FormatDirectory)
 	require.NoError(t, err)
+	defer ctf.Close()
+
+	// add component to transfert archive
+	err = comp.AddToCTF(ctf)
+	require.NoError(t, err)
+	defer comp.Close()
 
 	text := []byte("hello world")
 	fPath, err := writeFile(tmpdir, text)
