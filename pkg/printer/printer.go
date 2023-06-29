@@ -7,20 +7,39 @@ package printer
 import (
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/fatih/color"
+	"github.com/theckman/yacspin"
 )
 
 // Printer is a wrapper around the fmt package to print to a defined output.
 type Printer struct {
-	output io.Writer
+	output  io.Writer
+	spinner *yacspin.Spinner
 }
 
 // Newprinter returns a new Printer.
-func Newprinter(format string, output io.Writer) *Printer {
-	return &Printer{
-		output: output,
+func Newprinter(output io.Writer) (*Printer, error) {
+	cfg := yacspin.Config{
+		Frequency:         200 * time.Millisecond,
+		CharSet:           yacspin.CharSets[26],
+		Prefix:            " ",
+		Suffix:            " ",
+		SuffixAutoColon:   true,
+		StopCharacter:     "✓",
+		StopColors:        []string{"fgGreen"},
+		StopFailCharacter: "✗",
+		StopFailColors:    []string{"fgRed"},
 	}
+	spinner, err := yacspin.New(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create spinner: %w", err)
+	}
+	return &Printer{
+		output:  output,
+		spinner: spinner,
+	}, nil
 }
 
 // Printf is a convenience method to Printf to the defined output.
@@ -44,6 +63,35 @@ func (p *Printer) out() io.Writer {
 		return p.output
 	}
 	return io.Discard
+}
+
+func (p *Printer) startSpinner() error {
+	if p.spinner.Status() == yacspin.SpinnerStopped {
+		err := p.spinner.Start()
+		if err != nil {
+			return fmt.Errorf("failed to start spinner: %w", err)
+		}
+	}
+	return nil
+}
+
+// PrintSpinner starts a spinner and returns a function to stop it.
+func (p *Printer) PrintSpinner(message string) error {
+	p.spinner.Message(message)
+	p.spinner.StopMessage(message)
+	err := p.startSpinner()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Printer) StopSpinner() error {
+	err := p.spinner.Stop()
+	if err != nil {
+		return fmt.Errorf("failed to stop spinner: %w", err)
+	}
+	return nil
 }
 
 // BoldBlue returns a string formatted with blue and bold.

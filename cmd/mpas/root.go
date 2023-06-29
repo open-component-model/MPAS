@@ -9,12 +9,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-logr/logr"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
 	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
@@ -22,9 +24,13 @@ var (
 )
 
 // New returns a new cobra.Command for mpas
-func New(ctx context.Context, args []string) *cobra.Command {
+func New(ctx context.Context, args []string) (*cobra.Command, error) {
+	p, err := printer.Newprinter(defaultOutput)
+	if err != nil {
+		return nil, err
+	}
 	cfg := &config.MpasConfig{
-		Printer: printer.Newprinter("", defaultOutput),
+		Printer: p,
 	}
 	cmd := &cobra.Command{
 		Use:           "mpas",
@@ -40,13 +46,24 @@ func New(ctx context.Context, args []string) *cobra.Command {
 	cfg.SetContext(ctx)
 	cfg.KubeConfigArgs = genericclioptions.NewConfigFlags(false)
 	cfg.AddFlags(cmd.PersistentFlags())
-	setDefaultNamespace(cfg.KubeConfigArgs)
+	err = setDefaultNamespace(cfg.KubeConfigArgs)
+	if err != nil {
+		return nil, err
+	}
 	cfg.KubeConfigArgs.AddFlags(cmd.PersistentFlags())
 
 	cmd.AddCommand(NewBootstrap(cfg))
 
 	cmd.InitDefaultHelpCmd()
-	return cmd
+
+	// This is required because controller-runtime expects its consumers to
+	// set a logger through log.SetLogger within 30 seconds of the program's
+	// initalization. If not set, the entire debug stack is printed as an
+	// error, see: https://github.com/kubernetes-sigs/controller-runtime/blob/ed8be90/pkg/log/log.go#L59
+	// Since we have our own logging and don't care about controller-runtime's
+	// logger, we configure it's logger to do nothing.
+	ctrllog.SetLogger(logr.New(ctrllog.NullLogSink{}))
+	return cmd, nil
 }
 
 func setDefaultNamespace(kubeConfigArgs *genericclioptions.ConfigFlags) error {

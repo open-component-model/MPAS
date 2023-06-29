@@ -278,14 +278,13 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 	}
 
 	var healthErr error
-	if err := f.ReportKustomizationHealth(ctx, syncOpts, f.interval, f.timeout); err != nil {
+	if err := f.ReportKustomizationHealth(ctx, syncOpts, env.DefaultPollInterval, f.timeout); err != nil {
 		healthErr = errors.Join(healthErr, err)
 	}
 
 	installOpts := install.Options{
 		Namespace:  f.namespace,
 		Components: f.components,
-		LogLevel:   "info",
 	}
 	if err := f.ReportComponentsHealth(ctx, installOpts, f.timeout); err != nil {
 		healthErr = errors.Join(healthErr, err)

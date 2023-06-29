@@ -4,18 +4,19 @@
 
 package env
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 const (
 	DefaultFluxVer                  = "v2.0.0-rc.5"
-	DefaultOcmControllerVer         = "v0.8.3"
+	DefaultOcmControllerVer         = "v0.8.4"
 	DefaultGitControllerVer         = "v0.4.1"
-	DefaultReplicationVer           = "v0.3.0"
+	DefaultReplicationVer           = "v0.3.1"
 	DefaultMpasProductControllerVer = "v0.1.0"
 	DefaultMpasProjectControllerVer = "v0.1.1"
 	DefaultOcmCliVer                = "v0.2.0"
-	DefaultKubeAPIQPS               = 50.0
-	DefaultKubeAPIBurst             = 300
 )
 
 const (
@@ -47,4 +48,10 @@ var (
 		"ocm-cli",
 	}
 	DefaultBootstrapComponent = fmt.Sprintf("%s/bootstrap", ComponentNamePrefix)
+)
+
+var (
+	DefaultKubeAPIQPS   float32 = 50.0
+	DefaultKubeAPIBurst         = 300
+	DefaultPollInterval         = 2 * time.Second
 )

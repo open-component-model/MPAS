@@ -211,7 +211,18 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	b.printer.Printf("Running %s ...\n",
 		printer.BoldBlue("mpas bootstrap"))
 
+	err := b.printer.PrintSpinner(fmt.Sprintf("Preparing Management repository %s with branch %s and visibility %s",
+		printer.BoldBlue(b.repositoryName),
+		printer.BoldBlue(b.defaultBranch),
+		printer.BoldBlue(b.visibility)))
+	if err != nil {
+		return err
+	}
 	if err := b.reconcileManagementRepository(ctx); err != nil {
+		return err
+	}
+
+	if err := b.printer.StopSpinner(); err != nil {
 		return err
 	}
 
@@ -231,21 +242,29 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("flux component not found")
 	}
 
-	b.printer.Printf("Installing %s with version %s\n",
+	err = b.printer.PrintSpinner(fmt.Sprintf("Installing %s with version %s",
 		printer.BoldBlue("flux"),
-		printer.BoldBlue(fluxRef.GetVersion()))
+		printer.BoldBlue(fluxRef.GetVersion())))
+	if err != nil {
+		return err
+	}
 	if err := b.installFlux(ctx, ociRepo, fluxRef); err != nil {
 		return fmt.Errorf("failed to install flux: %w", err)
 	}
-
+	if err := b.printer.StopSpinner(); err != nil {
+		return err
+	}
 	delete(refs, "flux")
 
 	compNs := make(map[string][]string)
 
 	for comp, ref := range refs {
-		b.printer.Printf("Generating %s manifest with version %s\n",
+		err := b.printer.PrintSpinner(fmt.Sprintf("Generating %s manifest with version %s",
 			printer.BoldBlue(comp),
-			printer.BoldBlue(ref.GetVersion()))
+			printer.BoldBlue(ref.GetVersion())))
+		if err != nil {
+			return err
+		}
 
 		switch comp {
 		case "ocm-controller":
@@ -254,7 +273,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 				return err
 			}
 			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
 				withComponentBranch(b.defaultBranch),
 				withComponentTarget(b.target),
 				withComponentKubeClient(b.kubeclient),
@@ -277,7 +296,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 				return err
 			}
 			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
 				withComponentBranch(b.defaultBranch),
 				withComponentTarget(b.target),
 				withComponentKubeClient(b.kubeclient),
@@ -300,7 +319,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 				return err
 			}
 			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
 				withComponentBranch(b.defaultBranch),
 				withComponentTarget(b.target),
 				withComponentKubeClient(b.kubeclient),
@@ -323,7 +342,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 				return err
 			}
 			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
 				withComponentBranch(b.defaultBranch),
 				withComponentTarget(b.target),
 				withComponentKubeClient(b.kubeclient),
@@ -346,7 +365,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 				return err
 			}
 			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo,
+			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
 				withComponentBranch(b.defaultBranch),
 				withComponentTarget(b.target),
 				withComponentKubeClient(b.kubeclient),
@@ -366,19 +385,27 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		default:
 			return fmt.Errorf("unknown component %q", comp)
 		}
+		if err := b.printer.StopSpinner(); err != nil {
+			return err
+		}
 	}
 
 	if err := kubeutils.ReconcileKustomization(ctx, b.kubeclient, "flux-system", "flux-system"); err != nil {
 		return fmt.Errorf("failed to reconcile kustomization: %w", err)
 	}
 
-	b.printer.Printf("Waiting for components to be ready ...\n")
+	err = b.printer.PrintSpinner("Waiting for components to be ready")
+	if err != nil {
+		return err
+	}
 	for ns, comps := range compNs {
 		if err := kubeutils.ReportHealth(ctx, b.restClientGetter, b.timeout, comps, ns); err != nil {
 			return fmt.Errorf("failed to report health: %w", err)
 		}
 	}
-
+	if err := b.printer.StopSpinner(); err != nil {
+		return err
+	}
 	b.printer.Printf("\n")
 	b.printer.Printf("Bootstrap completed successfully!\n")
 
@@ -418,11 +445,6 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 	if err != nil && !errors.Is(err, errReconciledWithWarning) {
 		return err
 	}
-
-	b.printer.Printf("Preparing Management repository %s with branch %s and visibility %s\n",
-		printer.BoldBlue(b.repositoryName),
-		printer.BoldBlue(b.defaultBranch),
-		printer.BoldBlue(b.visibility))
 
 	cloneURL, err := b.getCloneURL(repo, gitprovider.TransportType(b.transportType))
 	if err != nil {

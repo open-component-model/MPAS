@@ -152,7 +152,7 @@ func ReportHealth(ctx context.Context, rcg genericclioptions.RESTClientGetter, t
 		return err
 	}
 
-	checker, err := status.NewStatusChecker(cfg, 5*time.Second, timeout, log.NopLogger{})
+	checker, err := status.NewStatusChecker(cfg, env.DefaultPollInterval, timeout, log.NopLogger{})
 	if err != nil {
 		return err
 	}

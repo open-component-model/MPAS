@@ -55,6 +55,7 @@ type componentInstall struct {
 	version       string
 	repository    ocm.Repository
 	components    []string
+	installedNS   map[string][]string
 	componentOptions
 
 	// mu is used to synchronize access to the kustomization file
@@ -109,27 +110,17 @@ func withComponentDir(dir string) componentOption {
 	}
 }
 
-func NewComponentInstall(name, version string, repository ocm.Repository, opts ...componentOption) (*componentInstall, error) {
+func NewComponentInstall(name, version string, repository ocm.Repository, installedNS map[string][]string, opts ...componentOption) (*componentInstall, error) {
 	c := &componentInstall{
 		componentName: name,
 		version:       version,
 		repository:    repository,
+		installedNS:   installedNS,
 	}
 	for _, o := range opts {
 		o(&c.componentOptions)
 	}
 
-	// clientOpts := []gogit.ClientOption{gogit.WithDiskStorage(), gogit.WithFallbackToDefaultKnownHosts()}
-	// // gitClient, err := gogit.NewClient(c.dir, &git.AuthOptions{
-	// // 	Transport: git.HTTPS,
-	// // 	Username:  owner,
-	// // 	Password:  c.token,
-	// // }, clientOpts...)
-	// // if err != nil {
-	// // 	return nil, fmt.Errorf("failed to create a Git client: %w", err)
-	// // }
-
-	// // c.gitClient = gitClient
 	return c, nil
 }
 
@@ -174,7 +165,7 @@ func (c *componentInstall) Install(ctx context.Context, component string) error 
 }
 
 func (c *componentInstall) reconcileComponents(ctx context.Context, content []byte) error {
-	if !c.mustInstallNS(ctx) {
+	if _, ok := c.installedNS[c.namespace]; ok {
 		// remove ns from content
 		objects, err := kubeutils.YamlToUnstructructured(content)
 		if err != nil {
@@ -202,10 +193,6 @@ func (c *componentInstall) reconcileComponents(ctx context.Context, content []by
 	}
 
 	return nil
-}
-
-func (c *componentInstall) mustInstallNS(ctx context.Context) bool {
-	return kubeutils.MustInstallNS(ctx, c.kubeClient, c.namespace)
 }
 
 func (c *componentInstall) generateKustomization(componentResource []byte, ocmConfig []byte) (string, kustypes.Kustomization, error) {

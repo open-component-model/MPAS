@@ -25,10 +25,16 @@ var (
 	repository            = "mpas-management-test"
 	hostnameVar           = "MPAS_MANAGEMENT_REPO_HOSTNAME"
 	namespace             = "mpas-cli-testns"
-	cfg                   = config.MpasConfig{Printer: printer.Newprinter("", nil), Timeout: "5m"}
+	cfg                   = config.MpasConfig{Timeout: "5m"}
 )
 
+func setCfgPrinter() {
+	printer, _ := printer.Newprinter(nil)
+	cfg.Printer = printer
+}
+
 func TestMain(m *testing.M) {
+	setCfgPrinter()
 	// "starting e2e-cli test suite"
 	cfg, _ := envconf.NewFromFlags()
 	testEnv = env.NewWithConfig(cfg)
