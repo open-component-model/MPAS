@@ -13,9 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/fluxcd/go-git-providers/gitprovider"
-	"github.com/fluxcd/pkg/git"
 	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/kubeutils"
 	cfd "github.com/open-component-model/ocm-controller/pkg/configdata"
@@ -26,7 +24,6 @@ import (
 )
 
 type componentOptions struct {
-	// gitClient  repository.Client
 	kubeClient client.Client
 
 	restClientGetter genericclioptions.RESTClientGetter
@@ -40,159 +37,107 @@ type componentOptions struct {
 
 	timeout time.Duration
 
-	signature             git.Signature
-	commitMessageAppendix string
-	gpgKeyRing            openpgp.EntityList
-	gpgPassphrase         string
-	gpgKeyID              string
-}
+	installedNS map[string][]string
 
-// componentOption is a function that configures a componentInstall.
-type componentOption func(*componentOptions)
+	commitMessageAppendix string
+}
 
 type componentInstall struct {
 	componentName string
 	version       string
 	repository    ocm.Repository
 	components    []string
-	installedNS   map[string][]string
-	componentOptions
+	*componentOptions
 
 	// mu is used to synchronize access to the kustomization file
 	mu sync.Mutex
 }
 
-func withComponentTimeout(timeout time.Duration) componentOption {
-	return func(o *componentOptions) {
-		o.timeout = timeout
-	}
-}
-
-func withComponentKubeConfig(kubeconfig genericclioptions.RESTClientGetter) componentOption {
-	return func(o *componentOptions) {
-		o.restClientGetter = kubeconfig
-	}
-}
-
-func withComponentKubeClient(kubeClient client.Client) componentOption {
-	return func(o *componentOptions) {
-		o.kubeClient = kubeClient
-	}
-}
-
-func withComponentGitRepository(gitRepository gitprovider.UserRepository) componentOption {
-	return func(o *componentOptions) {
-		o.gitRepository = gitRepository
-	}
-}
-
-func withComponentBranch(branch string) componentOption {
-	return func(o *componentOptions) {
-		o.branch = branch
-	}
-}
-
-func withComponentTarget(target string) componentOption {
-	return func(o *componentOptions) {
-		o.target = target
-	}
-}
-
-func withComponentNamespace(namespace string) componentOption {
-	return func(o *componentOptions) {
-		o.namespace = namespace
-	}
-}
-
-func withComponentDir(dir string) componentOption {
-	return func(o *componentOptions) {
-		o.dir = dir
-	}
-}
-
-func NewComponentInstall(name, version string, repository ocm.Repository, installedNS map[string][]string, opts ...componentOption) (*componentInstall, error) {
+func NewComponentInstall(name, version string, repository ocm.Repository, opts *componentOptions) (*componentInstall, error) {
 	c := &componentInstall{
-		componentName: name,
-		version:       version,
-		repository:    repository,
-		installedNS:   installedNS,
-	}
-	for _, o := range opts {
-		o(&c.componentOptions)
+		componentName:    name,
+		version:          version,
+		repository:       repository,
+		componentOptions: opts,
 	}
 
 	return c, nil
 }
 
-func (c *componentInstall) Install(ctx context.Context, component string) error {
+func (c *componentInstall) Install(ctx context.Context, component string) (string, error) {
 	cv, err := GetComponentVersion(c.repository, c.componentName, c.version)
 	if err != nil {
-		return fmt.Errorf("failed to get component version: %w", err)
+		return "", fmt.Errorf("failed to get component version: %w", err)
 	}
 
 	componentResource, ocmConfig, imagesResources, comps, err := getResources(cv, component)
 	if err != nil {
-		return fmt.Errorf("failed to get resources: %w", err)
+		return "", fmt.Errorf("failed to get resources: %w", err)
 	}
 
 	c.components = comps
 
 	if componentResource == nil || ocmConfig == nil {
-		return fmt.Errorf("failed to get component resource or ocm config")
+		return "", fmt.Errorf("failed to get component resource or ocm config")
 	}
 
 	kfile, kus, err := c.generateKustomization(componentResource, ocmConfig)
 	if err != nil {
-		return fmt.Errorf("failed to generate kustomization: %w", err)
+		return "", fmt.Errorf("failed to generate kustomization: %w", err)
 	}
 
 	kconfig, err := unMarshallConfig(ocmConfig)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshall config: %w", err)
+		return "", fmt.Errorf("failed to unmarshall config: %w", err)
 	}
 
 	res, err := c.generateComponentYaml(kconfig, imagesResources, kus, kfile)
 	if err != nil {
-		return fmt.Errorf("failed to generate component yaml: %w", err)
+		return "", fmt.Errorf("failed to generate component yaml: %w", err)
 	}
 
-	err = c.reconcileComponents(ctx, res)
+	sha, err := c.reconcileComponents(ctx, res)
 	if err != nil {
-		return fmt.Errorf("failed to reconcile components: %w", err)
+		return "", fmt.Errorf("failed to reconcile components: %w", err)
 	}
 
-	return nil
+	return sha, nil
 }
 
-func (c *componentInstall) reconcileComponents(ctx context.Context, content []byte) error {
+func (c *componentInstall) reconcileComponents(ctx context.Context, content []byte) (string, error) {
 	if _, ok := c.installedNS[c.namespace]; ok {
 		// remove ns from content
 		objects, err := kubeutils.YamlToUnstructructured(content)
 		if err != nil {
-			return fmt.Errorf("failed to convert yaml to unstructured: %w", err)
+			return "", fmt.Errorf("failed to convert yaml to unstructured: %w", err)
 		}
 
 		content, err = kubeutils.UnstructuredToYaml(kubeutils.FilterUnstructured(objects, kubeutils.NSFilter(c.namespace)))
 		if err != nil {
-			return fmt.Errorf("failed to convert unstructured to yaml: %w", err)
+			return "", fmt.Errorf("failed to convert unstructured to yaml: %w", err)
 		}
 	}
 
 	data := string(content)
 	path := filepath.Join(c.target, c.namespace, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2]))
-	if _, err := c.gitRepository.Commits().Create(ctx,
+	commitMsg := fmt.Sprintf("Add %s %s manifests", c.componentName, c.version)
+	if c.commitMessageAppendix != "" {
+		commitMsg = commitMsg + "\n\n" + c.commitMessageAppendix
+	}
+	commit, err := c.gitRepository.Commits().Create(ctx,
 		c.branch,
-		c.commitMessageAppendix,
+		commitMsg,
 		[]gitprovider.CommitFile{
 			{
 				Path:    &path,
 				Content: &data,
 			},
-		}); err != nil {
-		return fmt.Errorf("failed to create component: %w", err)
+		})
+	if err != nil {
+		return "", fmt.Errorf("failed to create component: %w", err)
 	}
 
-	return nil
+	return commit.Get().Sha, nil
 }
 
 func (c *componentInstall) generateKustomization(componentResource []byte, ocmConfig []byte) (string, kustypes.Kustomization, error) {

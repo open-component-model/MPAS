@@ -20,20 +20,21 @@ const (
 
 // BootstrapGithubCmd is a command for bootstrapping a GitHub repository
 type BootstrapGithubCmd struct {
-	Owner              string
-	Token              string
-	Personal           bool
-	Hostname           string
-	Repository         string
-	FromFile           string
-	Registry           string
-	DockerconfigPath   string
-	Target             string
-	Components         []string
-	Interval           time.Duration
-	Timeout            time.Duration
-	DestructiveActions bool
-	bootstrapper       *bootstrap.Bootstrap
+	Owner                 string
+	Token                 string
+	Personal              bool
+	Hostname              string
+	Repository            string
+	FromFile              string
+	Registry              string
+	DockerconfigPath      string
+	Target                string
+	CommitMessageAppendix string
+	Components            []string
+	Interval              time.Duration
+	Timeout               time.Duration
+	DestructiveActions    bool
+	bootstrapper          *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -67,7 +68,7 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 		return err
 	}
 
-	b.bootstrapper = bootstrap.New(providerClient,
+	b.bootstrapper, err = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
 		bootstrap.WithPersonal(b.Personal),
@@ -83,7 +84,12 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithRESTClientGetter(cfg.KubeConfigArgs),
 		bootstrap.WithInterval(b.Interval),
 		bootstrap.WithTimeout(b.Timeout),
+		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
 	)
+
+	if err != nil {
+		return err
+	}
 
 	return b.bootstrapper.Run(ctx)
 }

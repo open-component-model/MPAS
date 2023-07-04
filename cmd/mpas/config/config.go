@@ -42,14 +42,15 @@ func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
 
 // BootstrapConfig is the configuration shared by the bootstrap commands.
 type BootstrapConfig struct {
-	Components []string
-	Owner      string
-	Repository string
-	FromFile   string
-	Registry   string
-	Hostname   string
-	Target     string
-	Interval   string
+	Components            []string
+	Owner                 string
+	Repository            string
+	FromFile              string
+	Registry              string
+	Hostname              string
+	Target                string
+	Interval              string
+	CommitMessageAppendix string
 }
 
 // AddFlags adds the bootstrap flags to the given flag set.
@@ -62,6 +63,7 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Hostname, "hostname", "", "The hostname of the Git provider")
 	flags.StringVar(&m.Target, "target", ".", "The target path to use in the management repository to store the bootstrap component")
 	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")
+	flags.StringVar(&m.CommitMessageAppendix, "commit-message-appendix", "", "The appendix to add to the commit message, e.g. [ci skip]")
 }
 
 // GithubConfig is the configuration for the Github bootstrap command.

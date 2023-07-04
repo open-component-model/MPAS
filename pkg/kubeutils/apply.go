@@ -23,7 +23,7 @@ import (
 )
 
 // The file is copied from https://github.com/fluxcd/flux2/blob/main/internal/utils/apply.go
-// As it is nan internal package, we need to copy it here to use it.
+// As it is an internal package, we need to copy it here to use it.
 
 // Apply is the equivalent of 'kubectl apply --server-side -f'.
 // If the given manifest is a kustomization.yaml, then apply performs the equivalent of 'kubectl apply --server-side -k'.
@@ -142,7 +142,12 @@ func newManager(rcg genericclioptions.RESTClientGetter) (*ssa.ResourceManager, e
 	if err != nil {
 		return nil, err
 	}
-	kubeClient, err := client.New(cfg, client.Options{Mapper: restMapper, Scheme: NewScheme()})
+	scheme, err := NewScheme()
+	if err != nil {
+		return nil, err
+	}
+
+	kubeClient, err := client.New(cfg, client.Options{Mapper: restMapper, Scheme: scheme})
 	if err != nil {
 		return nil, err
 	}

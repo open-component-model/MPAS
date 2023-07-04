@@ -17,20 +17,21 @@ import (
 
 // BootstrapGiteaCmd is a command for bootstrapping a Gitea repository
 type BootstrapGiteaCmd struct {
-	Owner              string
-	Token              string
-	Personal           bool
-	Hostname           string
-	Repository         string
-	FromFile           string
-	Registry           string
-	DockerconfigPath   string
-	Target             string
-	Interval           time.Duration
-	Timeout            time.Duration
-	Components         []string
-	DestructiveActions bool
-	bootstrapper       *bootstrap.Bootstrap
+	Owner                 string
+	Token                 string
+	Personal              bool
+	Hostname              string
+	Repository            string
+	FromFile              string
+	Registry              string
+	DockerconfigPath      string
+	Target                string
+	CommitMessageAppendix string
+	Interval              time.Duration
+	Timeout               time.Duration
+	Components            []string
+	DestructiveActions    bool
+	bootstrapper          *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -63,7 +64,7 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		return err
 	}
 
-	b.bootstrapper = bootstrap.New(providerClient,
+	b.bootstrapper, err = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
 		bootstrap.WithPersonal(b.Personal),
@@ -79,7 +80,12 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithRESTClientGetter(cfg.KubeConfigArgs),
 		bootstrap.WithInterval(b.Interval),
 		bootstrap.WithTimeout(b.Timeout),
+		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
 	)
+
+	if err != nil {
+		return err
+	}
 
 	return b.bootstrapper.Run(ctx)
 }

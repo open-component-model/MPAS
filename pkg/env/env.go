@@ -26,6 +26,7 @@ const (
 	DefaultOCMHost        = "ghcr.io/open-component-model"
 	DefaultFluxHost       = "ghrc.io/fluxcd"
 	DefaultOCMInstallPath = "ocm-system"
+	DefaultFluxNamespace  = "flux-system"
 )
 
 const (

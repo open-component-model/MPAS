@@ -25,12 +25,14 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/retry"
@@ -38,22 +40,31 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Create the Scheme, methods for serializing and deserializing API objects
-// which can be shared by tests.
-func NewScheme() *apiruntime.Scheme {
-	scheme := apiruntime.NewScheme()
-	_ = apiextensionsv1.AddToScheme(scheme)
-	_ = corev1.AddToScheme(scheme)
-	_ = rbacv1.AddToScheme(scheme)
-	_ = appsv1.AddToScheme(scheme)
-	_ = networkingv1.AddToScheme(scheme)
-	_ = sourcev1.AddToScheme(scheme)
-	_ = kustomizev1.AddToScheme(scheme)
-	_ = ocmv1alpha1.AddToScheme(scheme)
-	_ = productv1alpha1.AddToScheme(scheme)
-	_ = projectv1alpha1.AddToScheme(scheme)
+var apiList = []func(s *apiruntime.Scheme) error{}
 
-	return scheme
+func init() {
+	apiList = append(apiList, apiextensionsv1.AddToScheme)
+	apiList = append(apiList, corev1.AddToScheme)
+	apiList = append(apiList, rbacv1.AddToScheme)
+	apiList = append(apiList, appsv1.AddToScheme)
+	apiList = append(apiList, networkingv1.AddToScheme)
+	apiList = append(apiList, sourcev1.AddToScheme)
+	apiList = append(apiList, kustomizev1.AddToScheme)
+	apiList = append(apiList, ocmv1alpha1.AddToScheme)
+	apiList = append(apiList, productv1alpha1.AddToScheme)
+	apiList = append(apiList, projectv1alpha1.AddToScheme)
+}
+
+// Create the Scheme, methods for serializing and deserializing API objects
+func NewScheme() (scheme *apiruntime.Scheme, err error) {
+	scheme = apiruntime.NewScheme()
+	for _, api := range apiList {
+		if err := api(scheme); err != nil {
+			return nil, err
+		}
+	}
+
+	return scheme, nil
 }
 
 // KubeConfig returns a new Kubernetes rest config.
@@ -79,7 +90,11 @@ func KubeClient(rcg genericclioptions.RESTClientGetter) (client.WithWatch, error
 	cfg.QPS = env.DefaultKubeAPIQPS
 	cfg.Burst = env.DefaultKubeAPIBurst
 
-	scheme := NewScheme()
+	scheme, err := NewScheme()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create scheme: %w", err)
+	}
+
 	kubeClient, err := client.NewWithWatch(cfg, client.Options{
 		Scheme: scheme,
 		WarningHandler: client.WarningHandlerOptions{
@@ -125,11 +140,31 @@ func ReconcileKustomization(ctx context.Context, kubeClient client.Client, name,
 	if err := kubeClient.Get(ctx, namespacedName, &k); err != nil {
 		return err
 	}
+
+	return reconcileObject(ctx, namespacedName, kubeClient, kustomizev1.GroupVersion.WithKind("Kustomization"))
+}
+
+func ReconcileGitrepository(ctx context.Context, kubeClient client.Client, name, namespace string) error {
+	namespacedName := types.NamespacedName{
+		Namespace: namespace,
+		Name:      name,
+	}
+	var g sourcev1.GitRepository
+	if err := kubeClient.Get(ctx, namespacedName, &g); err != nil {
+		return err
+	}
+	return reconcileObject(ctx, namespacedName, kubeClient, sourcev1.GroupVersion.WithKind("GitRepository"))
+}
+
+func reconcileObject(ctx context.Context, namespacedName types.NamespacedName, kubeClient client.Client, gvk schema.GroupVersionKind) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
-		object := &metav1.PartialObjectMetadata{}
-		object.SetGroupVersionKind(kustomizev1.GroupVersion.WithKind("Kustomization"))
-		object.SetName(namespacedName.Name)
-		object.SetNamespace(namespacedName.Namespace)
+		object := &metav1.PartialObjectMetadata{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      namespacedName.Name,
+				Namespace: namespacedName.Namespace,
+			},
+		}
+		object.SetGroupVersionKind(gvk)
 		if err := kubeClient.Get(ctx, namespacedName, object); err != nil {
 			return err
 		}
@@ -146,7 +181,100 @@ func ReconcileKustomization(ctx context.Context, kubeClient client.Client, name,
 	})
 }
 
-func ReportHealth(ctx context.Context, rcg genericclioptions.RESTClientGetter, timeout time.Duration, components []string, ns string) error {
+func ReportGitrepositoryHealth(ctx context.Context, kubeClient client.Client, name, namespace, expectedRevision string, pollInterval, timeout time.Duration) error {
+	objKey := client.ObjectKey{Name: name, Namespace: namespace}
+	var o sourcev1.GitRepository
+	if err := wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, reconciledGitrepositoryHealth(
+		ctx, kubeClient, objKey, &o, expectedRevision),
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ReportKustomizationHealth(ctx context.Context, kubeClient client.Client, name, namespace, expectedRevision string, pollInterval, timeout time.Duration) error {
+	objKey := client.ObjectKey{Name: name, Namespace: namespace}
+	var k kustomizev1.Kustomization
+	if err := wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, reconciledKustomizationHealth(
+		ctx, kubeClient, objKey, &k, expectedRevision),
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func reconciledKustomizationHealth(ctx context.Context, kube client.Client, objKey client.ObjectKey,
+	kustomization *kustomizev1.Kustomization, expectRevision string) func(context.Context) (bool, error) {
+
+	return func(ctx context.Context) (bool, error) {
+		if err := kube.Get(ctx, objKey, kustomization); err != nil {
+			return false, err
+		}
+
+		// Detect suspended Kustomization, as this would result in an endless wait
+		if kustomization.Spec.Suspend {
+			return false, fmt.Errorf("kustomization is suspended")
+		}
+
+		// Confirm the state we are observing is for the current generation
+		if kustomization.Generation != kustomization.Status.ObservedGeneration {
+			return false, nil
+		}
+
+		// Confirm the given revision has been attempted by the controller
+		if kustomization.Status.LastAttemptedRevision != expectRevision {
+			return false, nil
+		}
+
+		// Confirm the resource is healthy
+		if c := apimeta.FindStatusCondition(kustomization.Status.Conditions, meta.ReadyCondition); c != nil {
+			switch c.Status {
+			case metav1.ConditionTrue:
+				return true, nil
+			case metav1.ConditionFalse:
+				return false, fmt.Errorf(c.Message)
+			}
+		}
+		return false, nil
+	}
+}
+
+func reconciledGitrepositoryHealth(ctx context.Context, kube client.Client, objKey client.ObjectKey,
+	gitrepo *sourcev1.GitRepository, expectedRevision string) func(context.Context) (bool, error) {
+
+	return func(ctx context.Context) (bool, error) {
+		if err := kube.Get(ctx, objKey, gitrepo); err != nil {
+			return false, err
+		}
+
+		// Detect suspended Kustomization, as this would result in an endless wait
+		if gitrepo.Spec.Suspend {
+			return false, fmt.Errorf("GitRepository is suspended")
+		}
+
+		// Confirm the state we are observing is for the current generation
+		if gitrepo.Generation != gitrepo.Status.ObservedGeneration {
+			return false, nil
+		}
+
+		if gitrepo.Status.Artifact.Revision != expectedRevision {
+			return false, nil
+		}
+
+		// Confirm the resource is healthy
+		if c := apimeta.FindStatusCondition(gitrepo.Status.Conditions, meta.ReadyCondition); c != nil {
+			switch c.Status {
+			case metav1.ConditionTrue:
+				return true, nil
+			case metav1.ConditionFalse:
+				return false, fmt.Errorf(c.Message)
+			}
+		}
+		return false, nil
+	}
+}
+
+func ReportComponentsHealth(ctx context.Context, rcg genericclioptions.RESTClientGetter, timeout time.Duration, components []string, ns string) error {
 	cfg, err := KubeConfig(rcg)
 	if err != nil {
 		return err

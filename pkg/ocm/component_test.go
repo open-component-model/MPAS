@@ -84,7 +84,7 @@ func Test_ParseURL(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			u, err := ParseURL(tc.url)
+			u, err := parseURL(tc.url)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedHost, u.Host)
 			assert.Equal(t, tc.expectedPath, u.Path)

@@ -10,13 +10,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/kubeutils"
+	"github.com/open-component-model/mpas/pkg/ocm"
 	"github.com/open-component-model/mpas/pkg/printer"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,24 +31,25 @@ var (
 
 // options contains the options to be used during bootstrap
 type options struct {
-	description      string
-	defaultBranch    string
-	visibility       string
-	personal         bool
-	owner            string
-	token            string
-	repositoryName   string
-	target           string
-	fromFile         string
-	registry         string
-	dockerConfigPath string
-	transportType    string
-	kubeclient       client.Client
-	restClientGetter genericclioptions.RESTClientGetter
-	components       []string
-	interval         time.Duration
-	timeout          time.Duration
-	printer          *printer.Printer
+	description           string
+	defaultBranch         string
+	visibility            string
+	personal              bool
+	owner                 string
+	token                 string
+	repositoryName        string
+	target                string
+	commitMessageAppendix string
+	fromFile              string
+	registry              string
+	dockerConfigPath      string
+	transportType         string
+	kubeclient            client.Client
+	restClientGetter      genericclioptions.RESTClientGetter
+	components            []string
+	interval              time.Duration
+	timeout               time.Duration
+	printer               *printer.Printer
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -59,6 +63,13 @@ type Bootstrap struct {
 	repository     gitprovider.UserRepository
 	url            string
 	options
+}
+
+// WithCommitMessageAppendix sets the commit message appendix to use for the bootstrap component
+func WithCommitMessageAppendix(commitMessageAppendix string) Option {
+	return func(o *options) {
+		o.commitMessageAppendix = commitMessageAppendix
+	}
 }
 
 // WithInterval sets the interval to use for the bootstrap component
@@ -188,7 +199,7 @@ func WithTransportType(transportType string) Option {
 }
 
 // New returns a new Bootstrap. It accepts a gitprovider.Client and a list of options.
-func New(ProviderClient gitprovider.Client, opts ...Option) *Bootstrap {
+func New(ProviderClient gitprovider.Client, opts ...Option) (*Bootstrap, error) {
 	b := &Bootstrap{
 		ProviderClient: ProviderClient,
 	}
@@ -199,7 +210,11 @@ func New(ProviderClient gitprovider.Client, opts ...Option) *Bootstrap {
 
 	setDefaults(b)
 
-	return b
+	if err := validateOptions(&b.options); err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 // Run runs the bootstrap of mpas and returns an error if it fails.
@@ -219,22 +234,45 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return err
 	}
 	if err := b.reconcileManagementRepository(ctx); err != nil {
+		if er := b.printer.StopFailSpinner(fmt.Sprintf("Preparing Management repository %s with branch %s and visibility %s",
+			printer.BoldBlue(b.repositoryName),
+			printer.BoldBlue(b.defaultBranch),
+			printer.BoldBlue(b.visibility))); er != nil {
+			err = errors.Join(err, er)
+		}
 		return err
 	}
 
-	if err := b.printer.StopSpinner(); err != nil {
+	if err := b.printer.StopSpinner(fmt.Sprintf("Preparing Management repository %s with branch %s and visibility %s",
+		printer.BoldBlue(b.repositoryName),
+		printer.BoldBlue(b.defaultBranch),
+		printer.BoldBlue(b.visibility))); err != nil {
 		return err
 	}
 
-	octx := ocm.DefaultContext()
-	ociRepo, err := makeOCIRepository(octx, b.registry, b.dockerConfigPath)
+	ociRepo, err := ocm.MakeRepositoryWithDockerConfig(b.registry, b.dockerConfigPath)
 	if err != nil {
 		return err
 	}
+	defer ociRepo.Close()
 
+	err = b.printer.PrintSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
+		printer.BoldBlue(b.registry)))
+	if err != nil {
+		return err
+	}
 	refs, err := b.fetchBootstrapComponentReferences(ociRepo)
 	if err != nil {
+		if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
+			printer.BoldBlue(b.registry))); er != nil {
+			err = errors.Join(err, er)
+		}
 		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
+	}
+
+	if err := b.printer.StopSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
+		printer.BoldBlue(b.registry))); err != nil {
+		return err
 	}
 
 	fluxRef, ok := refs["flux"]
@@ -248,17 +286,28 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := b.installFlux(ctx, ociRepo, fluxRef); err != nil {
+	if err = b.installFlux(ctx, ociRepo, fluxRef); err != nil {
+		if er := b.printer.StopFailSpinner(fmt.Sprintf("Installing %s with version %s",
+			printer.BoldBlue("flux"),
+			printer.BoldBlue(fluxRef.GetVersion()))); er != nil {
+			err = errors.Join(err, er)
+		}
 		return fmt.Errorf("failed to install flux: %w", err)
 	}
-	if err := b.printer.StopSpinner(); err != nil {
+
+	if err := b.printer.StopSpinner(fmt.Sprintf("Installing %s with version %s",
+		printer.BoldBlue("flux"),
+		printer.BoldBlue(fluxRef.GetVersion()))); err != nil {
 		return err
 	}
 	delete(refs, "flux")
 
 	compNs := make(map[string][]string)
-
-	for comp, ref := range refs {
+	// install components in order by using the ordered keys
+	comps := getOrderedKeys(refs)
+	var latestSHA string
+	for _, comp := range comps {
+		ref := refs[comp]
 		err := b.printer.PrintSpinner(fmt.Sprintf("Generating %s manifest with version %s",
 			printer.BoldBlue(comp),
 			printer.BoldBlue(ref.GetVersion())))
@@ -268,142 +317,99 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 
 		switch comp {
 		case "ocm-controller":
-			dir, err := mkdirTempDir("ocm-controller-install")
+			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
 			if err != nil {
 				return err
 			}
-			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
-				withComponentBranch(b.defaultBranch),
-				withComponentTarget(b.target),
-				withComponentKubeClient(b.kubeclient),
-				withComponentNamespace("ocm-system"),
-				withComponentDir(dir),
-				withComponentGitRepository(b.repository),
-				withComponentKubeConfig(b.restClientGetter),
-				withComponentTimeout(b.timeout),
-			)
-			if err != nil {
-				return err
-			}
-			if err := inst.Install(ctx, "ocm-controller-file"); err != nil {
-				return err
-			}
+			latestSHA = sha
 			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
 		case "git-controller":
-			dir, err := mkdirTempDir("git-controller-install")
+			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
 			if err != nil {
 				return err
 			}
-			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
-				withComponentBranch(b.defaultBranch),
-				withComponentTarget(b.target),
-				withComponentKubeClient(b.kubeclient),
-				withComponentNamespace("ocm-system"),
-				withComponentDir(dir),
-				withComponentGitRepository(b.repository),
-				withComponentKubeConfig(b.restClientGetter),
-				withComponentTimeout(b.timeout),
-			)
-			if err != nil {
-				return err
-			}
-			if err := inst.Install(ctx, "git-controller-file"); err != nil {
-				return err
-			}
+			latestSHA = sha
 			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
 		case "replication-controller":
-			dir, err := mkdirTempDir("replication-controller-install")
+			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
 			if err != nil {
 				return err
 			}
-			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
-				withComponentBranch(b.defaultBranch),
-				withComponentTarget(b.target),
-				withComponentKubeClient(b.kubeclient),
-				withComponentNamespace("ocm-system"),
-				withComponentDir(dir),
-				withComponentGitRepository(b.repository),
-				withComponentKubeConfig(b.restClientGetter),
-				withComponentTimeout(b.timeout),
-			)
-			if err != nil {
-				return err
-			}
-			if err := inst.Install(ctx, "replication-controller-file"); err != nil {
-				return err
-			}
+			latestSHA = sha
 			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
 		case "mpas-product-controller":
-			dir, err := mkdirTempDir("mpas-product-controller-install")
+			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
 			if err != nil {
 				return err
 			}
-			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
-				withComponentBranch(b.defaultBranch),
-				withComponentTarget(b.target),
-				withComponentKubeClient(b.kubeclient),
-				withComponentNamespace("mpas-system"),
-				withComponentDir(dir),
-				withComponentGitRepository(b.repository),
-				withComponentKubeConfig(b.restClientGetter),
-				withComponentTimeout(b.timeout),
-			)
-			if err != nil {
-				return err
-			}
-			if err := inst.Install(ctx, "mpas-product-controller-file"); err != nil {
-				return err
-			}
+			latestSHA = sha
 			compNs["mpas-system"] = append(compNs["mpas-system"], comp)
 		case "mpas-project-controller":
-			dir, err := mkdirTempDir("mpas-project-controller-install")
+			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
 			if err != nil {
 				return err
 			}
-			defer os.RemoveAll(dir)
-			inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, compNs,
-				withComponentBranch(b.defaultBranch),
-				withComponentTarget(b.target),
-				withComponentKubeClient(b.kubeclient),
-				withComponentNamespace("mpas-system"),
-				withComponentDir(dir),
-				withComponentGitRepository(b.repository),
-				withComponentKubeConfig(b.restClientGetter),
-				withComponentTimeout(b.timeout),
-			)
-			if err != nil {
-				return err
-			}
-			if err := inst.Install(ctx, "mpas-project-controller-file"); err != nil {
-				return err
-			}
+			latestSHA = sha
 			compNs["mpas-system"] = append(compNs["mpas-system"], comp)
 		default:
-			return fmt.Errorf("unknown component %q", comp)
-		}
-		if err := b.printer.StopSpinner(); err != nil {
+			err := fmt.Errorf("unknown component %q", comp)
+			if er := b.printer.StopFailSpinner(fmt.Sprintf("Generating %s manifest with version %s",
+				printer.BoldBlue(comp),
+				printer.BoldBlue(ref.GetVersion()))); er != nil {
+				err = errors.Join(err, er)
+			}
 			return err
 		}
-	}
 
-	if err := kubeutils.ReconcileKustomization(ctx, b.kubeclient, "flux-system", "flux-system"); err != nil {
-		return fmt.Errorf("failed to reconcile kustomization: %w", err)
+		if err := b.printer.StopSpinner(fmt.Sprintf("Generating %s manifest with version %s",
+			printer.BoldBlue(comp),
+			printer.BoldBlue(ref.GetVersion()))); err != nil {
+			return err
+		}
 	}
 
 	err = b.printer.PrintSpinner("Waiting for components to be ready")
 	if err != nil {
 		return err
 	}
+
+	expectedRevision := fmt.Sprintf("%s@sha1:%s", b.defaultBranch, latestSHA)
+	if err := kubeutils.ReconcileGitrepository(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace); err != nil {
+		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
+			err = errors.Join(err, er)
+		}
+		return err
+	}
+
+	if err := kubeutils.ReportGitrepositoryHealth(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace, expectedRevision, env.DefaultPollInterval, b.timeout); err != nil {
+		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
+			err = errors.Join(err, er)
+		}
+		return fmt.Errorf("failed to report gitrepository health: %w", err)
+	}
+
+	if err := kubeutils.ReconcileKustomization(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace); err != nil {
+		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
+			err = errors.Join(err, er)
+		}
+		return err
+	}
+
+	if err := kubeutils.ReportKustomizationHealth(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace, expectedRevision, env.DefaultPollInterval, b.timeout); err != nil {
+		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
+			err = errors.Join(err, er)
+		}
+		return fmt.Errorf("failed to report kustomization health: %w", err)
+	}
 	for ns, comps := range compNs {
-		if err := kubeutils.ReportHealth(ctx, b.restClientGetter, b.timeout, comps, ns); err != nil {
-			return fmt.Errorf("failed to report health: %w", err)
+		if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, comps, ns); err != nil {
+			if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
+				err = errors.Join(err, er)
+			}
+			return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
 		}
 	}
-	if err := b.printer.StopSpinner(); err != nil {
+	if err := b.printer.StopSpinner("Waiting for components to be ready"); err != nil {
 		return err
 	}
 	b.printer.Printf("\n")
@@ -412,24 +418,61 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	return nil
 }
 
-func (b *Bootstrap) installFlux(ctx context.Context, ociRepo ocm.Repository, ref compdesc.ComponentReference) error {
+func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference, comp, ns string, compNs map[string][]string) (string, error) {
+	dir, err := mkdirTempDir(fmt.Sprintf("%s-install", comp))
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(dir)
+	opts := &componentOptions{
+		kubeClient:            b.kubeclient,
+		restClientGetter:      b.restClientGetter,
+		gitRepository:         b.repository,
+		branch:                b.defaultBranch,
+		target:                b.target,
+		commitMessageAppendix: b.commitMessageAppendix,
+		namespace:             ns,
+		dir:                   dir,
+		timeout:               b.timeout,
+		installedNS:           compNs,
+	}
+	inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
+	if err != nil {
+		return "", err
+	}
+	sha, err := inst.Install(ctx, fmt.Sprintf("%s-file", comp))
+	if err != nil {
+		if er := b.printer.StopFailSpinner(fmt.Sprintf("Generating %s manifest with version %s",
+			printer.BoldBlue(comp),
+			printer.BoldBlue(ref.GetVersion()))); er != nil {
+			err = errors.Join(err, er)
+		}
+		return "", err
+	}
+	return sha, nil
+}
+
+func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference) error {
 	dir, err := mkdirTempDir("flux-install")
 	if err != nil {
 		return err
 	}
 	defer os.RemoveAll(dir)
-	inst, err := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo,
-		withBranch(b.defaultBranch),
-		withTarget(b.target),
-		withKubeClient(b.kubeclient),
-		withKubeConfig(b.restClientGetter),
-		withURL(b.url),
-		withNamespace("flux-system"),
-		withDir(dir),
-		withInterval(b.interval),
-		withTimeout(b.timeout),
-		withToken(b.token),
-	)
+
+	opts := &fluxOptions{
+		kubeClient:            b.kubeclient,
+		restClientGetter:      b.restClientGetter,
+		url:                   b.url,
+		branch:                b.defaultBranch,
+		target:                b.target,
+		commitMessageAppendix: b.commitMessageAppendix,
+		dir:                   dir,
+		interval:              b.interval,
+		timeout:               b.timeout,
+		token:                 b.token,
+		namespace:             env.DefaultFluxNamespace,
+	}
+	inst, err := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo, opts)
 	if err != nil {
 		return err
 	}
@@ -437,6 +480,19 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo ocm.Repository, ref
 		return err
 	}
 	return nil
+}
+
+func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo om.Repository) (map[string]compdesc.ComponentReference, error) {
+	cv, err := ocm.FetchLatestComponent(ociRepo, env.DefaultBootstrapComponent)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch latest component version of %q: %w", env.DefaultBootstrapComponent, err)
+	}
+
+	references, err := ocm.FetchComponenReferences(cv, b.components)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch component references: %w", err)
+	}
+	return references, nil
 }
 
 // reconcileManagementRepository reconciles the management repository. It creates it if it does not exist.
@@ -597,6 +653,26 @@ func setDefaults(b *Bootstrap) {
 	}
 }
 
+func validateOptions(opts *options) error {
+	if opts.repositoryName == "" {
+		return fmt.Errorf("repository name must be set")
+	}
+
+	if opts.restClientGetter == nil {
+		return fmt.Errorf("rest client getter must be set")
+	}
+
+	if opts.kubeclient == nil {
+		return fmt.Errorf("kubeclient must be set")
+	}
+
+	if opts.printer == nil {
+		return fmt.Errorf("printer must be set")
+	}
+
+	return nil
+}
+
 func mkdirTempDir(pattern string) (string, error) {
 	dir, err := os.MkdirTemp("", pattern)
 	if err != nil {
@@ -608,4 +684,13 @@ func mkdirTempDir(pattern string) (string, error) {
 		return "", err
 	}
 	return dir, nil
+}
+
+func getOrderedKeys(m map[string]compdesc.ComponentReference) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

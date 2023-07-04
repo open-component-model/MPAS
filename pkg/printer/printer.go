@@ -78,7 +78,6 @@ func (p *Printer) startSpinner() error {
 // PrintSpinner starts a spinner and returns a function to stop it.
 func (p *Printer) PrintSpinner(message string) error {
 	p.spinner.Message(message)
-	p.spinner.StopMessage(message)
 	err := p.startSpinner()
 	if err != nil {
 		return err
@@ -86,8 +85,18 @@ func (p *Printer) PrintSpinner(message string) error {
 	return nil
 }
 
-func (p *Printer) StopSpinner() error {
+func (p *Printer) StopSpinner(message string) error {
+	p.spinner.StopMessage(message)
 	err := p.spinner.Stop()
+	if err != nil {
+		return fmt.Errorf("failed to stop spinner: %w", err)
+	}
+	return nil
+}
+
+func (p *Printer) StopFailSpinner(message string) error {
+	p.spinner.StopFailMessage(message)
+	err := p.spinner.StopFail()
 	if err != nil {
 		return fmt.Errorf("failed to stop spinner: %w", err)
 	}

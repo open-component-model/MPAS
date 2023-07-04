@@ -59,15 +59,8 @@ type fluxOptions struct {
 	interval time.Duration
 	timeout  time.Duration
 
-	signature             git.Signature
 	commitMessageAppendix string
-	gpgKeyRing            openpgp.EntityList
-	gpgPassphrase         string
-	gpgKeyID              string
 }
-
-// fluxOption is a function that configures a fluxInstall.
-type fluxOption func(*fluxOptions)
 
 type fluxInstall struct {
 	componentName string
@@ -75,7 +68,7 @@ type fluxInstall struct {
 	repository    ocm.Repository
 	components    []string
 	*flux.PlainGitBootstrapper
-	fluxOptions
+	*fluxOptions
 
 	// mu is used to synchronize access to the kustomization file
 	mu sync.Mutex
@@ -86,104 +79,12 @@ type nameTag struct {
 	Tag  string
 }
 
-func withInterval(interval time.Duration) fluxOption {
-	return func(o *fluxOptions) {
-		o.interval = interval
-	}
-}
-
-func withTimeout(timeout time.Duration) fluxOption {
-	return func(o *fluxOptions) {
-		o.timeout = timeout
-	}
-}
-
-func withToken(token string) fluxOption {
-	return func(o *fluxOptions) {
-		o.token = token
-	}
-}
-
-func withKubeConfig(kubeconfig genericclioptions.RESTClientGetter) fluxOption {
-	return func(o *fluxOptions) {
-		o.restClientGetter = kubeconfig
-	}
-}
-
-func withKubeClient(kubeClient client.Client) fluxOption {
-	return func(o *fluxOptions) {
-		o.kubeClient = kubeClient
-	}
-}
-
-func withURL(url string) fluxOption {
-	return func(o *fluxOptions) {
-		o.url = url
-	}
-}
-
-func withBranch(branch string) fluxOption {
-	return func(o *fluxOptions) {
-		o.branch = branch
-	}
-}
-
-func withTarget(target string) fluxOption {
-	return func(o *fluxOptions) {
-		o.target = target
-	}
-}
-
-func withNamespace(namespace string) fluxOption {
-	return func(o *fluxOptions) {
-		o.namespace = namespace
-	}
-}
-
-func withDir(dir string) fluxOption {
-	return func(o *fluxOptions) {
-		o.dir = dir
-	}
-}
-
-func withSignature(signature git.Signature) fluxOption {
-	return func(o *fluxOptions) {
-		o.signature = signature
-	}
-}
-
-func withCommitMessageAppendix(commitMessageAppendix string) fluxOption {
-	return func(o *fluxOptions) {
-		o.commitMessageAppendix = commitMessageAppendix
-	}
-}
-
-func withGPGKeyRing(gpgKeyRing openpgp.EntityList) fluxOption {
-	return func(o *fluxOptions) {
-		o.gpgKeyRing = gpgKeyRing
-	}
-}
-
-func withGPGPassphrase(gpgPassphrase string) fluxOption {
-	return func(o *fluxOptions) {
-		o.gpgPassphrase = gpgPassphrase
-	}
-}
-
-func withGPGKeyID(gpgKeyID string) fluxOption {
-	return func(o *fluxOptions) {
-		o.gpgKeyID = gpgKeyID
-	}
-}
-
-func NewFluxInstall(name, version, owner string, repository ocm.Repository, opts ...fluxOption) (*fluxInstall, error) {
+func NewFluxInstall(name, version, owner string, repository ocm.Repository, opts *fluxOptions) (*fluxInstall, error) {
 	f := &fluxInstall{
 		componentName: name,
 		version:       version,
 		repository:    repository,
-	}
-	for _, o := range opts {
-		o(&f.fluxOptions)
+		fluxOptions:   opts,
 	}
 
 	clientOpts := []gogit.ClientOption{gogit.WithDiskStorage(), gogit.WithFallbackToDefaultKnownHosts()}
@@ -290,7 +191,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		healthErr = errors.Join(healthErr, err)
 	}
 	if healthErr != nil {
-		return fmt.Errorf("bootstrap failed with errors: %w", healthErr)
+		return fmt.Errorf("failed to report health, please try again later: %w", healthErr)
 	}
 
 	return nil
@@ -384,24 +285,17 @@ func (f *fluxInstall) mustInstallManifests(ctx context.Context) bool {
 }
 
 func (f *fluxInstall) commitAndPushComponents(ctx context.Context, path string, content string) (err error) {
-	var signer *openpgp.Entity
-	if f.gpgKeyRing != nil {
-		signer, err = getOpenPgpEntity(f.gpgKeyRing, f.gpgPassphrase, f.gpgKeyID)
-		if err != nil {
-			return fmt.Errorf("failed to generate OpenPGP entity: %w", err)
-		}
-	}
 	commitMsg := fmt.Sprintf("Add Flux %s component manifests", f.version)
 	if f.commitMessageAppendix != "" {
 		commitMsg = commitMsg + "\n\n" + f.commitMessageAppendix
 	}
 
 	_, err = f.gitClient.Commit(git.Commit{
-		Author:  f.signature,
+		Author:  git.Signature{Name: "Flux"},
 		Message: commitMsg,
 	}, repository.WithFiles(map[string]io.Reader{
 		path: strings.NewReader(content),
-	}), repository.WithSigner(signer))
+	}))
 	if err != nil && err != git.ErrNoStagedFiles {
 		return fmt.Errorf("failed to commit sync manifests: %w", err)
 	}

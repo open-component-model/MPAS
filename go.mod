@@ -21,7 +21,8 @@ require (
 	github.com/fluxcd/pkg/ssa v0.28.2
 	github.com/fluxcd/source-controller/api v1.0.0-rc.5
 	github.com/gabriel-vasile/mimetype v1.4.2
-	github.com/mandelsoft/vfs v0.0.0-20230114230722-fb9b39ce80b9
+	github.com/go-logr/logr v1.2.4
+	github.com/mandelsoft/vfs v0.0.0-20230506183150-975954b82357
 	github.com/open-component-model/git-controller v0.2.1-0.20230420095143-61f3c56dd194
 	github.com/open-component-model/mpas-product-controller v0.0.0-20230421151404-988973070ec7
 	github.com/open-component-model/mpas-project-controller v0.0.0-20230419141522-bec22e3fe0eb
@@ -118,7 +119,6 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.4.1 // indirect
 	github.com/go-git/go-git/v5 v5.7.0 // indirect
-	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
@@ -222,6 +222,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/component-base v0.27.3 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect

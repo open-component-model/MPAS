@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/release"
 	"github.com/open-component-model/mpas/pkg/env"
@@ -16,7 +15,6 @@ import (
 	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	flag "github.com/spf13/pflag"
 )
 
@@ -82,7 +80,7 @@ func main() {
 
 	ctx := context.Background()
 	octx := om.New(datacontext.MODE_SHARED)
-	target, err := makeTarget(octx, repositoryURL)
+	target, err := ocm.MakeOCIRepository(octx, repositoryURL)
 	if err != nil {
 		fmt.Println("Failed to create target: ", err)
 		os.Exit(1)
@@ -180,19 +178,4 @@ func main() {
 	}
 
 	fmt.Println("Release of bootstrap component successful.")
-}
-
-func makeTarget(octx om.Context, repositoryURL string) (om.Repository, error) {
-	regURL, err := ocm.ParseURL(repositoryURL)
-	if err != nil {
-		return nil, err
-	}
-
-	meta := ocireg.NewComponentRepositoryMeta(strings.TrimPrefix(regURL.Path, "/"), ocireg.OCIRegistryURLPathMapping)
-	targetSpec := ocireg.NewRepositorySpec(regURL.Host, meta)
-	target, err := octx.RepositoryForSpec(targetSpec)
-	if err != nil {
-		return nil, err
-	}
-	return target, nil
 }
