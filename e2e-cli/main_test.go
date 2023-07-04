@@ -19,7 +19,7 @@ import (
 func TestBootstrap_github(t *testing.T) {
 	owner, token, err := retrieveBootStrapConfigVars()
 	require.NoError(t, err)
-	bootstrapGithubCmd, err := bootstrapGithub(owner, repository, token)
+	bootstrapGithubCmd, err := bootstrapGithub(owner, token)
 	require.NoError(t, err)
 	assert.NotNil(t, bootstrapGithubCmd)
 
@@ -61,11 +61,13 @@ func retrieveBootStrapConfigVars() (string, string, error) {
 	return owner, token, nil
 }
 
-func bootstrapGithub(owner, repository, token string) (*bootstrap.BootstrapGithubCmd, error) {
+func bootstrapGithub(owner, token string) (*bootstrap.BootstrapGithubCmd, error) {
 	bootstrapGithubCmd := bootstrap.BootstrapGithubCmd{
 		Owner:              owner,
 		Repository:         repository,
 		Token:              token,
+		Target:             target,
+		Registry:           registry,
 		DestructiveActions: true,
 	}
 
@@ -83,8 +85,15 @@ func bootstrapGitea(owner, token, hostname string) (*bootstrap.BootstrapGiteaCmd
 		Token:              token,
 		Hostname:           hostname,
 		Personal:           true,
+		Target:             target,
+		Registry:           registry,
 		DestructiveActions: true,
 	}
+
+	// set kubeconfig
+	kubeconfig := envConf.KubeconfigFile()
+	fmt.Println("kubeconfig: ", kubeconfig)
+	cfg.KubeConfigArgs.KubeConfig = &kubeconfig
 
 	err := bootstrapGiteaCmd.Execute(&cfg)
 	if err != nil {

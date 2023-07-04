@@ -16,37 +16,44 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	"github.com/open-component-model/ocm/pkg/contexts/oci/identity"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
-	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	metav1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 )
 
 func FetchLatestComponent(repo ocm.Repository, name string) (ocm.ComponentVersionAccess, error) {
-	c, err := repo.LookupComponent(name)
+	c, ver, err := fetchLatestComponentVersion(repo, name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookup component %q: %w", name, err)
+		return nil, fmt.Errorf("failed to fetch latest version of component %q: %w", name, err)
 	}
-	vnames, err := c.ListVersions()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list versions of component %q: %w", name, err)
-	}
-	vs := make([]*semver.Version, len(vnames))
-	for i, vname := range vnames {
-		v, err := semver.NewVersion(vname)
-		if err != nil {
-			return nil, err
-		}
-		vs[i] = v
-	}
-	sort.Sort(semver.Collection(vs))
-	ver := vs[len(vs)-1]
 	cv, err := c.LookupVersion(ver.Original())
 	if err != nil {
 		return nil, fmt.Errorf("failed to lookup version %q of component %q: %w", ver.String(), env.DefaultBootstrapComponent, err)
 	}
 
 	return cv, nil
+}
+
+func fetchLatestComponentVersion(repo ocm.Repository, name string) (ocm.ComponentAccess, *semver.Version, error) {
+	c, err := repo.LookupComponent(name)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to lookup component %q: %w", name, err)
+	}
+	vnames, err := c.ListVersions()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to list versions of component %q: %w", name, err)
+	}
+	vs := make([]*semver.Version, len(vnames))
+	for i, vname := range vnames {
+		v, err := semver.NewVersion(vname)
+		if err != nil {
+			return nil, nil, err
+		}
+		vs[i] = v
+	}
+	sort.Sort(semver.Collection(vs))
+	ver := vs[len(vs)-1]
+	return c, ver, nil
 }
 
 func FetchComponenReferences(cv ocm.ComponentVersionAccess, components []string) (map[string]compdesc.ComponentReference, error) {
@@ -85,7 +92,7 @@ func MakeRepositoryWithDockerConfig(repositoryURL, dockerconfigPath string) (ocm
 	return makeOCIRepository(octx, regURL.Host, regURL.Path)
 }
 
-func MakeOCIRepository(octx om.Context, repositoryURL string) (om.Repository, error) {
+func MakeOCIRepository(octx ocm.Context, repositoryURL string) (ocm.Repository, error) {
 	regURL, err := parseURL(repositoryURL)
 	if err != nil {
 		return nil, err
@@ -94,7 +101,7 @@ func MakeOCIRepository(octx om.Context, repositoryURL string) (om.Repository, er
 	return makeOCIRepository(octx, regURL.Host, regURL.Path)
 }
 
-func makeOCIRepository(octx om.Context, host, path string) (om.Repository, error) {
+func makeOCIRepository(octx ocm.Context, host, path string) (ocm.Repository, error) {
 	meta := ocireg.NewComponentRepositoryMeta(strings.TrimPrefix(path, "/"), ocireg.OCIRegistryURLPathMapping)
 	targetSpec := ocireg.NewRepositorySpec(host, meta)
 	target, err := octx.RepositoryForSpec(targetSpec)

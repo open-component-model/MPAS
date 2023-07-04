@@ -20,13 +20,14 @@ const (
 )
 
 const (
-	FluxBinURL            = "https://github.com/fluxcd/flux2/releases/download"
-	OcmBinURL             = "https://github.com/open-component-model/ocm/releases/download"
-	ComponentNamePrefix   = "ocm.software/mpas"
-	DefaultOCMHost        = "ghcr.io/open-component-model"
-	DefaultFluxHost       = "ghrc.io/fluxcd"
-	DefaultOCMInstallPath = "ocm-system"
-	DefaultFluxNamespace  = "flux-system"
+	FluxBinURL                        = "https://github.com/fluxcd/flux2/releases/download"
+	OcmBinURL                         = "https://github.com/open-component-model/ocm/releases/download"
+	ComponentNamePrefix               = "ocm.software/mpas"
+	DefaultOCMHost                    = "ghcr.io/open-component-model"
+	DefaultBootstrapComponentLocation = "ghcr.io/open-component-model/mpas-bootstrap-component"
+	DefaultFluxHost                   = "ghrc.io/fluxcd"
+	DefaultOCMInstallPath             = "ocm-system"
+	DefaultFluxNamespace              = "flux-system"
 )
 
 const (

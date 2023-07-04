@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_OCM(t *testing.T) {
+func Test_Component(t *testing.T) {
 	tmpdir := t.TempDir()
 	name := "github.com/ocm/test"
 	octx := om.New(datacontext.MODE_SHARED)
@@ -54,42 +54,6 @@ func Test_OCM(t *testing.T) {
 		WithResourceVersion("v0.1.0"),
 		WithResourceImage("ghcr.io/my-registry/my-image:v0.1.0"))
 	require.NoError(t, err)
-}
-
-func Test_ParseURL(t *testing.T) {
-	testCases := []struct {
-		name         string
-		url          string
-		expectedHost string
-		expectedPath string
-	}{
-		{
-			name:         "ghcr.io",
-			url:          "ghcr.io/ocm/test",
-			expectedHost: "ghcr.io",
-			expectedPath: "/ocm/test",
-		},
-		{
-			name:         "docker.io",
-			url:          "docker.io/ocm/test",
-			expectedHost: "docker.io",
-			expectedPath: "/ocm/test",
-		},
-		{
-			name:         "https://ghcr.io",
-			url:          "https://ghcr.io/ocm/test",
-			expectedHost: "ghcr.io",
-			expectedPath: "/ocm/test",
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			u, err := parseURL(tc.url)
-			require.NoError(t, err)
-			assert.Equal(t, tc.expectedHost, u.Host)
-			assert.Equal(t, tc.expectedPath, u.Path)
-		})
-	}
 }
 
 func writeFile(tmpdir string, data []byte) (string, error) {

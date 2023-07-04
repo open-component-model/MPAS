@@ -5,10 +5,12 @@
 package e2ecli
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
 	"github.com/open-component-model/mpas/cmd/mpas/config"
+	env2 "github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"sigs.k8s.io/e2e-framework/pkg/env"
@@ -24,8 +26,11 @@ var (
 	ownerVar              = "MPAS_MANAGEMENT_REPO_OWNER"
 	repository            = "mpas-management-test"
 	hostnameVar           = "MPAS_MANAGEMENT_REPO_HOSTNAME"
+	registry              = env2.DefaultBootstrapComponentLocation
 	namespace             = "mpas-cli-testns"
+	target                = "clusters/my-cluster"
 	cfg                   = config.MpasConfig{Timeout: "5m"}
+	envConf               *envconf.Config
 )
 
 func setCfgPrinter() {
@@ -36,8 +41,13 @@ func setCfgPrinter() {
 func TestMain(m *testing.M) {
 	setCfgPrinter()
 	// "starting e2e-cli test suite"
-	cfg, _ := envconf.NewFromFlags()
-	testEnv = env.NewWithConfig(cfg)
+	var err error
+	envConf, err = envconf.NewFromFlags()
+	if err != nil {
+		fmt.Println("failed to create config from flags: ", err)
+		os.Exit(1)
+	}
+	testEnv = env.NewWithConfig(envConf)
 	kindClusterName = envconf.RandomName("mpas-e2e-cli", 32)
 
 	stopChannelGitea := make(chan struct{}, 1)
