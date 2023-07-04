@@ -1,0 +1,41 @@
+name: Release Bootstrap Component
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: 'Version to release'
+        required: false
+        default: ${{ github.sha }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Restore Go cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.20.0'
+      - name: Checkout mpas repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository }}
+          ref: main
+          path: mpas
+      - name: Build Bootstrap
+        run: |
+          BOOTSTRAP_RELEASE_VERSION=${{ github.event.inputs.version }} make build-release-bootstrap-component
+      - name: Push Bootstrap
+        run: |
+          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} make release-bootstrap-component
