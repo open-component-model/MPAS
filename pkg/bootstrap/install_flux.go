@@ -44,22 +44,18 @@ import (
 )
 
 type fluxOptions struct {
-	gitClient  repository.Client
-	kubeClient client.Client
-
-	restClientGetter genericclioptions.RESTClientGetter
-
-	url       string
-	branch    string
-	target    string
-	namespace string
-	token     string
-	dir       string
-
-	interval time.Duration
-	timeout  time.Duration
-
+	gitClient             repository.Client
+	kubeClient            client.Client
+	restClientGetter      genericclioptions.RESTClientGetter
+	url                   string
+	branch                string
+	targetPath            string
+	namespace             string
+	token                 string
+	dir                   string
 	commitMessageAppendix string
+	interval              time.Duration
+	timeout               time.Duration
 }
 
 type fluxInstall struct {
@@ -69,7 +65,6 @@ type fluxInstall struct {
 	components    []string
 	*flux.PlainGitBootstrapper
 	*fluxOptions
-
 	// mu is used to synchronize access to the kustomization file
 	mu sync.Mutex
 }
@@ -79,7 +74,7 @@ type nameTag struct {
 	Tag  string
 }
 
-func NewFluxInstall(name, version, owner string, repository ocm.Repository, opts *fluxOptions) (*fluxInstall, error) {
+func newFluxInstall(name, version, owner string, repository ocm.Repository, opts *fluxOptions) (*fluxInstall, error) {
 	f := &fluxInstall{
 		componentName: name,
 		version:       version,
@@ -113,7 +108,7 @@ func NewFluxInstall(name, version, owner string, repository ocm.Repository, opts
 }
 
 func (f *fluxInstall) Install(ctx context.Context, component string) error {
-	cv, err := GetComponentVersion(f.repository, f.componentName, f.version)
+	cv, err := getComponentVersion(f.repository, f.componentName, f.version)
 	if err != nil {
 		return fmt.Errorf("failed to get component version: %w", err)
 	}
@@ -144,7 +139,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		return err
 	}
 
-	err = f.reconcileComponents(ctx, fmt.Sprintf("%s/%s/%s", f.target, f.namespace, "gotk-components.yaml"), string(res))
+	err = f.reconcileComponents(ctx, fmt.Sprintf("%s/%s/%s", f.targetPath, f.namespace, "gotk-components.yaml"), string(res))
 	if err != nil {
 		return fmt.Errorf("failed to reconcile components: %w", err)
 	}
@@ -152,7 +147,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 	secretOpts := sourcesecret.Options{
 		Name:         f.namespace,
 		Namespace:    f.namespace,
-		TargetPath:   f.target,
+		TargetPath:   f.targetPath,
 		ManifestFile: sourcesecret.MakeDefaultOptions().ManifestFile,
 		Username:     "git",
 		Password:     f.token,
@@ -169,7 +164,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		URL:               f.url,
 		Branch:            f.branch,
 		Secret:            secretOpts.Name,
-		TargetPath:        f.target,
+		TargetPath:        f.targetPath,
 		ManifestFile:      syncOpts.MakeDefaultOptions().ManifestFile,
 		RecurseSubmodules: false,
 	}
@@ -395,8 +390,8 @@ func generateKustomizationFile(path, resource string) (string, error) {
 	return kfile, os.WriteFile(kfile, kd, os.ModePerm)
 }
 
-// GetComponentVersion returns the component version matching the given version constraint.
-func GetComponentVersion(repository ocm.Repository, componentName, version string) (ocm.ComponentVersionAccess, error) {
+// getComponentVersion returns the component version matching the given version constraint.
+func getComponentVersion(repository ocm.Repository, componentName, version string) (ocm.ComponentVersionAccess, error) {
 	c, err := repository.LookupComponent(componentName)
 	if err != nil {
 		return nil, err

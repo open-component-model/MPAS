@@ -62,4 +62,4 @@ jobs:
 
       - name: Run test suite
         working-directory: mpas
-        run: go test -v -count=1 ./e2e
+        run: go test --tags=e2e -v -count=1 ./e2e

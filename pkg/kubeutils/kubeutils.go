@@ -108,6 +108,7 @@ func KubeClient(rcg genericclioptions.RESTClientGetter) (client.WithWatch, error
 	return kubeClient, nil
 }
 
+// MustInstallKustomization returns true if the given kustomization is not installed.
 func MustInstallKustomization(ctx context.Context, kubeClient client.Client, name, namespace string) bool {
 	namespacedName := types.NamespacedName{
 		Namespace: namespace,
@@ -120,6 +121,7 @@ func MustInstallKustomization(ctx context.Context, kubeClient client.Client, nam
 	return k.Status.LastAppliedRevision == ""
 }
 
+// MustInstallNS returns true if the given namespace is not installed.
 func MustInstallNS(ctx context.Context, kubeClient client.Client, namespace string) bool {
 	namespacedName := types.NamespacedName{
 		Name: namespace,
@@ -131,6 +133,7 @@ func MustInstallNS(ctx context.Context, kubeClient client.Client, namespace stri
 	return false
 }
 
+// ReconcileKustomization reconciles the given kustomization.
 func ReconcileKustomization(ctx context.Context, kubeClient client.Client, name, namespace string) error {
 	namespacedName := types.NamespacedName{
 		Namespace: namespace,
@@ -144,6 +147,7 @@ func ReconcileKustomization(ctx context.Context, kubeClient client.Client, name,
 	return reconcileObject(ctx, namespacedName, kubeClient, kustomizev1.GroupVersion.WithKind("Kustomization"))
 }
 
+// ReconcileGitrepository reconciles the given git repository.
 func ReconcileGitrepository(ctx context.Context, kubeClient client.Client, name, namespace string) error {
 	namespacedName := types.NamespacedName{
 		Namespace: namespace,
@@ -181,6 +185,7 @@ func reconcileObject(ctx context.Context, namespacedName types.NamespacedName, k
 	})
 }
 
+// ReconcileGitrepositoryHealth reconciles the health of the given git repository.
 func ReportGitrepositoryHealth(ctx context.Context, kubeClient client.Client, name, namespace, expectedRevision string, pollInterval, timeout time.Duration) error {
 	objKey := client.ObjectKey{Name: name, Namespace: namespace}
 	var o sourcev1.GitRepository
@@ -192,6 +197,7 @@ func ReportGitrepositoryHealth(ctx context.Context, kubeClient client.Client, na
 	return nil
 }
 
+// ReconcileKustomizationHealth reconciles the health of the given kustomization.
 func ReportKustomizationHealth(ctx context.Context, kubeClient client.Client, name, namespace, expectedRevision string, pollInterval, timeout time.Duration) error {
 	objKey := client.ObjectKey{Name: name, Namespace: namespace}
 	var k kustomizev1.Kustomization
@@ -274,6 +280,7 @@ func reconciledGitrepositoryHealth(ctx context.Context, kube client.Client, objK
 	}
 }
 
+// ReconcileComponentsHealth reconciles the health of the given components.
 func ReportComponentsHealth(ctx context.Context, rcg genericclioptions.RESTClientGetter, timeout time.Duration, components []string, ns string) error {
 	cfg, err := KubeConfig(rcg)
 	if err != nil {
@@ -300,6 +307,7 @@ func ReportComponentsHealth(ctx context.Context, rcg genericclioptions.RESTClien
 	return nil
 }
 
+// YamlToUnstructructured converts the given yaml to a slice of unstructured objects.
 func YamlToUnstructructured(data []byte) ([]*unstructured.Unstructured, error) {
 	return ssa.ReadObjects(bytes.NewReader(data))
 }
@@ -319,6 +327,7 @@ func UnstructuredToYaml(objs []*unstructured.Unstructured) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// FilterUnstructured returns a slice of unstructured objects that match the given filter.
 func FilterUnstructured(objs []*unstructured.Unstructured, filter func(*unstructured.Unstructured) bool) []*unstructured.Unstructured {
 	var filtered []*unstructured.Unstructured
 	for _, obj := range objs {
@@ -329,6 +338,7 @@ func FilterUnstructured(objs []*unstructured.Unstructured, filter func(*unstruct
 	return filtered
 }
 
+// NSFilter returns a filter that filters out the given namespace.
 func NSFilter(ns string) func(*unstructured.Unstructured) bool {
 	return func(obj *unstructured.Unstructured) bool {
 		return obj.GetKind() != "Namespace" && obj.GetName() != ns

@@ -1,3 +1,6 @@
+//go:build e2e
+// +build e2e
+
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -13,6 +16,7 @@ import (
 	env2 "github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/envfuncs"
@@ -28,7 +32,7 @@ var (
 	hostnameVar           = "MPAS_MANAGEMENT_REPO_HOSTNAME"
 	registry              = env2.DefaultBootstrapComponentLocation
 	namespace             = "mpas-cli-testns"
-	target                = "clusters/my-cluster"
+	targetPath            = "clusters/my-cluster"
 	cfg                   = config.MpasConfig{Timeout: "5m"}
 	envConf               *envconf.Config
 )
@@ -36,6 +40,8 @@ var (
 func setCfgPrinter() {
 	printer, _ := printer.Newprinter(nil)
 	cfg.Printer = printer
+	cfg.KubeConfigArgs = genericclioptions.NewConfigFlags(false)
+	cfg.DockerconfigPath = "~/.docker/config.json"
 }
 
 func TestMain(m *testing.M) {

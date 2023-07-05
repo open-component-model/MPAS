@@ -18,6 +18,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/finalizer"
 )
 
+// CTF is a component transfer format repository.
 type CTF ocm.Repository
 
 // CreateCTF creates a new ctf repository.

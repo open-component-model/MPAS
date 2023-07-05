@@ -25,8 +25,9 @@ type BootstrapGiteaCmd struct {
 	FromFile              string
 	Registry              string
 	DockerconfigPath      string
-	Target                string
+	Path                string
 	CommitMessageAppendix string
+	Private               bool
 	Interval              time.Duration
 	Timeout               time.Duration
 	Components            []string
@@ -64,6 +65,10 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		return err
 	}
 
+	visibility := "public"
+	if b.Private {
+		visibility = "private"
+	}
 	b.bootstrapper, err = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
@@ -75,12 +80,13 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithToken(b.Token),
 		bootstrap.WithTransportType("https"),
 		bootstrap.WithDockerConfigPath(b.DockerconfigPath),
-		bootstrap.WithTarget(b.Target),
+		bootstrap.WithTarget(b.Path),
 		bootstrap.WithKubeClient(kubeClient),
 		bootstrap.WithRESTClientGetter(cfg.KubeConfigArgs),
 		bootstrap.WithInterval(b.Interval),
 		bootstrap.WithTimeout(b.Timeout),
 		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
+		bootstrap.WithVisibility(visibility),
 	)
 
 	if err != nil {

@@ -38,7 +38,7 @@ type options struct {
 	owner                 string
 	token                 string
 	repositoryName        string
-	target                string
+	targetPath                string
 	commitMessageAppendix string
 	fromFile              string
 	registry              string
@@ -100,17 +100,18 @@ func WithKubeClient(kubeclient client.Client) Option {
 	}
 }
 
+// WithDockerConfigPath sets the docker config path to use for the bootstrap component
 func WithDockerConfigPath(dockerConfigPath string) Option {
 	return func(o *options) {
 		o.dockerConfigPath = dockerConfigPath
 	}
 }
 
-// WithTarget sets the target of the bootstrap component
-func WithTarget(target string) Option {
+// WithTarget sets the targetPath of the bootstrap component
+func WithTarget(targetPath string) Option {
 	return func(o *options) {
-		target = strings.TrimSuffix(target, "/")
-		o.target = target
+		targetPath = strings.TrimSuffix(targetPath, "/")
+		o.targetPath = targetPath
 	}
 }
 
@@ -429,18 +430,18 @@ func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository,
 		restClientGetter:      b.restClientGetter,
 		gitRepository:         b.repository,
 		branch:                b.defaultBranch,
-		target:                b.target,
+		targetPath:                b.targetPath,
 		commitMessageAppendix: b.commitMessageAppendix,
 		namespace:             ns,
 		dir:                   dir,
 		timeout:               b.timeout,
 		installedNS:           compNs,
 	}
-	inst, err := NewComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
+	inst, err := newComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
 	if err != nil {
 		return "", err
 	}
-	sha, err := inst.Install(ctx, fmt.Sprintf("%s-file", comp))
+	sha, err := inst.install(ctx, fmt.Sprintf("%s-file", comp))
 	if err != nil {
 		if er := b.printer.StopFailSpinner(fmt.Sprintf("Generating %s manifest with version %s",
 			printer.BoldBlue(comp),
@@ -464,7 +465,7 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 		restClientGetter:      b.restClientGetter,
 		url:                   b.url,
 		branch:                b.defaultBranch,
-		target:                b.target,
+		targetPath:                b.targetPath,
 		commitMessageAppendix: b.commitMessageAppendix,
 		dir:                   dir,
 		interval:              b.interval,
@@ -472,7 +473,7 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 		token:                 b.token,
 		namespace:             env.DefaultFluxNamespace,
 	}
-	inst, err := NewFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo, opts)
+	inst, err := newFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo, opts)
 	if err != nil {
 		return err
 	}
@@ -485,12 +486,12 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo om.Repository) (map[string]compdesc.ComponentReference, error) {
 	cv, err := ocm.FetchLatestComponent(ociRepo, env.DefaultBootstrapComponent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch latest component version of %q: %w", env.DefaultBootstrapComponent, err)
+		return nil, err
 	}
 
 	references, err := ocm.FetchComponenReferences(cv, b.components)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch component references: %w", err)
+		return nil, err
 	}
 	return references, nil
 }
@@ -513,6 +514,7 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 	return nil
 }
 
+// DeleteManagementRepository deletes the management repository.
 func (b *Bootstrap) DeleteManagementRepository(ctx context.Context) error {
 	if b.repository == nil {
 		return fmt.Errorf("management repository is not set")

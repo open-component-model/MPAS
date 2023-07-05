@@ -1,3 +1,6 @@
+//go:build e2e
+// +build e2e
+
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -66,7 +69,7 @@ func bootstrapGithub(owner, token string) (*bootstrap.BootstrapGithubCmd, error)
 		Owner:              owner,
 		Repository:         repository,
 		Token:              token,
-		Target:             target,
+		Path:               targetPath,
 		Registry:           registry,
 		DestructiveActions: true,
 	}
@@ -85,7 +88,7 @@ func bootstrapGitea(owner, token, hostname string) (*bootstrap.BootstrapGiteaCmd
 		Token:              token,
 		Hostname:           hostname,
 		Personal:           true,
-		Target:             target,
+		Path:               targetPath,
 		Registry:           registry,
 		DestructiveActions: true,
 	}

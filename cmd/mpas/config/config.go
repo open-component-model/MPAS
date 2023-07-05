@@ -48,9 +48,10 @@ type BootstrapConfig struct {
 	FromFile              string
 	Registry              string
 	Hostname              string
-	Target                string
+	Path                  string
 	Interval              string
 	CommitMessageAppendix string
+	Private               bool
 }
 
 // AddFlags adds the bootstrap flags to the given flag set.
@@ -61,9 +62,10 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.FromFile, "from-file", "", "The path to a file containing the bootstrap component in archive format")
 	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas")
 	flags.StringVar(&m.Hostname, "hostname", "", "The hostname of the Git provider")
-	flags.StringVar(&m.Target, "target", ".", "The target path to use in the management repository to store the bootstrap component")
+	flags.StringVar(&m.Path, "path", ".", "The target path to use in the management repository to store the bootstrap component")
 	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")
 	flags.StringVar(&m.CommitMessageAppendix, "commit-message-appendix", "", "The appendix to add to the commit message, e.g. [ci skip]")
+	flags.BoolVar(&m.Private, "private", false, "Whether the management repository should be private")
 }
 
 // GithubConfig is the configuration for the Github bootstrap command.

@@ -18,6 +18,7 @@ import (
 	"golang.org/x/term"
 )
 
+// NewBootstrap returns a new cobra.Command for bootstrap
 func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "bootstrap [provider] [flags]",
@@ -36,9 +37,20 @@ func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 	c := &config.GithubConfig{}
 	cmd := &cobra.Command{
-		Use:     "github [flags]",
-		Short:   "Bootstrap an mpas management repository on Github",
-		Example: `mpas bootstrap github --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux`,
+		Use:   "github [flags]",
+		Short: "Bootstrap an mpas management repository on Github",
+		Example: `  - Bootstrap with a private organization repository
+    mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --path clusters/my-cluster
+
+    - Bootstrap with a private user repository
+    mpas bootstrap github --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --path clusters/my-cluster
+
+    - Bootstrap with a public user repository
+    mpas bootstrap github --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --private=false --path clusters/my-cluster
+
+    - Bootstrap with a public organization repository
+    mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster
+`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.BootstrapGithubCmd{
 				Owner:                 c.Owner,
@@ -47,10 +59,14 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				FromFile:              c.FromFile,
 				Registry:              c.Registry,
 				DockerconfigPath:      cfg.DockerconfigPath,
-				Target:                c.Target,
+				Path:                  c.Path,
 				CommitMessageAppendix: c.CommitMessageAppendix,
 				Hostname:              c.Hostname,
 				Components:            append(env.Components, c.Components...),
+			}
+
+			if len(c.Components) != 0 {
+				return fmt.Errorf("additional  components are not yet supported for github")
 			}
 
 			token := os.Getenv(env.GithubTokenVar)
@@ -100,7 +116,18 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "gitea [flags]",
 		Short:   "Bootstrap an mpas management repository on Gitea",
-		Example: `mpas bootstrap gitea --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux --hostname gitea.example.com`,
+		Example: `  - Bootstrap with a private organization repository
+    mpas bootstrap gitea --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --path clusters/my-cluster --hostname gitea.example.com
+
+    - Bootstrap with a private user repository
+    mpas bootstrap gitea --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --path clusters/my-cluster --hostname gitea.example.com
+
+    - Bootstrap with a public user repository
+    mpas bootstrap gitea --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --private=false --path clusters/my-cluster --hostname gitea.example.com
+
+    - Bootstrap with a public organization repository
+    mpas bootstrap gitea --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster --hostname gitea.example.com
+`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.BootstrapGiteaCmd{
 				Owner:                 c.Owner,
@@ -109,10 +136,14 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				FromFile:              c.FromFile,
 				Registry:              c.Registry,
 				DockerconfigPath:      cfg.DockerconfigPath,
-				Target:                c.Target,
+				Path:                  c.Path,
 				CommitMessageAppendix: c.CommitMessageAppendix,
 				Hostname:              c.Hostname,
 				Components:            append(env.Components, c.Components...),
+			}
+
+			if len(c.Components) != 0 {
+				return fmt.Errorf("additional  components are not yet supported for gitea")
 			}
 
 			token := os.Getenv(env.GiteaTokenVar)

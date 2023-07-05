@@ -24,36 +24,31 @@ import (
 )
 
 type componentOptions struct {
-	kubeClient client.Client
-
+	kubeClient       client.Client
 	restClientGetter genericclioptions.RESTClientGetter
-
-	gitRepository gitprovider.UserRepository
-
-	branch    string
-	target    string
-	namespace string
-	dir       string
-
-	timeout time.Duration
-
-	installedNS map[string][]string
-
+	gitRepository    gitprovider.UserRepository
+	branch           string
+	targetPath           string
+	namespace        string
+	dir              string
+	// we bookkeep the installed components so we can cleanup unnecessary namespaces
+	installedNS           map[string][]string
 	commitMessageAppendix string
+	timeout               time.Duration
 }
 
+// componentInstall is used to install a component
 type componentInstall struct {
 	componentName string
 	version       string
 	repository    ocm.Repository
-	components    []string
 	*componentOptions
-
 	// mu is used to synchronize access to the kustomization file
 	mu sync.Mutex
 }
 
-func NewComponentInstall(name, version string, repository ocm.Repository, opts *componentOptions) (*componentInstall, error) {
+// newComponentInstall returns a new component install
+func newComponentInstall(name, version string, repository ocm.Repository, opts *componentOptions) (*componentInstall, error) {
 	c := &componentInstall{
 		componentName:    name,
 		version:          version,
@@ -64,18 +59,16 @@ func NewComponentInstall(name, version string, repository ocm.Repository, opts *
 	return c, nil
 }
 
-func (c *componentInstall) Install(ctx context.Context, component string) (string, error) {
-	cv, err := GetComponentVersion(c.repository, c.componentName, c.version)
+func (c *componentInstall) install(ctx context.Context, component string) (string, error) {
+	cv, err := getComponentVersion(c.repository, c.componentName, c.version)
 	if err != nil {
 		return "", fmt.Errorf("failed to get component version: %w", err)
 	}
 
-	componentResource, ocmConfig, imagesResources, comps, err := getResources(cv, component)
+	componentResource, ocmConfig, imagesResources, _, err := getResources(cv, component)
 	if err != nil {
 		return "", fmt.Errorf("failed to get resources: %w", err)
 	}
-
-	c.components = comps
 
 	if componentResource == nil || ocmConfig == nil {
 		return "", fmt.Errorf("failed to get component resource or ocm config")
@@ -119,7 +112,7 @@ func (c *componentInstall) reconcileComponents(ctx context.Context, content []by
 	}
 
 	data := string(content)
-	path := filepath.Join(c.target, c.namespace, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2]))
+	path := filepath.Join(c.targetPath, c.namespace, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2]))
 	commitMsg := fmt.Sprintf("Add %s %s manifests", c.componentName, c.version)
 	if c.commitMessageAppendix != "" {
 		commitMsg = commitMsg + "\n\n" + c.commitMessageAppendix

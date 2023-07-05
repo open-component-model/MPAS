@@ -21,6 +21,8 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 )
 
+// FetchLatestComponent fetches the latest version of the component with the given name.
+// It returns the component version access and an error if the component cannot be fetched.
 func FetchLatestComponent(repo ocm.Repository, name string) (ocm.ComponentVersionAccess, error) {
 	c, ver, err := fetchLatestComponentVersion(repo, name)
 	if err != nil {
@@ -56,6 +58,7 @@ func fetchLatestComponentVersion(repo ocm.Repository, name string) (ocm.Componen
 	return c, ver, nil
 }
 
+// FetchComponentReferences fetches the component references from the given component version.
 func FetchComponenReferences(cv ocm.ComponentVersionAccess, components []string) (map[string]compdesc.ComponentReference, error) {
 	references := make(map[string]compdesc.ComponentReference, len(components))
 	for _, component := range components {
@@ -71,6 +74,8 @@ func FetchComponenReferences(cv ocm.ComponentVersionAccess, components []string)
 	return references, nil
 }
 
+// MakeRepositoryWithDockerConfig creates a repository, and use tge given dockerconfigPath
+// to configure the credentials.
 func MakeRepositoryWithDockerConfig(repositoryURL, dockerconfigPath string) (ocm.Repository, error) {
 	octx := ocm.DefaultContext()
 
@@ -92,6 +97,7 @@ func MakeRepositoryWithDockerConfig(repositoryURL, dockerconfigPath string) (ocm
 	return makeOCIRepository(octx, regURL.Host, regURL.Path)
 }
 
+// MakeOCIRepository creates a repository for the given repositoryURL.
 func MakeOCIRepository(octx ocm.Context, repositoryURL string) (ocm.Repository, error) {
 	regURL, err := parseURL(repositoryURL)
 	if err != nil {
