@@ -22,9 +22,9 @@ import (
 const (
 	tokenVar                        = "GITHUB_TOKEN"
 	defaultFluxVer                  = "v2.0.0-rc.5"
-	defaultOcmControllerVer         = "v0.8.3"
+	defaultOcmControllerVer         = "v0.8.4"
 	defaultGitControllerVer         = "v0.4.1"
-	defaultReplicationVer           = "v0.3.0"
+	defaultReplicationVer           = "v0.3.1"
 	defaultMpasProductControllerVer = "v0.1.0"
 	defaultMpasProjectControllerVer = "v0.1.1"
 	defaultOcmCliVer                = "v0.2.0"
