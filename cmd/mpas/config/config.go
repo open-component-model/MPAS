@@ -14,11 +14,16 @@ import (
 
 // MpasConfig is the global configuration for the mpas CLI.
 type MpasConfig struct {
+	// Printer is the printer to use for output.
 	Printer          *printer.Printer
+	// Timeout is the timeout to use for operations.
 	Timeout          string
+	// DockerconfigPath is the path to the docker config file.
 	DockerconfigPath string
+	// KubeConfigArgs are the kubeconfig arguments.
 	KubeConfigArgs   *genericclioptions.ConfigFlags
 	ctx              context.Context
+	// PlainHTTP indicates whether to use plain HTTP instead of HTTPS.
 	PlainHTTP        bool
 }
 
