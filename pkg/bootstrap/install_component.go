@@ -6,6 +6,7 @@ package bootstrap
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,9 +29,10 @@ type componentOptions struct {
 	restClientGetter genericclioptions.RESTClientGetter
 	gitRepository    gitprovider.UserRepository
 	branch           string
-	targetPath           string
+	targetPath       string
 	namespace        string
 	dir              string
+	provider         string
 	// we bookkeep the installed components so we can cleanup unnecessary namespaces
 	installedNS           map[string][]string
 	commitMessageAppendix string
@@ -112,6 +114,9 @@ func (c *componentInstall) reconcileComponents(ctx context.Context, content []by
 	}
 
 	data := string(content)
+	if c.provider == env.ProviderGitea {
+		data = base64.StdEncoding.EncodeToString(content)
+	}
 	path := filepath.Join(c.targetPath, c.namespace, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2]))
 	commitMsg := fmt.Sprintf("Add %s %s manifests", c.componentName, c.version)
 	if c.commitMessageAppendix != "" {

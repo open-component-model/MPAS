@@ -10,11 +10,7 @@ import (
 	"github.com/fluxcd/go-git-providers/gitea"
 	"github.com/fluxcd/go-git-providers/github"
 	"github.com/fluxcd/go-git-providers/gitprovider"
-)
-
-const (
-	ProviderGithub = "github"
-	ProviderGitea  = "gitea"
+	"github.com/open-component-model/mpas/pkg/env"
 )
 
 // rewrite of https://github.com/fluxcd/flux2/tree/main/pkg/bootstrap/provider
@@ -28,8 +24,8 @@ var (
 func init() {
 	// Register the default providers
 	providers = make(providerMap)
-	providers.register(ProviderGithub, githubProviderFunc)
-	providers.register(ProviderGitea, giteaProviderFunc)
+	providers.register(env.ProviderGithub, githubProviderFunc)
+	providers.register(env.ProviderGitea, giteaProviderFunc)
 }
 
 // ProviderOptions contains the options for the provider

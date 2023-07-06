@@ -12,8 +12,10 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -71,10 +73,30 @@ func bootstrapGithub(owner, token string) (*bootstrap.BootstrapGithubCmd, error)
 		Token:              token,
 		Path:               targetPath,
 		Registry:           registry,
+		Components:         env.Components,
+		DockerconfigPath:   cfg.DockerconfigPath,
 		DestructiveActions: true,
 	}
 
-	err := bootstrapGithubCmd.Execute(&cfg)
+	// set kubeconfig
+	kubeconfig := envConf.KubeconfigFile()
+	fmt.Println("kubeconfig: ", kubeconfig)
+	cfg.KubeConfigArgs.KubeConfig = &kubeconfig
+
+	timeout, err := time.ParseDuration(cfg.Timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	interval, err := time.ParseDuration("5m")
+	if err != nil {
+		return nil, err
+	}
+
+	bootstrapGithubCmd.Timeout = timeout
+	bootstrapGithubCmd.Interval = interval
+
+	err = bootstrapGithubCmd.Execute(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute bootstrapGithubCmd: %w", err)
 	}
@@ -90,15 +112,30 @@ func bootstrapGitea(owner, token, hostname string) (*bootstrap.BootstrapGiteaCmd
 		Personal:           true,
 		Path:               targetPath,
 		Registry:           registry,
+		TestURL:            fmt.Sprintf("http://%s/%s/%s", defautHostname, owner, repository),
+		Components:         env.Components,
+		DockerconfigPath:   cfg.DockerconfigPath,
 		DestructiveActions: true,
 	}
 
 	// set kubeconfig
 	kubeconfig := envConf.KubeconfigFile()
-	fmt.Println("kubeconfig: ", kubeconfig)
 	cfg.KubeConfigArgs.KubeConfig = &kubeconfig
 
-	err := bootstrapGiteaCmd.Execute(&cfg)
+	timeout, err := time.ParseDuration(cfg.Timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	interval, err := time.ParseDuration("5m")
+	if err != nil {
+		return nil, err
+	}
+
+	bootstrapGiteaCmd.Timeout = timeout
+	bootstrapGiteaCmd.Interval = interval
+
+	err = bootstrapGiteaCmd.Execute(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute bootstrapGiteaCmd: %w", err)
 	}

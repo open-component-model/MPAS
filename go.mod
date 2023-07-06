@@ -11,7 +11,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.3
 	github.com/fatih/color v1.13.0
 	github.com/fluxcd/flux2/v2 v2.0.0-rc.5
-	github.com/fluxcd/go-git-providers v0.18.0
+	github.com/fluxcd/go-git-providers v0.18.1-0.20230706132206-211750e8915d
 	github.com/fluxcd/kustomize-controller/api v1.0.0-rc.4
 	github.com/fluxcd/pkg/apis/meta v1.1.0
 	github.com/fluxcd/pkg/git v0.12.3

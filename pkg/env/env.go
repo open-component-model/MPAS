@@ -55,6 +55,13 @@ const (
 	GiteaTokenVar = "GITEA_TOKEN"
 )
 
+const (
+	// ProviderGithub is the github provider.
+	ProviderGithub = "github"
+	// ProviderGitea is the gitea provider.
+	ProviderGitea = "gitea"
+)
+
 var (
 	// Components is the list of components to install or package.
 	Components = []string{

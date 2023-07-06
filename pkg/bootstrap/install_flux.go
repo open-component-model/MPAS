@@ -48,6 +48,8 @@ type fluxOptions struct {
 	kubeClient            client.Client
 	restClientGetter      genericclioptions.RESTClientGetter
 	url                   string
+	testURL               string
+	transport             string
 	branch                string
 	targetPath            string
 	namespace             string
@@ -83,11 +85,12 @@ func newFluxInstall(name, version, owner string, repository ocm.Repository, opts
 	}
 
 	clientOpts := []gogit.ClientOption{gogit.WithDiskStorage(), gogit.WithFallbackToDefaultKnownHosts()}
-	gitClient, err := gogit.NewClient(f.dir, &git.AuthOptions{
-		Transport: git.HTTPS,
-		Username:  owner,
-		Password:  f.token,
-	}, clientOpts...)
+	gitOptions := &git.AuthOptions{Transport: git.HTTPS, Username: owner, Password: f.token}
+	if f.transport == "http" {
+		clientOpts = append(clientOpts, gogit.WithInsecureCredentialsOverHTTP())
+		gitOptions.Transport = git.HTTP
+	}
+	gitClient, err := gogit.NewClient(f.dir, gitOptions, clientOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a Git client: %w", err)
 	}
@@ -167,6 +170,10 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		TargetPath:        f.targetPath,
 		ManifestFile:      syncOpts.MakeDefaultOptions().ManifestFile,
 		RecurseSubmodules: false,
+	}
+
+	if f.testURL != "" {
+		syncOpts.URL = f.testURL
 	}
 
 	if err := f.ReconcileSyncConfig(ctx, syncOpts); err != nil {

@@ -19,6 +19,7 @@ type MpasConfig struct {
 	DockerconfigPath string
 	KubeConfigArgs   *genericclioptions.ConfigFlags
 	ctx              context.Context
+	PlainHTTP        bool
 }
 
 // SetContext sets the context to use for operations.
@@ -38,6 +39,7 @@ func (m *MpasConfig) Context() context.Context {
 func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Timeout, "timeout", "5m", "The timeout to use for operations")
 	flags.StringVar(&m.DockerconfigPath, "dockerconfig", "~/.docker/config.json", "The path to the docker config file")
+	flags.BoolVar(&m.PlainHTTP, "plain-http", false, "Whether to use plain HTTP instead of HTTPS")
 }
 
 // BootstrapConfig is the configuration shared by the bootstrap commands.
@@ -60,7 +62,7 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")
 	flags.StringVar(&m.Repository, "repository", "", "The name of the management repository")
 	flags.StringVar(&m.FromFile, "from-file", "", "The path to a file containing the bootstrap component in archive format")
-	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas")
+	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas-bootstrap-component")
 	flags.StringVar(&m.Hostname, "hostname", "", "The hostname of the Git provider")
 	flags.StringVar(&m.Path, "path", ".", "The target path to use in the management repository to store the bootstrap component")
 	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")

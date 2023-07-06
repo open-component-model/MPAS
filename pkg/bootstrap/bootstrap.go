@@ -38,7 +38,7 @@ type options struct {
 	owner                 string
 	token                 string
 	repositoryName        string
-	targetPath                string
+	targetPath            string
 	commitMessageAppendix string
 	fromFile              string
 	registry              string
@@ -50,6 +50,7 @@ type options struct {
 	interval              time.Duration
 	timeout               time.Duration
 	printer               *printer.Printer
+	testURL               string
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -59,10 +60,17 @@ type Option func(*options)
 // This means it creates a new management repository and the installs the bootstrap component
 // in the cluster targeted by the kubeconfig.
 type Bootstrap struct {
-	ProviderClient gitprovider.Client
+	providerClient gitprovider.Client
 	repository     gitprovider.UserRepository
 	url            string
 	options
+}
+
+// WithTestURL sets the testURL to use for the bootstrap component
+func WithTestURL(testURL string) Option {
+	return func(o *options) {
+		o.testURL = testURL
+	}
 }
 
 // WithCommitMessageAppendix sets the commit message appendix to use for the bootstrap component
@@ -200,9 +208,9 @@ func WithTransportType(transportType string) Option {
 }
 
 // New returns a new Bootstrap. It accepts a gitprovider.Client and a list of options.
-func New(ProviderClient gitprovider.Client, opts ...Option) (*Bootstrap, error) {
+func New(providerClient gitprovider.Client, opts ...Option) (*Bootstrap, error) {
 	b := &Bootstrap{
-		ProviderClient: ProviderClient,
+		providerClient: providerClient,
 	}
 
 	for _, opt := range opts {
@@ -227,10 +235,8 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	b.printer.Printf("Running %s ...\n",
 		printer.BoldBlue("mpas bootstrap"))
 
-	err := b.printer.PrintSpinner(fmt.Sprintf("Preparing Management repository %s with branch %s and visibility %s",
-		printer.BoldBlue(b.repositoryName),
-		printer.BoldBlue(b.defaultBranch),
-		printer.BoldBlue(b.visibility)))
+	err := b.printer.PrintSpinner(fmt.Sprintf("Preparing Management repository %s",
+		printer.BoldBlue(b.repositoryName)))
 	if err != nil {
 		return err
 	}
@@ -430,13 +436,15 @@ func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository,
 		restClientGetter:      b.restClientGetter,
 		gitRepository:         b.repository,
 		branch:                b.defaultBranch,
-		targetPath:                b.targetPath,
+		targetPath:            b.targetPath,
 		commitMessageAppendix: b.commitMessageAppendix,
 		namespace:             ns,
+		provider:              string(b.providerClient.ProviderID()),
 		dir:                   dir,
 		timeout:               b.timeout,
 		installedNS:           compNs,
 	}
+
 	inst, err := newComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
 	if err != nil {
 		return "", err
@@ -464,8 +472,10 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 		kubeClient:            b.kubeclient,
 		restClientGetter:      b.restClientGetter,
 		url:                   b.url,
+		testURL:               b.testURL,
+		transport:             b.transportType,
 		branch:                b.defaultBranch,
-		targetPath:                b.targetPath,
+		targetPath:            b.targetPath,
 		commitMessageAppendix: b.commitMessageAppendix,
 		dir:                   dir,
 		interval:              b.interval,
@@ -503,7 +513,7 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 		return err
 	}
 
-	cloneURL, err := b.getCloneURL(repo, gitprovider.TransportType(b.transportType))
+	cloneURL, err := b.getCloneURL(repo, gitprovider.TransportType(gitprovider.TransportTypeHTTPS))
 	if err != nil {
 		return err
 	}
@@ -534,15 +544,15 @@ func (b *Bootstrap) reconcileRepository(ctx context.Context, personal bool) (git
 	)
 	subOrgs, repoName := splitSubOrganizationsFromRepositoryName(b.repositoryName)
 	if personal {
-		userRef := newUserRef(b.ProviderClient.SupportedDomain(), b.owner)
+		userRef := newUserRef(b.providerClient.SupportedDomain(), b.owner)
 		repoRef := newUserRepositoryRef(userRef, repoName)
 		repoInfo := newRepositoryInfo(b.description, b.defaultBranch, b.visibility)
-		repo, err = b.ProviderClient.UserRepositories().Get(ctx, repoRef)
+		repo, err = b.providerClient.UserRepositories().Get(ctx, repoRef)
 		if err != nil {
 			if !errors.Is(err, gitprovider.ErrNotFound) {
 				return nil, fmt.Errorf("failed to get Git repository %q: %w", repoRef.String(), err)
 			}
-			repo, _, err = b.ProviderClient.UserRepositories().Reconcile(ctx, repoRef, repoInfo)
+			repo, _, err = b.providerClient.UserRepositories().Reconcile(ctx, repoRef, repoInfo)
 			if err != nil {
 				return nil, fmt.Errorf("failed to reconcile Git repository %q: %w", repoRef.String(), err)
 			}
@@ -554,12 +564,12 @@ func (b *Bootstrap) reconcileRepository(ctx context.Context, personal bool) (git
 		}
 		repoRef := newOrgRepositoryRef(*orgRef, repoName)
 		repoInfo := newRepositoryInfo(b.description, b.defaultBranch, b.visibility)
-		repo, err = b.ProviderClient.OrgRepositories().Get(ctx, repoRef)
+		repo, err = b.providerClient.OrgRepositories().Get(ctx, repoRef)
 		if err != nil {
 			if !errors.Is(err, gitprovider.ErrNotFound) {
 				return nil, fmt.Errorf("failed to get Git repository %q: %w", repoRef.String(), err)
 			}
-			repo, _, err = b.ProviderClient.OrgRepositories().Reconcile(ctx, repoRef, repoInfo)
+			repo, _, err = b.providerClient.OrgRepositories().Reconcile(ctx, repoRef, repoInfo)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create new Git repository %q: %w", repoRef.String(), err)
 			}
@@ -571,7 +581,7 @@ func (b *Bootstrap) reconcileRepository(ctx context.Context, personal bool) (git
 
 func (b *Bootstrap) getOrganization(ctx context.Context, subOrgs []string) (*gitprovider.OrganizationRef, error) {
 	return &gitprovider.OrganizationRef{
-		Domain:           b.ProviderClient.SupportedDomain(),
+		Domain:           b.providerClient.SupportedDomain(),
 		Organization:     b.owner,
 		SubOrganizations: subOrgs,
 	}, nil
@@ -585,11 +595,11 @@ func (b *Bootstrap) getCloneURL(repository gitprovider.UserRepository, transport
 		url = repository.Repository().GetCloneURL(transport)
 	}
 
-	var err error
 	if transport == gitprovider.TransportTypeSSH {
 		return "", fmt.Errorf("SSH transport is not supported")
 	}
-	return url, err
+
+	return url, nil
 }
 
 func splitSubOrganizationsFromRepositoryName(name string) ([]string, string) {

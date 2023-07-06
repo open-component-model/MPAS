@@ -12,6 +12,7 @@ import (
 	"github.com/open-component-model/mpas/cmd/mpas/config"
 	"github.com/open-component-model/mpas/pkg/bootstrap"
 	"github.com/open-component-model/mpas/pkg/bootstrap/provider"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/kubeutils"
 )
 
@@ -25,14 +26,16 @@ type BootstrapGiteaCmd struct {
 	FromFile              string
 	Registry              string
 	DockerconfigPath      string
-	Path                string
+	Path                  string
 	CommitMessageAppendix string
 	Private               bool
 	Interval              time.Duration
 	Timeout               time.Duration
 	Components            []string
 	DestructiveActions    bool
-	bootstrapper          *bootstrap.Bootstrap
+	// TestURL is the URL to use for testing the management repository
+	TestURL      string
+	bootstrapper *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -49,7 +52,7 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 	}
 
 	providerOpts := provider.ProviderOptions{
-		Provider:           provider.ProviderGitea,
+		Provider:           env.ProviderGitea,
 		Hostname:           b.Hostname,
 		Token:              b.Token,
 		DestructiveActions: b.DestructiveActions,
@@ -69,6 +72,12 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 	if b.Private {
 		visibility = "private"
 	}
+
+	transport := "https"
+	if cfg.PlainHTTP {
+		transport = "http"
+	}
+
 	b.bootstrapper, err = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
@@ -78,7 +87,7 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithPrinter(cfg.Printer),
 		bootstrap.WithComponents(b.Components),
 		bootstrap.WithToken(b.Token),
-		bootstrap.WithTransportType("https"),
+		bootstrap.WithTransportType(transport),
 		bootstrap.WithDockerConfigPath(b.DockerconfigPath),
 		bootstrap.WithTarget(b.Path),
 		bootstrap.WithKubeClient(kubeClient),
@@ -87,6 +96,7 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithTimeout(b.Timeout),
 		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
 		bootstrap.WithVisibility(visibility),
+		bootstrap.WithTestURL(b.TestURL),
 	)
 
 	if err != nil {

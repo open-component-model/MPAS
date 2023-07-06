@@ -11,6 +11,7 @@ import (
 	"github.com/open-component-model/mpas/cmd/mpas/config"
 	"github.com/open-component-model/mpas/pkg/bootstrap"
 	"github.com/open-component-model/mpas/pkg/bootstrap/provider"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/kubeutils"
 )
 
@@ -28,7 +29,7 @@ type BootstrapGithubCmd struct {
 	FromFile              string
 	Registry              string
 	DockerconfigPath      string
-	Path                string
+	Path                  string
 	CommitMessageAppendix string
 	Private               bool
 	Components            []string
@@ -53,7 +54,7 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 	}
 
 	providerOpts := provider.ProviderOptions{
-		Provider:           provider.ProviderGithub,
+		Provider:           env.ProviderGithub,
 		Hostname:           hostname,
 		Token:              b.Token,
 		DestructiveActions: b.DestructiveActions,
@@ -74,6 +75,11 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 		visibility = "private"
 	}
 
+	transport := "https"
+	if cfg.PlainHTTP {
+		transport = "http"
+	}
+
 	b.bootstrapper, err = bootstrap.New(providerClient,
 		bootstrap.WithOwner(b.Owner),
 		bootstrap.WithRepositoryName(b.Repository),
@@ -83,7 +89,7 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 		bootstrap.WithPrinter(cfg.Printer),
 		bootstrap.WithComponents(b.Components),
 		bootstrap.WithToken(b.Token),
-		bootstrap.WithTransportType("https"),
+		bootstrap.WithTransportType(transport),
 		bootstrap.WithDockerConfigPath(b.DockerconfigPath),
 		bootstrap.WithTarget(b.Path),
 		bootstrap.WithKubeClient(kubeClient),
