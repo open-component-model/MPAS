@@ -12,19 +12,25 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/open-component-model/mpas/pkg/env"
+	"github.com/open-component-model/ocm/pkg/common/accessobj"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	"github.com/open-component-model/ocm/pkg/contexts/oci/identity"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	metav1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ctf"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 )
 
 // FetchLatestComponent fetches the latest version of the component with the given name.
 // It returns the component version access and an error if the component cannot be fetched.
 func FetchLatestComponent(repo ocm.Repository, name string) (ocm.ComponentVersionAccess, error) {
-	c, ver, err := fetchLatestComponentVersion(repo, name)
+	c, err := repo.LookupComponent(name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to lookup component %q: %w", name, err)
+	}
+	ver, err := fetchLatestComponentVersion(c, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch latest version of component %q: %w", name, err)
 	}
@@ -36,26 +42,41 @@ func FetchLatestComponent(repo ocm.Repository, name string) (ocm.ComponentVersio
 	return cv, nil
 }
 
-func fetchLatestComponentVersion(repo ocm.Repository, name string) (ocm.ComponentAccess, *semver.Version, error) {
-	c, err := repo.LookupComponent(name)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to lookup component %q: %w", name, err)
-	}
+// func FetchLatestComponentFromArchive(name, path string) (*comparch.ComponentArchive, ocm.ComponentVersionAccess, error) {
+// 	octx := ocm.DefaultContext()
+// 	arch, err := ctf.Open(octx, accessobj.ACC_READONLY, path, 0644)
+// 	if err != nil {
+// 		return nil, nil, fmt.Errorf("failed to open component archive %q: %w", path, err)
+// 	}
+// 	c := arch.ComponentAccess()
+// 	ver, err := fetchLatestComponentVersion(c, name)
+// 	if err != nil {
+// 		return nil, nil, fmt.Errorf("failed to fetch latest version of component %q: %w", name, err)
+// 	}
+// 	cv, err := c.LookupVersion(ver.Original())
+// 	if err != nil {
+// 		return nil, nil, fmt.Errorf("failed to lookup version %q of component %q: %w", ver.String(), env.DefaultBootstrapComponent, err)
+// 	}
+
+// 	return arch, cv, nil
+// }
+
+func fetchLatestComponentVersion(c ocm.ComponentAccess, name string) (*semver.Version, error) {
 	vnames, err := c.ListVersions()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list versions of component %q: %w", name, err)
+		return nil, fmt.Errorf("failed to list versions of component %q: %w", name, err)
 	}
 	vs := make([]*semver.Version, len(vnames))
 	for i, vname := range vnames {
 		v, err := semver.NewVersion(vname)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		vs[i] = v
 	}
 	sort.Sort(semver.Collection(vs))
 	ver := vs[len(vs)-1]
-	return c, ver, nil
+	return ver, nil
 }
 
 // FetchComponentReferences fetches the component references from the given component version.
@@ -72,6 +93,15 @@ func FetchComponentReferences(cv ocm.ComponentVersionAccess, components []string
 	}
 
 	return references, nil
+}
+
+func RepositoryFromCTF(path string) (ocm.Repository, error) {
+	octx := ocm.DefaultContext()
+	repo, err := ctf.Open(octx, accessobj.ACC_READONLY, path, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open component archive %q: %w", path, err)
+	}
+	return repo, nil
 }
 
 // MakeRepositoryWithDockerConfig creates a repository, and use tge given dockerconfigPath

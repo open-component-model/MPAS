@@ -64,7 +64,9 @@ func Test_FetchLatestComponent(t *testing.T) {
 	octx := ocm.DefaultContext()
 	repo, err := makeOCIRepository(octx, srv.URL, "ocm/test")
 	require.NoError(t, err)
-	_, cv, err := fetchLatestComponentVersion(repo, "test")
+	c, err := repo.LookupComponent("test")
+	require.NoError(t, err)
+	cv, err := fetchLatestComponentVersion(c, "test")
 	require.NoError(t, err)
 	assert.Equal(t, versions[len(versions)-1], cv.Original())
 }
