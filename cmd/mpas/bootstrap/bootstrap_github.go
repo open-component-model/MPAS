@@ -19,8 +19,8 @@ const (
 	githubDefaultHostname = "github.com"
 )
 
-// BootstrapGithubCmd is a command for bootstrapping a GitHub repository
-type BootstrapGithubCmd struct {
+// GithubCmd is a command for bootstrapping a GitHub repository
+type GithubCmd struct {
 	// Owner is the owner of the repository
 	Owner string
 	// Token is the token to use for authentication
@@ -37,7 +37,7 @@ type BootstrapGithubCmd struct {
 	Registry string
 	// DockerconfigPath is the path to the docker config file
 	DockerconfigPath string
-	// Path is the path in the repository to use to host the bootstraped components yamls
+	// Path is the path in the repository to use to host the bootstrapped components yamls
 	Path string
 	// CommitMessageAppendix is the appendix to add to the commit message
 	// for example to skip CI
@@ -56,12 +56,12 @@ type BootstrapGithubCmd struct {
 }
 
 // Execute executes the command and returns an error if one occurred.
-func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
+func (b *GithubCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 	t, err := time.ParseDuration(cfg.Timeout)
 	if err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(cfg.Context(), t)
+	ctx, cancel := context.WithTimeout(ctx, t)
 	defer cancel()
 
 	hostname := githubDefaultHostname
@@ -124,7 +124,7 @@ func (b *BootstrapGithubCmd) Execute(cfg *config.MpasConfig) error {
 }
 
 // Cleanup cleans up the resources created by the command.
-func (b *BootstrapGithubCmd) Cleanup(ctx context.Context) error {
+func (b *GithubCmd) Cleanup(ctx context.Context) error {
 	if b.bootstrapper != nil {
 		return b.bootstrapper.DeleteManagementRepository(ctx)
 	}

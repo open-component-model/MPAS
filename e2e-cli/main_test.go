@@ -66,8 +66,9 @@ func retrieveBootStrapConfigVars() (string, string, error) {
 	return owner, token, nil
 }
 
-func bootstrapGithub(owner, token string) (*bootstrap.BootstrapGithubCmd, error) {
-	bootstrapGithubCmd := bootstrap.BootstrapGithubCmd{
+func bootstrapGithub(owner, token string) (*bootstrap.GithubCmd, error) {
+	ctx := context.Background()
+	bootstrapGithubCmd := bootstrap.GithubCmd{
 		Owner:              owner,
 		Repository:         repository,
 		Token:              token,
@@ -96,15 +97,16 @@ func bootstrapGithub(owner, token string) (*bootstrap.BootstrapGithubCmd, error)
 	bootstrapGithubCmd.Timeout = timeout
 	bootstrapGithubCmd.Interval = interval
 
-	err = bootstrapGithubCmd.Execute(&cfg)
+	err = bootstrapGithubCmd.Execute(ctx, &cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute bootstrapGithubCmd: %w", err)
 	}
 	return &bootstrapGithubCmd, nil
 }
 
-func bootstrapGitea(owner, token, hostname string) (*bootstrap.BootstrapGiteaCmd, error) {
-	bootstrapGiteaCmd := bootstrap.BootstrapGiteaCmd{
+func bootstrapGitea(owner, token, hostname string) (*bootstrap.GiteaCmd, error) {
+	ctx := context.Background()
+	bootstrapGiteaCmd := bootstrap.GiteaCmd{
 		Owner:              owner,
 		Repository:         repository,
 		Token:              token,
@@ -135,7 +137,7 @@ func bootstrapGitea(owner, token, hostname string) (*bootstrap.BootstrapGiteaCmd
 	bootstrapGiteaCmd.Timeout = timeout
 	bootstrapGiteaCmd.Interval = interval
 
-	err = bootstrapGiteaCmd.Execute(&cfg)
+	err = bootstrapGiteaCmd.Execute(ctx, &cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute bootstrapGiteaCmd: %w", err)
 	}

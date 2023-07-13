@@ -107,7 +107,7 @@ func (r *Releaser) ReleaseOcmControllerComponent(ctx context.Context, ocmVersion
 		return nil, fmt.Errorf("failed to generate ocm-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/ocm-controller", env.ComponentNamePrefix),
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.OcmControllerName),
 		ocmVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -131,7 +131,7 @@ func (r *Releaser) ReleaseGitControllerComponent(ctx context.Context, gitVersion
 		return nil, fmt.Errorf("failed to generate git-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/git-controller", env.ComponentNamePrefix),
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.GitControllerName),
 		gitVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -155,7 +155,7 @@ func (r *Releaser) ReleaseReplicationControllerComponent(ctx context.Context, re
 		return nil, fmt.Errorf("failed to generate replication-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/replication-controller", env.ComponentNamePrefix),
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.ReplicationControllerName),
 		replicationVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -179,7 +179,7 @@ func (r *Releaser) ReleaseMpasProductControllerComponent(ctx context.Context, mp
 		return nil, fmt.Errorf("failed to generate mpas-product-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/mpas-product-controller", env.ComponentNamePrefix),
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.MpasProductControllerName),
 		mpasProductVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -203,7 +203,7 @@ func (r *Releaser) ReleaseMpasProjectControllerComponent(ctx context.Context, mp
 		return nil, fmt.Errorf("failed to generate mpas-project-controller manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/mpas-project-controller", env.ComponentNamePrefix),
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.MpasProjectControllerName),
 		mpasProjectVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
@@ -227,7 +227,7 @@ func (r *Releaser) ReleaseFluxComponent(ctx context.Context, fluxVersion, comp s
 		return nil, fmt.Errorf("failed to generate flux manifests: %v", err)
 	}
 	component, err := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/flux", env.ComponentNamePrefix),
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.FluxName),
 		fluxVersion,
 		ocm.WithProvider("fluxcd"),
 		ocm.WithUsername(r.username),
@@ -237,7 +237,7 @@ func (r *Releaser) ReleaseFluxComponent(ctx context.Context, fluxVersion, comp s
 		return nil, fmt.Errorf("failed to create component: %w", err)
 	}
 
-	if err := r.release(ctx, r.octx, component, r.ctf, &f, "flux", fluxLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &f, env.FluxName, fluxLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release flux component: %w", err)
 	}
 

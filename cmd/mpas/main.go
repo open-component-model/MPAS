@@ -30,7 +30,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := cmd.Execute(); err != nil {
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		return err
 	}
 	return nil

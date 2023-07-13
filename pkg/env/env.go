@@ -62,15 +62,24 @@ const (
 	ProviderGitea = "gitea"
 )
 
+const (
+	OcmControllerName         = "ocm-controller"
+	GitControllerName         = "git-controller"
+	ReplicationControllerName = "replication-controller"
+	MpasProductControllerName = "mpas-product-controller"
+	MpasProjectControllerName = "mpas-project-controller"
+	FluxName                  = "flux"
+)
+
 var (
 	// Components is the list of components to install or package.
 	Components = []string{
-		"ocm-controller",
-		"flux",
-		"git-controller",
-		"replication-controller",
-		"mpas-product-controller",
-		"mpas-project-controller",
+		OcmControllerName,
+		FluxName,
+		GitControllerName,
+		ReplicationControllerName,
+		MpasProductControllerName,
+		MpasProjectControllerName,
 	}
 	// BinaryComponents is the list of components that are binaries.
 	BinaryComponents = []string{

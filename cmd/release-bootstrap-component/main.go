@@ -109,40 +109,40 @@ func main() {
 	for _, comp := range env.Components {
 		var component *ocm.Component
 		switch comp {
-		case "ocm-controller":
+		case env.OcmControllerName:
 			component, err = r.ReleaseOcmControllerComponent(ctx, ocmControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release ocm-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "flux":
+		case env.FluxName:
 			component, err = r.ReleaseFluxComponent(ctx, fluxVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release flux component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "git-controller":
+		case env.GitControllerName:
 			component, err = r.ReleaseGitControllerComponent(ctx, gitControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release git-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "replication-controller":
+		case env.ReplicationControllerName:
 			component, err = r.ReleaseReplicationControllerComponent(ctx, replicationControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release replication-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "mpas-product-controller":
+		case env.MpasProductControllerName:
 			component, err = r.ReleaseMpasProductControllerComponent(ctx, mpasProductControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release mpas-product-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "mpas-project-controller":
+		case env.MpasProjectControllerName:
 			component, err = r.ReleaseMpasProjectControllerComponent(ctx, mpasProjectControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release mpas-project-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
 		}

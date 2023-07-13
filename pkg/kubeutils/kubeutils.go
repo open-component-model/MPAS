@@ -55,7 +55,7 @@ func init() {
 	apiList = append(apiList, projectv1alpha1.AddToScheme)
 }
 
-// Create the Scheme, methods for serializing and deserializing API objects
+// NewScheme creates the Scheme methods for serializing and deserializing API objects
 func NewScheme() (scheme *apiruntime.Scheme, err error) {
 	scheme = apiruntime.NewScheme()
 	for _, api := range apiList {
@@ -185,7 +185,7 @@ func reconcileObject(ctx context.Context, namespacedName types.NamespacedName, k
 	})
 }
 
-// ReconcileGitrepositoryHealth reconciles the health of the given git repository.
+// ReportGitrepositoryHealth reconciles the health of the given git repository.
 func ReportGitrepositoryHealth(ctx context.Context, kubeClient client.Client, name, namespace, expectedRevision string, pollInterval, timeout time.Duration) error {
 	objKey := client.ObjectKey{Name: name, Namespace: namespace}
 	var o sourcev1.GitRepository
@@ -197,7 +197,7 @@ func ReportGitrepositoryHealth(ctx context.Context, kubeClient client.Client, na
 	return nil
 }
 
-// ReconcileKustomizationHealth reconciles the health of the given kustomization.
+// ReportKustomizationHealth reconciles the health of the given kustomization.
 func ReportKustomizationHealth(ctx context.Context, kubeClient client.Client, name, namespace, expectedRevision string, pollInterval, timeout time.Duration) error {
 	objKey := client.ObjectKey{Name: name, Namespace: namespace}
 	var k kustomizev1.Kustomization
@@ -280,7 +280,7 @@ func reconciledGitrepositoryHealth(ctx context.Context, kube client.Client, objK
 	}
 }
 
-// ReconcileComponentsHealth reconciles the health of the given components.
+// ReportComponentsHealth reconciles the health of the given components.
 func ReportComponentsHealth(ctx context.Context, rcg genericclioptions.RESTClientGetter, timeout time.Duration, components []string, ns string) error {
 	cfg, err := KubeConfig(rcg)
 	if err != nil {

@@ -235,11 +235,11 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	b.printer.Printf("Running %s ...\n",
 		printer.BoldBlue("mpas bootstrap"))
 
-	err := b.printer.PrintSpinner(fmt.Sprintf("Preparing Management repository %s",
-		printer.BoldBlue(b.repositoryName)))
-	if err != nil {
+	if err := b.printer.PrintSpinner(fmt.Sprintf("Preparing Management repository %s",
+		printer.BoldBlue(b.repositoryName))); err != nil {
 		return err
 	}
+
 	if err := b.reconcileManagementRepository(ctx); err != nil {
 		if er := b.printer.StopFailSpinner(fmt.Sprintf("Preparing Management repository %s with branch %s and visibility %s",
 			printer.BoldBlue(b.repositoryName),
@@ -263,9 +263,8 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	}
 	defer ociRepo.Close()
 
-	err = b.printer.PrintSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
-		printer.BoldBlue(b.registry)))
-	if err != nil {
+	if err = b.printer.PrintSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
+		printer.BoldBlue(b.registry))); err != nil {
 		return err
 	}
 	refs, err := b.fetchBootstrapComponentReferences(ociRepo)
@@ -282,20 +281,20 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return err
 	}
 
-	fluxRef, ok := refs["flux"]
+	fluxRef, ok := refs[env.FluxName]
 	if !ok {
 		return fmt.Errorf("flux component not found")
 	}
 
 	err = b.printer.PrintSpinner(fmt.Sprintf("Installing %s with version %s",
-		printer.BoldBlue("flux"),
+		printer.BoldBlue(env.FluxName),
 		printer.BoldBlue(fluxRef.GetVersion())))
 	if err != nil {
 		return err
 	}
 	if err = b.installFlux(ctx, ociRepo, fluxRef); err != nil {
 		if er := b.printer.StopFailSpinner(fmt.Sprintf("Installing %s with version %s",
-			printer.BoldBlue("flux"),
+			printer.BoldBlue(env.FluxName),
 			printer.BoldBlue(fluxRef.GetVersion()))); er != nil {
 			err = errors.Join(err, er)
 		}
@@ -303,11 +302,11 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	}
 
 	if err := b.printer.StopSpinner(fmt.Sprintf("Installing %s with version %s",
-		printer.BoldBlue("flux"),
+		printer.BoldBlue(env.FluxName),
 		printer.BoldBlue(fluxRef.GetVersion()))); err != nil {
 		return err
 	}
-	delete(refs, "flux")
+	delete(refs, env.FluxName)
 
 	compNs := make(map[string][]string)
 	// install components in order by using the ordered keys
@@ -323,7 +322,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 
 		switch comp {
-		case "ocm-controller":
+		case env.OcmControllerName:
 			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
 			if err != nil {
 				return err
@@ -337,21 +336,21 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 			}
 			latestSHA = sha
 			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
-		case "replication-controller":
+		case env.ReplicationControllerName:
 			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
 			if err != nil {
 				return err
 			}
 			latestSHA = sha
 			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
-		case "mpas-product-controller":
+		case env.MpasProductControllerName:
 			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
 			if err != nil {
 				return err
 			}
 			latestSHA = sha
 			compNs["mpas-system"] = append(compNs["mpas-system"], comp)
-		case "mpas-project-controller":
+		case env.MpasProjectControllerName:
 			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
 			if err != nil {
 				return err
@@ -499,11 +498,7 @@ func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo om.Repository) (ma
 		return nil, err
 	}
 
-	references, err := ocm.FetchComponenReferences(cv, b.components)
-	if err != nil {
-		return nil, err
-	}
-	return references, nil
+	return ocm.FetchComponenReferences(cv, b.components)
 }
 
 // reconcileManagementRepository reconciles the management repository. It creates it if it does not exist.
@@ -513,7 +508,7 @@ func (b *Bootstrap) reconcileManagementRepository(ctx context.Context) error {
 		return err
 	}
 
-	cloneURL, err := b.getCloneURL(repo, gitprovider.TransportType(gitprovider.TransportTypeHTTPS))
+	cloneURL, err := b.getCloneURL(repo, gitprovider.TransportTypeHTTPS)
 	if err != nil {
 		return err
 	}

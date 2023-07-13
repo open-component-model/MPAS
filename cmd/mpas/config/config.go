@@ -5,8 +5,6 @@
 package config
 
 import (
-	"context"
-
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -15,35 +13,21 @@ import (
 // MpasConfig is the global configuration for the mpas CLI.
 type MpasConfig struct {
 	// Printer is the printer to use for output.
-	Printer          *printer.Printer
+	Printer *printer.Printer
 	// Timeout is the timeout to use for operations.
-	Timeout          string
+	Timeout string
 	// DockerconfigPath is the path to the docker config file.
 	DockerconfigPath string
 	// KubeConfigArgs are the kubeconfig arguments.
-	KubeConfigArgs   *genericclioptions.ConfigFlags
-	ctx              context.Context
+	KubeConfigArgs *genericclioptions.ConfigFlags
 	// PlainHTTP indicates whether to use plain HTTP instead of HTTPS.
-	PlainHTTP        bool
-}
-
-// SetContext sets the context to use for operations.
-func (m *MpasConfig) SetContext(ctx context.Context) {
-	m.ctx = ctx
-}
-
-// Context returns the context to use for operations.
-func (m *MpasConfig) Context() context.Context {
-	if m.ctx == nil {
-		return context.Background()
-	}
-	return m.ctx
+	PlainHTTP bool
 }
 
 // AddFlags adds the global flags to the given flag set.
 func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Timeout, "timeout", "5m", "The timeout to use for operations")
-	flags.StringVar(&m.DockerconfigPath, "dockerconfig", "~/.docker/config.json", "The path to the docker config file")
+	flags.StringVar(&m.DockerconfigPath, "dockerconfigpath", "~/.docker/config.json", "The path to the docker config file")
 	flags.BoolVar(&m.PlainHTTP, "plain-http", false, "Whether to use plain HTTP instead of HTTPS")
 }
 

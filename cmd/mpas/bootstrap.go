@@ -52,7 +52,7 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
     mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			b := bootstrap.BootstrapGithubCmd{
+			b := bootstrap.GithubCmd{
 				Owner:                 c.Owner,
 				Personal:              c.Personal,
 				Repository:            c.Repository,
@@ -100,7 +100,7 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				return err
 			}
 
-			return b.Execute(cfg)
+			return b.Execute(cmd.Context(), cfg)
 
 		},
 	}
@@ -114,8 +114,8 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 	c := &config.GiteaConfig{}
 	cmd := &cobra.Command{
-		Use:     "gitea [flags]",
-		Short:   "Bootstrap an mpas management repository on Gitea",
+		Use:   "gitea [flags]",
+		Short: "Bootstrap an mpas management repository on Gitea",
 		Example: `  - Bootstrap with a private organization repository
     mpas bootstrap gitea --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --path clusters/my-cluster --hostname gitea.example.com
 
@@ -129,7 +129,7 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
     mpas bootstrap gitea --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster --hostname gitea.example.com
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			b := bootstrap.BootstrapGiteaCmd{
+			b := bootstrap.GiteaCmd{
 				Owner:                 c.Owner,
 				Personal:              c.Personal,
 				Repository:            c.Repository,
@@ -181,7 +181,7 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				return err
 			}
 
-			return b.Execute(cfg)
+			return b.Execute(cmd.Context(), cfg)
 
 		},
 	}

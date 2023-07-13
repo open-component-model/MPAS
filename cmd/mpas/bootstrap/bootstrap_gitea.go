@@ -16,51 +16,51 @@ import (
 	"github.com/open-component-model/mpas/pkg/kubeutils"
 )
 
-// BootstrapGiteaCmd is a command for bootstrapping a Gitea repository
-type BootstrapGiteaCmd struct {
+// GiteaCmd is a command for bootstrapping a Gitea repository
+type GiteaCmd struct {
 	// Owner is the owner of the repository
-	Owner                 string
+	Owner string
 	// Token is the token to use for authentication
-	Token                 string
+	Token string
 	// Personal indicates whether the repository is a personal repository
-	Personal              bool
+	Personal bool
 	// Hostname is the hostname of the Gitea instance
-	Hostname              string
+	Hostname string
 	// Repository is the name of the repository
-	Repository            string
+	Repository string
 	// FromFile is the path to a file archive to use for bootstrapping
-	FromFile              string
+	FromFile string
 	// Registry is the registry to use for the bootstrap components
-	Registry              string
+	Registry string
 	// DockerconfigPath is the path to the docker config file
-	DockerconfigPath      string
-	// Path is the path in the repository to use to host the bootstraped components yamls
-	Path                  string
+	DockerconfigPath string
+	// Path is the path in the repository to use to host the bootstrapped components yamls
+	Path string
 	// CommitMessageAppendix is the appendix to add to the commit message
 	// for example to skip CI
 	CommitMessageAppendix string
 	// Private indicates whether the repository is private
-	Private               bool
+	Private bool
 	// Interval is the interval to use for reconciling
-	Interval              time.Duration
+	Interval time.Duration
 	// Timeout is the timeout to use for operations
-	Timeout               time.Duration
+	Timeout time.Duration
 	// Components is the list of components to install
-	Components            []string
+	Components []string
 	// DestructiveActions indicates whether destructive actions are allowed
-	DestructiveActions    bool
+	DestructiveActions bool
 	// TestURL is the URL to use for testing the management repository
 	TestURL      string
 	bootstrapper *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
-func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
+func (b *GiteaCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 	t, err := time.ParseDuration(cfg.Timeout)
 	if err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(cfg.Context(), t)
+	ctx, cancel := context.WithTimeout(ctx, t)
 	defer cancel()
 
 	if b.Hostname == "" {
@@ -123,7 +123,7 @@ func (b *BootstrapGiteaCmd) Execute(cfg *config.MpasConfig) error {
 }
 
 // Cleanup cleans up the resources created by the command.
-func (b *BootstrapGiteaCmd) Cleanup(ctx context.Context) error {
+func (b *GiteaCmd) Cleanup(ctx context.Context) error {
 	if b.bootstrapper != nil {
 		return b.bootstrapper.DeleteManagementRepository(ctx)
 	}

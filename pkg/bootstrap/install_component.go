@@ -67,26 +67,26 @@ func (c *componentInstall) install(ctx context.Context, component string) (strin
 		return "", fmt.Errorf("failed to get component version: %w", err)
 	}
 
-	componentResource, ocmConfig, imagesResources, _, err := getResources(cv, component)
+	resources, err := getResources(cv, component)
 	if err != nil {
 		return "", fmt.Errorf("failed to get resources: %w", err)
 	}
 
-	if componentResource == nil || ocmConfig == nil {
+	if resources.componentResource == nil || resources.ocmConfig == nil {
 		return "", fmt.Errorf("failed to get component resource or ocm config")
 	}
 
-	kfile, kus, err := c.generateKustomization(componentResource, ocmConfig)
+	kfile, kus, err := c.generateKustomization(resources.componentResource, resources.ocmConfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate kustomization: %w", err)
 	}
 
-	kconfig, err := unMarshallConfig(ocmConfig)
+	kconfig, err := unMarshallConfig(resources.ocmConfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshall config: %w", err)
 	}
 
-	res, err := c.generateComponentYaml(kconfig, imagesResources, kus, kfile)
+	res, err := c.generateComponentYaml(kconfig, resources.imagesResources, kus, kfile)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate component yaml: %w", err)
 	}

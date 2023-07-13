@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/containers/image/v5/pkg/compression"
 	flux "github.com/fluxcd/flux2/v2/pkg/bootstrap"
 	"github.com/fluxcd/flux2/v2/pkg/log"
@@ -61,11 +60,11 @@ type fluxOptions struct {
 }
 
 type fluxInstall struct {
-	componentName string
-	version       string
-	repository    ocm.Repository
-	components    []string
-	*flux.PlainGitBootstrapper
+	componentName    string
+	version          string
+	repository       ocm.Repository
+	components       []string
+	fluxBootstrapper *flux.PlainGitBootstrapper
 	*fluxOptions
 	// mu is used to synchronize access to the kustomization file
 	mu sync.Mutex
@@ -74,6 +73,14 @@ type fluxInstall struct {
 type nameTag struct {
 	Name string
 	Tag  string
+}
+
+// resources contains the resources extracted from the component version
+type resources struct {
+	componentResource []byte
+	ocmConfig         []byte
+	imagesResources   map[string]nameTag
+	compomentsList    []string
 }
 
 func newFluxInstall(name, version, owner string, repository ocm.Repository, opts *fluxOptions) (*fluxInstall, error) {
@@ -99,14 +106,14 @@ func newFluxInstall(name, version, owner string, repository ocm.Repository, opts
 		flux.WithBranch(f.branch),
 		flux.WithRepositoryURL(f.url),
 		flux.WithLogger(log.NopLogger{}),
-		flux.WithKubeconfig(f.restClientGetter, &rateoption.Options{QPS: float32(env.DefaultKubeAPIQPS), Burst: env.DefaultKubeAPIBurst}),
+		flux.WithKubeconfig(f.restClientGetter, &rateoption.Options{QPS: env.DefaultKubeAPIQPS, Burst: env.DefaultKubeAPIBurst}),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	f.gitClient = gitClient
-	f.PlainGitBootstrapper = p
+	f.fluxBootstrapper = p
 	return f, nil
 }
 
@@ -116,28 +123,28 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		return fmt.Errorf("failed to get component version: %w", err)
 	}
 
-	fluxResource, ocmConfig, imagesResources, comps, err := getResources(cv, component)
+	resources, err := getResources(cv, component)
 	if err != nil {
 		return fmt.Errorf("failed to get resources: %w", err)
 	}
 
-	f.components = comps
+	f.components = resources.compomentsList
 
-	if fluxResource == nil || ocmConfig == nil {
+	if resources.componentResource == nil || resources.ocmConfig == nil {
 		return fmt.Errorf("flux or ocm-config resource not found")
 	}
 
-	kfile, kus, err := f.generateKustomization(fluxResource, ocmConfig)
+	kfile, kus, err := f.generateKustomization(resources.componentResource, resources.ocmConfig)
 	if err != nil {
 		return err
 	}
 
-	kconfig, err := unMarshallConfig(ocmConfig)
+	kconfig, err := unMarshallConfig(resources.ocmConfig)
 	if err != nil {
 		return err
 	}
 
-	res, err := f.generateGOTKComponent(kconfig, imagesResources, kus, kfile)
+	res, err := f.generateGOTKComponent(kconfig, resources.imagesResources, kus, kfile)
 	if err != nil {
 		return err
 	}
@@ -156,7 +163,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		Password:     f.token,
 	}
 
-	if err := f.ReconcileSourceSecret(ctx, secretOpts); err != nil {
+	if err := f.fluxBootstrapper.ReconcileSourceSecret(ctx, secretOpts); err != nil {
 		return err
 	}
 
@@ -176,12 +183,12 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		syncOpts.URL = f.testURL
 	}
 
-	if err := f.ReconcileSyncConfig(ctx, syncOpts); err != nil {
+	if err := f.fluxBootstrapper.ReconcileSyncConfig(ctx, syncOpts); err != nil {
 		return fmt.Errorf("failed to reconcile sync config: %w", err)
 	}
 
 	var healthErr error
-	if err := f.ReportKustomizationHealth(ctx, syncOpts, env.DefaultPollInterval, f.timeout); err != nil {
+	if err := f.fluxBootstrapper.ReportKustomizationHealth(ctx, syncOpts, env.DefaultPollInterval, f.timeout); err != nil {
 		healthErr = errors.Join(healthErr, err)
 	}
 
@@ -189,7 +196,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		Namespace:  f.namespace,
 		Components: f.components,
 	}
-	if err := f.ReportComponentsHealth(ctx, installOpts, f.timeout); err != nil {
+	if err := f.fluxBootstrapper.ReportComponentsHealth(ctx, installOpts, f.timeout); err != nil {
 		healthErr = errors.Join(healthErr, err)
 	}
 	if healthErr != nil {
@@ -434,8 +441,8 @@ func getComponentVersion(repository ocm.Repository, componentName, version strin
 	return cv, nil
 }
 
-func getResources(cv ocm.ComponentVersionAccess, componentName string) ([]byte, []byte, map[string]nameTag, []string, error) {
-	resources := cv.GetResources()
+func getResources(cv ocm.ComponentVersionAccess, componentName string) (resources, error) {
+	res := cv.GetResources()
 	var (
 		componentResource []byte
 		ocmConfig         []byte
@@ -443,17 +450,17 @@ func getResources(cv ocm.ComponentVersionAccess, componentName string) ([]byte, 
 		comps             = make([]string, 0)
 		err               error
 	)
-	for _, resource := range resources {
+	for _, resource := range res {
 		switch resource.Meta().GetName() {
 		case componentName:
 			componentResource, err = getResourceContent(resource)
 			if err != nil {
-				return nil, nil, nil, nil, err
+				return resources{}, err
 			}
 		case "ocm-config":
 			ocmConfig, err = getResourceContent(resource)
 			if err != nil {
-				return nil, nil, nil, nil, err
+				return resources{}, err
 			}
 		default:
 			if resource.Meta().GetType() == "ociImage" {
@@ -469,7 +476,7 @@ func getResources(cv ocm.ComponentVersionAccess, componentName string) ([]byte, 
 			}
 		}
 	}
-	return componentResource, ocmConfig, imagesResources, comps, nil
+	return resources{componentResource, ocmConfig, imagesResources, comps}, nil
 }
 
 func getResourceContent(resource ocm.ResourceAccess) ([]byte, error) {
@@ -513,43 +520,6 @@ func unMarshallConfig(data []byte) (*cfd.ConfigData, error) {
 		return nil, fmt.Errorf("failed to decode config data: %w", err)
 	}
 	return k, nil
-}
-
-func getOpenPgpEntity(keyRing openpgp.EntityList, passphrase, keyID string) (*openpgp.Entity, error) {
-	if len(keyRing) == 0 {
-		return nil, fmt.Errorf("empty GPG key ring")
-	}
-
-	var entity *openpgp.Entity
-	if keyID != "" {
-		keyID = strings.TrimPrefix(keyID, "0x")
-		if len(keyID) != 16 {
-			return nil, fmt.Errorf("invalid GPG key id length; expected %d, got %d", 16, len(keyID))
-		}
-		keyID = strings.ToUpper(keyID)
-
-		for _, ent := range keyRing {
-			if ent.PrimaryKey.KeyIdString() == keyID {
-				entity = ent
-			}
-		}
-
-		if entity == nil {
-			return nil, fmt.Errorf("no GPG keyring matching key id '%s' found", keyID)
-		}
-		if entity.PrivateKey == nil {
-			return nil, fmt.Errorf("keyring does not contain private key for key id '%s'", keyID)
-		}
-	} else {
-		entity = keyRing[0]
-	}
-
-	err := entity.PrivateKey.Decrypt([]byte(passphrase))
-	if err != nil {
-		return nil, fmt.Errorf("unable to decrypt GPG private key: %w", err)
-	}
-
-	return entity, nil
 }
 
 func retry(retries int, wait time.Duration, fn func() error) (err error) {
