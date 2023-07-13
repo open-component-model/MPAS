@@ -8,9 +8,12 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	credentials "github.com/oras-project/oras-credentials-go"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/registry/remote"
@@ -51,47 +54,115 @@ func PushArtifact(ctx context.Context, repositoryURL, src, username, password, v
 		return err
 	}
 
+	creds, err := resolveCredentials(username, password, reg)
+	if err != nil {
+		return err
+	}
 	repo.Client = &auth.Client{
-		Client: retry.DefaultClient,
-		Cache:  auth.DefaultCache,
-		Credential: auth.StaticCredential(reg, auth.Credential{
-			Username: username,
-			Password: password,
-		}),
+		Client:     retry.DefaultClient,
+		Cache:      auth.DefaultCache,
+		Credential: creds,
 	}
 	_, err = oras.Copy(ctx, fs, version, repo, version, oras.DefaultCopyOptions)
 	return err
 }
 
 // PullArtifact pulls the artifact from the given repository.
-func PullArtifact(ctx context.Context, repositoryURL, username, password, version string) error {
+func PullArtifact(ctx context.Context, repositoryURL, username, password, version string) (name string, err error) {
 	fs, err := file.New(".")
 	if err != nil {
-		return fmt.Errorf("failed to create file store: %w", err)
+		return "", fmt.Errorf("failed to create file store: %w", err)
 	}
 	defer fs.Close()
 	fs.AllowPathTraversalOnWrite = true
-	fs.DisableOverwrite = false
 
 	reg, repo, err := repoRef(repositoryURL)
 	if err != nil {
-		return err
+		return "", err
 	}
 
+	creds, err := resolveCredentials(username, password, reg)
+	if err != nil {
+		return "", err
+	}
 	repo.Client = &auth.Client{
-		Client: retry.DefaultClient,
-		Cache:  auth.DefaultCache,
-		Credential: auth.StaticCredential(reg, auth.Credential{
+		Client:     retry.DefaultClient,
+		Cache:      auth.DefaultCache,
+		Credential: creds,
+	}
+
+	copyOptions := oras.DefaultCopyOptions
+	copyOptions.PostCopy = func(ctx context.Context, desc ocispec.Descriptor) error {
+		n, ok := desc.Annotations[ocispec.AnnotationTitle]
+		if ok {
+			name = n
+		}
+		return nil
+	}
+
+	_, err = oras.Copy(ctx, repo, version, fs, version, copyOptions)
+	if err != nil {
+		return "", err
+	}
+
+	return
+}
+
+func resolveCredentials(username string, password string, reg string) (func(context.Context, string) (auth.Credential, error), error) {
+	var creds func(context.Context, string) (auth.Credential, error)
+	if username != "" && password != "" {
+		creds = auth.StaticCredential(reg, auth.Credential{
 			Username: username,
 			Password: password,
-		}),
+		})
+	} else {
+		store, err := credentials.NewStoreFromDocker(credentials.StoreOptions{
+			AllowPlaintextPut: true,
+		})
+		if err != nil {
+			return nil, err
+		}
+		creds = credentials.Credential(store)
+	}
+	return creds, nil
+}
+
+// GetLatestVersion returns the latest version of the component with the given name.
+func GetLatestVersion(ctx context.Context, repositoryURL, username, password string) (string, error) {
+	reg, repo, err := repoRef(repositoryURL)
+	if err != nil {
+		return "", err
 	}
 
-	_, err = oras.Copy(ctx, repo, version, fs, version, oras.DefaultCopyOptions)
+	creds, err := resolveCredentials(username, password, reg)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	repo.Client = &auth.Client{
+		Client:     retry.DefaultClient,
+		Cache:      auth.DefaultCache,
+		Credential: creds,
+	}
+
+	var version *semver.Version
+	err = repo.Tags(ctx, "", func(tags []string) error {
+		vs := make([]*semver.Version, len(tags))
+		for i, tag := range tags {
+			v, err := semver.NewVersion(tag)
+			if err != nil {
+				return err
+			}
+			vs[i] = v
+		}
+		sort.Sort(semver.Collection(vs))
+		version = vs[len(vs)-1]
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return version.Original(), nil
 }
 
 func repoRef(repositoryURL string) (string, *remote.Repository, error) {

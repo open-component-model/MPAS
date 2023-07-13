@@ -21,10 +21,23 @@ import (
 // NewBootstrap returns a new cobra.Command for bootstrap
 func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "bootstrap [provider] [flags]",
-		Short:   "Bootstrap the MPAS system into a Kubernetes cluster.",
-		Long:    "Bootstrap the MPAS system into a Kubernetes cluster.",
-		Example: "mpas bootstrap [flags]",
+		Use:   "bootstrap [provider] [flags]",
+		Short: "Bootstrap the MPAS system into a Kubernetes cluster.",
+		Long:  "Bootstrap the MPAS system into a Kubernetes cluster.",
+		Example: `  - Export bootstrap commponent locally
+    mpas bootstrap --export --export-path /tmp
+`,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if !cfg.Export {
+				return fmt.Errorf("no provider specified, see mpas bootstrap --help for more information")
+			}
+			url := env.DefautBootstrapBundleLocation
+			err = bootstrap.Export(cfg, url, cfg.ExportPath)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
 	}
 
 	cmd.AddCommand(NewBootstrapGithub(cfg))

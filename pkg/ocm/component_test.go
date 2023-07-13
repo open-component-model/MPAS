@@ -62,7 +62,7 @@ func writeFile(tmpdir string, data []byte) (string, error) {
 		return "", nil
 	}
 	defer file.Close()
-	err = os.WriteFile(file.Name(), data, 0644)
+	err = os.WriteFile(file.Name(), data, 0o644)
 	if err != nil {
 		return "", err
 	}

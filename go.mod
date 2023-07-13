@@ -34,6 +34,7 @@ require (
 	github.com/open-component-model/ocm-e2e-framework v0.4.0
 	github.com/open-component-model/replication-controller v0.3.1
 	github.com/opencontainers/image-spec v1.1.0-rc4
+	github.com/oras-project/oras-credentials-go v0.2.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5

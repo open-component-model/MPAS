@@ -41,7 +41,7 @@ func CreateArchive(src, archiveName string) (string, error) {
 		return "", fmt.Errorf("failed to close temporary file: %w", err)
 	}
 
-	if err := os.Chmod(tf.Name(), 0o600); err != nil {
+	if err := os.Chmod(tf.Name(), 0o644); err != nil {
 		return "", fmt.Errorf("failed to change file mode of %q: %w", tf.Name(), err)
 	}
 

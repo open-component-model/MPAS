@@ -42,25 +42,6 @@ func FetchLatestComponent(repo ocm.Repository, name string) (ocm.ComponentVersio
 	return cv, nil
 }
 
-// func FetchLatestComponentFromArchive(name, path string) (*comparch.ComponentArchive, ocm.ComponentVersionAccess, error) {
-// 	octx := ocm.DefaultContext()
-// 	arch, err := ctf.Open(octx, accessobj.ACC_READONLY, path, 0644)
-// 	if err != nil {
-// 		return nil, nil, fmt.Errorf("failed to open component archive %q: %w", path, err)
-// 	}
-// 	c := arch.ComponentAccess()
-// 	ver, err := fetchLatestComponentVersion(c, name)
-// 	if err != nil {
-// 		return nil, nil, fmt.Errorf("failed to fetch latest version of component %q: %w", name, err)
-// 	}
-// 	cv, err := c.LookupVersion(ver.Original())
-// 	if err != nil {
-// 		return nil, nil, fmt.Errorf("failed to lookup version %q of component %q: %w", ver.String(), env.DefaultBootstrapComponent, err)
-// 	}
-
-// 	return arch, cv, nil
-// }
-
 func fetchLatestComponentVersion(c ocm.ComponentAccess, name string) (*semver.Version, error) {
 	vnames, err := c.ListVersions()
 	if err != nil {
@@ -97,7 +78,7 @@ func FetchComponentReferences(cv ocm.ComponentVersionAccess, components []string
 
 func RepositoryFromCTF(path string) (ocm.Repository, error) {
 	octx := ocm.DefaultContext()
-	repo, err := ctf.Open(octx, accessobj.ACC_READONLY, path, 0644)
+	repo, err := ctf.Open(octx, accessobj.ACC_READONLY, path, 0o644)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open component archive %q: %w", path, err)
 	}

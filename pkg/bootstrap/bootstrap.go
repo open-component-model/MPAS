@@ -228,10 +228,6 @@ func New(providerClient gitprovider.Client, opts ...Option) (*Bootstrap, error) 
 
 // Run runs the bootstrap of mpas and returns an error if it fails.
 func (b *Bootstrap) Run(ctx context.Context) error {
-	if b.fromFile != "" {
-		return fmt.Errorf("bootstrap from file is not supported yet")
-	}
-
 	b.printer.Printf("Running %s ...\n",
 		printer.BoldBlue("mpas bootstrap"))
 

@@ -357,7 +357,7 @@ func (r *Releaser) release(ctx context.Context, octx om.Context, component *ocm.
 	if err != nil {
 		return fmt.Errorf("failed to generate images: %w", err)
 	}
-	err = os.WriteFile(path.Join(r.tmpDir, "config.yaml"), []byte(tmpl), 0644)
+	err = os.WriteFile(path.Join(r.tmpDir, "config.yaml"), []byte(tmpl), 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write config.yaml: %w", err)
 	}
