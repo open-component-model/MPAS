@@ -110,15 +110,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := oci.PushArtifact(ctx, repositoryURL+"-bundle", src, username, token, Version); err != nil {
+	ociRepo := oci.Repository{
+		RepositoryURL: repositoryURL + "-bundle",
+		Username:      username,
+		Password:      token,
+	}
+	if err := ociRepo.PushArtifact(ctx, src, Version); err != nil {
 		fmt.Println("Failed to push bundle: ", err)
 		os.Exit(1)
 	}
-
-	// if err := oci.PullArtifact(ctx, "ghcr.io/souleb/mpas-bundle", username, token, Version); err != nil {
-	// 	fmt.Println("Failed to pull bundle: ", err)
-	// 	os.Exit(1)
-	// }
 
 	fmt.Println("Release of bootstrap component successful.")
 }

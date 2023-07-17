@@ -21,7 +21,7 @@ type nameTag struct {
 	Tags []string `json:"tags"`
 }
 
-func Test_FetchLatestComponent(t *testing.T) {
+func Test_FetchLatestComponentVersion(t *testing.T) {
 	versions := []string{"v0.1.0", "v0.2.0", "v0.3.0", "v1.0.0-alpha.1", "v1.0.0-beta.1", "v1.0.0-rc.1", "v1.0.0-rc.2", "v1.0.0"}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

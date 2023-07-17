@@ -21,8 +21,15 @@ import (
 	"oras.land/oras-go/v2/registry/remote/retry"
 )
 
+type Repository struct {
+	RepositoryURL string
+	Username      string
+	Password      string
+	PlainHTTP     bool
+}
+
 // PushArtifact pushes the artifact to the given repository.
-func PushArtifact(ctx context.Context, repositoryURL, src, username, password, version string) error {
+func (r *Repository) PushArtifact(ctx context.Context, src, version string) error {
 	fs, err := file.New("")
 	if err != nil {
 		return err
@@ -49,12 +56,14 @@ func PushArtifact(ctx context.Context, repositoryURL, src, username, password, v
 		return err
 	}
 
-	reg, repo, err := repoRef(repositoryURL)
+	reg, repo, err := repoRef(r.RepositoryURL)
 	if err != nil {
 		return err
 	}
 
-	creds, err := resolveCredentials(username, password, reg)
+	repo.PlainHTTP = r.PlainHTTP
+
+	creds, err := resolveCredentials(r.Username, r.Password, reg)
 	if err != nil {
 		return err
 	}
@@ -68,7 +77,7 @@ func PushArtifact(ctx context.Context, repositoryURL, src, username, password, v
 }
 
 // PullArtifact pulls the artifact from the given repository.
-func PullArtifact(ctx context.Context, repositoryURL, username, password, version string) (name string, err error) {
+func (r *Repository) PullArtifact(ctx context.Context, version string) (name string, err error) {
 	fs, err := file.New(".")
 	if err != nil {
 		return "", fmt.Errorf("failed to create file store: %w", err)
@@ -76,12 +85,14 @@ func PullArtifact(ctx context.Context, repositoryURL, username, password, versio
 	defer fs.Close()
 	fs.AllowPathTraversalOnWrite = true
 
-	reg, repo, err := repoRef(repositoryURL)
+	reg, repo, err := repoRef(r.RepositoryURL)
 	if err != nil {
 		return "", err
 	}
 
-	creds, err := resolveCredentials(username, password, reg)
+	repo.PlainHTTP = r.PlainHTTP
+
+	creds, err := resolveCredentials(r.Username, r.Password, reg)
 	if err != nil {
 		return "", err
 	}
@@ -128,13 +139,15 @@ func resolveCredentials(username string, password string, reg string) (func(cont
 }
 
 // GetLatestVersion returns the latest version of the component with the given name.
-func GetLatestVersion(ctx context.Context, repositoryURL, username, password string) (string, error) {
-	reg, repo, err := repoRef(repositoryURL)
+func (r *Repository) GetLatestVersion(ctx context.Context) (string, error) {
+	reg, repo, err := repoRef(r.RepositoryURL)
 	if err != nil {
 		return "", err
 	}
 
-	creds, err := resolveCredentials(username, password, reg)
+	repo.PlainHTTP = r.PlainHTTP
+
+	creds, err := resolveCredentials(r.Username, r.Password, reg)
 	if err != nil {
 		return "", err
 	}
@@ -159,7 +172,7 @@ func GetLatestVersion(ctx context.Context, repositoryURL, username, password str
 		return nil
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get tags: %w", err)
 	}
 
 	return version.Original(), nil

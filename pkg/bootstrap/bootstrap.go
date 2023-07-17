@@ -261,7 +261,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		source = b.registry
 	}
 
-	err = b.printer.PrintSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
+	err := b.printer.PrintSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
 		printer.BoldBlue(source)))
 	if err != nil {
 		return err
@@ -344,7 +344,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 
 		switch comp {
 		case env.OcmControllerName:
-			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
+			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "ocm-system", compNs)
 			if err != nil {
 				return err
 			}
@@ -358,21 +358,21 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 			latestSHA = sha
 			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
 		case env.ReplicationControllerName:
-			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
+			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "ocm-system", compNs)
 			if err != nil {
 				return err
 			}
 			latestSHA = sha
 			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
 		case env.MpasProductControllerName:
-			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
+			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "mpas-system", compNs)
 			if err != nil {
 				return err
 			}
 			latestSHA = sha
 			compNs["mpas-system"] = append(compNs["mpas-system"], comp)
 		case env.MpasProjectControllerName:
-			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
+			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "mpas-system", compNs)
 			if err != nil {
 				return err
 			}
@@ -445,7 +445,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	return nil
 }
 
-func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference, comp, ns string, compNs map[string][]string) (string, error) {
+func (b *Bootstrap) installComponent(ctx context.Context, ocmRepo om.Repository, ref compdesc.ComponentReference, comp, ns string, compNs map[string][]string) (string, error) {
 	dir, err := mkdirTempDir(fmt.Sprintf("%s-install", comp))
 	if err != nil {
 		return "", err
@@ -465,7 +465,7 @@ func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository,
 		installedNS:           compNs,
 	}
 
-	inst, err := newComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
+	inst, err := newComponentInstall(ref.GetComponentName(), ref.GetVersion(), ocmRepo, opts)
 	if err != nil {
 		return "", err
 	}
@@ -481,7 +481,7 @@ func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository,
 	return sha, nil
 }
 
-func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference) error {
+func (b *Bootstrap) installFlux(ctx context.Context, ocmRepo om.Repository, ref compdesc.ComponentReference) error {
 	dir, err := mkdirTempDir("flux-install")
 	if err != nil {
 		return err
@@ -503,7 +503,7 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 		token:                 b.token,
 		namespace:             env.DefaultFluxNamespace,
 	}
-	inst, err := newFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo, opts)
+	inst, err := newFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ocmRepo, opts)
 	if err != nil {
 		return err
 	}
@@ -513,8 +513,8 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 	return nil
 }
 
-func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo om.Repository) (map[string]compdesc.ComponentReference, error) {
-	cv, err := ocm.FetchLatestComponent(ociRepo, env.DefaultBootstrapComponent)
+func (b *Bootstrap) fetchBootstrapComponentReferences(ocmRepo om.Repository) (map[string]compdesc.ComponentReference, error) {
+	cv, err := ocm.FetchLatestComponentVersion(ocmRepo, env.DefaultBootstrapComponent)
 	if err != nil {
 		return nil, err
 	}

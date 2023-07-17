@@ -5,6 +5,7 @@
 package bootstrap
 
 import (
+	"context"
 	"os"
 	"path"
 
@@ -14,9 +15,11 @@ import (
 )
 
 // Export exports the latest version of the component with the given name to the given path.
-func Export(cfg *config.MpasConfig, repositoryURL, dir string) error {
-	ctx := cfg.Context()
-	ver, err := oci.GetLatestVersion(ctx, repositoryURL, "", "")
+func Export(ctx context.Context, cfg *config.MpasConfig, repositoryURL string) error {
+	repo := oci.Repository{
+		RepositoryURL: repositoryURL,
+	}
+	ver, err := repo.GetLatestVersion(ctx)
 	if err != nil {
 		return err
 	}
@@ -25,7 +28,7 @@ func Export(cfg *config.MpasConfig, repositoryURL, dir string) error {
 		printer.BoldBlue(repositoryURL),
 		printer.BoldBlue(ver))
 
-	name, err := oci.PullArtifact(ctx, repositoryURL, "", "", ver)
+	name, err := repo.PullArtifact(ctx, ver)
 	if err != nil {
 		return err
 	}
@@ -35,9 +38,9 @@ func Export(cfg *config.MpasConfig, repositoryURL, dir string) error {
 		printer.BoldBlue(ver))
 
 	finalLocation := name
-	if dir != "" {
+	if cfg.ExportPath != "" {
 		baseName := path.Base(name)
-		newLocation := path.Join(dir, baseName)
+		newLocation := path.Join(cfg.ExportPath, baseName)
 		if err := os.Rename(name, newLocation); err != nil {
 			return err
 		}

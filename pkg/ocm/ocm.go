@@ -23,9 +23,9 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 )
 
-// FetchLatestComponent fetches the latest version of the component with the given name.
-// It returns the component version access and an error if the component cannot be fetched.
-func FetchLatestComponent(repo ocm.Repository, name string) (ocm.ComponentVersionAccess, error) {
+// FetchLatestComponentVersion fetches the latest version of the component with the given name.
+// It returns the component version access and an error if the component version cannot be fetched.
+func FetchLatestComponentVersion(repo ocm.Repository, name string) (ocm.ComponentVersionAccess, error) {
 	c, err := repo.LookupComponent(name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to lookup component %q: %w", name, err)
