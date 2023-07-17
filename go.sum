@@ -1559,8 +1559,8 @@ github.com/open-component-model/mpas-product-controller v0.1.0 h1:tDVk+2j9lDEsUD
 github.com/open-component-model/mpas-product-controller v0.1.0/go.mod h1:Vq/mSa3lhuTM5oOhO+TTfDLKbpybr+ovpVXDAOiWNtI=
 github.com/open-component-model/mpas-project-controller v0.1.1 h1:IxibR03HzsNt/T4aFK13nr2NJNWmxlzw0XjyHPww0uY=
 github.com/open-component-model/mpas-project-controller v0.1.1/go.mod h1:zBwWb2/5+BRseF8AL7rjCZajXF69ExqflNcqwEXSSAM=
-github.com/open-component-model/ocm v0.3.0-rc.1.0.20230713094443-6e9c826c5a5c h1:vcYahfbGtFx5VahYdNe8UmsKkVY0NFWARTc1JgCDW3Q=
-github.com/open-component-model/ocm v0.3.0-rc.1.0.20230713094443-6e9c826c5a5c/go.mod h1:9XrUXuL5Ev1CKcNKk//pJWWaAwWIKEXtFtGS/VQ+Oos=
+github.com/open-component-model/ocm v0.3.0-rc.1.0.20230714180211-6d7c21618cf9 h1:FAj/KquTMOGEx1zUByOYEC69rJpJMMJByHPYwSEhBN0=
+github.com/open-component-model/ocm v0.3.0-rc.1.0.20230714180211-6d7c21618cf9/go.mod h1:LmsnU1AH/+2O4X6F6Ohoxq08GYo34v2Fv2JACDPixrA=
 github.com/open-component-model/ocm-controller v0.8.2 h1:uidHe+jKo7K2RAe6XrOME5IyeyOoU2hOSi+bOYipdgI=
 github.com/open-component-model/ocm-controller v0.8.2/go.mod h1:SjUTPuV8z+dbD9sqNj7IuW2Fc8FWx6R9v9JxgYgCAZ0=
 github.com/open-component-model/ocm-e2e-framework v0.4.0 h1:YSDZ09ENko+O6x5+k+C845cmW7ggG0i4kNgMNAJmhSw=

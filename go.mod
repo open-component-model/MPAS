@@ -10,7 +10,6 @@ replace github.com/google/go-containerregistry => github.com/google/go-container
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
-	github.com/ProtonMail/go-crypto v0.0.0-20230619160724-3fbb1f12458c
 	github.com/containers/image/v5 v5.23.0
 	github.com/cyphar/filepath-securejoin v0.2.3
 	github.com/fatih/color v1.13.0
@@ -30,7 +29,7 @@ require (
 	github.com/open-component-model/git-controller v0.4.1
 	github.com/open-component-model/mpas-product-controller v0.1.0
 	github.com/open-component-model/mpas-project-controller v0.1.1
-	github.com/open-component-model/ocm v0.3.0-rc.1.0.20230713094443-6e9c826c5a5c
+	github.com/open-component-model/ocm v0.3.0-rc.1.0.20230714180211-6d7c21618cf9
 	github.com/open-component-model/ocm-controller v0.8.2
 	github.com/open-component-model/ocm-e2e-framework v0.4.0
 	github.com/open-component-model/replication-controller v0.3.1
@@ -48,6 +47,7 @@ require (
 	k8s.io/apimachinery v0.27.3
 	k8s.io/cli-runtime v0.27.2
 	k8s.io/client-go v0.27.3
+	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	sigs.k8s.io/cli-utils v0.34.0
 	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/e2e-framework v0.2.0
@@ -75,6 +75,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230619160724-3fbb1f12458c // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
@@ -337,7 +338,6 @@ require (
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	k8s.io/kubectl v0.27.2 // indirect
-	k8s.io/utils v0.0.0-20230505201702-9f6742963106 // indirect
 	oras.land/oras-go v1.2.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/release-utils v0.7.4 // indirect

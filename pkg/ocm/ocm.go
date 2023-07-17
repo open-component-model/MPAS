@@ -59,7 +59,7 @@ func fetchLatestComponentVersion(repo ocm.Repository, name string) (ocm.Componen
 }
 
 // FetchComponentReferences fetches the component references from the given component version.
-func FetchComponenReferences(cv ocm.ComponentVersionAccess, components []string) (map[string]compdesc.ComponentReference, error) {
+func FetchComponentReferences(cv ocm.ComponentVersionAccess, components []string) (map[string]compdesc.ComponentReference, error) {
 	references := make(map[string]compdesc.ComponentReference, len(components))
 	for _, component := range components {
 		ref, err := cv.GetReference(metav1.Identity{

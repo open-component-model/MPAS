@@ -498,7 +498,7 @@ func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo om.Repository) (ma
 		return nil, err
 	}
 
-	return ocm.FetchComponenReferences(cv, b.components)
+	return ocm.FetchComponentReferences(cv, b.components)
 }
 
 // reconcileManagementRepository reconciles the management repository. It creates it if it does not exist.
