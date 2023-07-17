@@ -8,42 +8,18 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/release"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/ocm"
 	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	flag "github.com/spf13/pflag"
 )
 
 const (
-	tokenVar                        = "GITHUB_TOKEN"
-	defaultFluxVer                  = "v2.0.0-rc.5"
-	defaultOcmControllerVer         = "v0.8.4"
-	defaultGitControllerVer         = "v0.4.1"
-	defaultReplicationVer           = "v0.3.1"
-	defaultMpasProductControllerVer = "v0.1.0"
-	defaultMpasProjectControllerVer = "v0.1.1"
-	defaultOcmCliVer                = "v0.2.0"
-	Version                         = "v0.1.0"
-)
-
-var (
-	components = []string{
-		"ocm-controller",
-		"flux",
-		"git-controller",
-		"replication-controller",
-		"mpas-product-controller",
-		"mpas-project-controller",
-	}
-	binaryComponents = []string{
-		"flux-cli",
-		"ocm-cli",
-	}
+	Version = "v0.1.0"
 )
 
 func main() {
@@ -72,13 +48,13 @@ func main() {
 		targetArch string
 	)
 
-	flag.StringVar(&fluxVersion, "flux-version", defaultFluxVer, "The version of the flux component to use.")
-	flag.StringVar(&ocmControllerVersion, "ocm-controller-version", defaultOcmControllerVer, "The version of the ocm-controller component to use.")
-	flag.StringVar(&gitControllerVersion, "git-controller-version", defaultGitControllerVer, "The version of the git-controller component to use.")
-	flag.StringVar(&replicationControllerVersion, "replication-controller-version", defaultReplicationVer, "The version of the replication-controller component to use.")
-	flag.StringVar(&mpasProductControllerVersion, "mpas-product-controller-version", defaultMpasProductControllerVer, "The version of the mpas-product-controller component to use.")
-	flag.StringVar(&mpasProjectControllerVersion, "mpas-project-controller-version", defaultMpasProjectControllerVer, "The version of the mpas-project-controller component to use.")
-	flag.StringVar(&ocmCliVersion, "ocm-cli-version", defaultOcmCliVer, "The version of the ocm-cli component to use.")
+	flag.StringVar(&fluxVersion, "flux-version", env.DefaultFluxVer, "The version of the flux component to use.")
+	flag.StringVar(&ocmControllerVersion, "ocm-controller-version", env.DefaultOcmControllerVer, "The version of the ocm-controller component to use.")
+	flag.StringVar(&gitControllerVersion, "git-controller-version", env.DefaultGitControllerVer, "The version of the git-controller component to use.")
+	flag.StringVar(&replicationControllerVersion, "replication-controller-version", env.DefaultReplicationVer, "The version of the replication-controller component to use.")
+	flag.StringVar(&mpasProductControllerVersion, "mpas-product-controller-version", env.DefaultMpasProductControllerVer, "The version of the mpas-product-controller component to use.")
+	flag.StringVar(&mpasProjectControllerVersion, "mpas-project-controller-version", env.DefaultMpasProjectControllerVer, "The version of the mpas-project-controller component to use.")
+	flag.StringVar(&ocmCliVersion, "ocm-cli-version", env.DefaultOcmCliVer, "The version of the ocm-cli component to use.")
 	flag.StringVar(&repositoryURL, "repository-url", "", "The oci repository URL to use.Must be of format <host>/<path>.")
 	flag.StringVar(&username, "username", "", "The username to use.")
 	flag.StringVar(&targetOS, "target-os", "linux", "The target OS to use.")
@@ -86,7 +62,7 @@ func main() {
 
 	flag.Parse()
 
-	token := os.Getenv(tokenVar)
+	token := os.Getenv(env.GithubTokenVar)
 	if token == "" {
 		fmt.Println("token must be provided via environment variable")
 		os.Exit(1)
@@ -104,7 +80,7 @@ func main() {
 
 	ctx := context.Background()
 	octx := om.New(datacontext.MODE_SHARED)
-	target, err := makeTarget(octx, repositoryURL)
+	target, err := ocm.MakeOCIRepository(octx, repositoryURL)
 	if err != nil {
 		fmt.Println("Failed to create target: ", err)
 		os.Exit(1)
@@ -130,49 +106,49 @@ func main() {
 	r := release.New(octx, username, token, tmpDir, repositoryURL, ctf)
 
 	generatedComponents := make(map[string]*ocm.Component)
-	for _, comp := range components {
+	for _, comp := range env.Components {
 		var component *ocm.Component
 		switch comp {
-		case "ocm-controller":
+		case env.OcmControllerName:
 			component, err = r.ReleaseOcmControllerComponent(ctx, ocmControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release ocm-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "flux":
+		case env.FluxName:
 			component, err = r.ReleaseFluxComponent(ctx, fluxVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release flux component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "git-controller":
+		case env.GitControllerName:
 			component, err = r.ReleaseGitControllerComponent(ctx, gitControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release git-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "replication-controller":
+		case env.ReplicationControllerName:
 			component, err = r.ReleaseReplicationControllerComponent(ctx, replicationControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release replication-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "mpas-product-controller":
+		case env.MpasProductControllerName:
 			component, err = r.ReleaseMpasProductControllerComponent(ctx, mpasProductControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release mpas-product-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
-		case "mpas-project-controller":
+		case env.MpasProjectControllerName:
 			component, err = r.ReleaseMpasProjectControllerComponent(ctx, mpasProjectControllerVersion, comp)
 			if err != nil {
-				fmt.Println("Failed to release mpas-project-controller component: ", err)
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
 		}
 		generatedComponents[comp] = component
 	}
-	for _, comp := range binaryComponents {
+	for _, comp := range env.BinaryComponents {
 		var component *ocm.Component
 		switch comp {
 		case "flux-cli":
@@ -202,19 +178,4 @@ func main() {
 	}
 
 	fmt.Println("Release of bootstrap component successful.")
-}
-
-func makeTarget(octx om.Context, repositoryURL string) (om.Repository, error) {
-	regURL, err := ocm.ParseURL(repositoryURL)
-	if err != nil {
-		return nil, err
-	}
-
-	meta := ocireg.NewComponentRepositoryMeta(strings.TrimPrefix(regURL.Path, "/"), ocireg.OCIRegistryURLPathMapping)
-	targetSpec := ocireg.NewRepositorySpec(regURL.Host, meta)
-	target, err := octx.RepositoryForSpec(targetSpec)
-	if err != nil {
-		return nil, err
-	}
-	return target, nil
 }

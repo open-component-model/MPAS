@@ -5,53 +5,44 @@
 package config
 
 import (
-	"context"
-
 	"github.com/open-component-model/mpas/pkg/printer"
 	"github.com/spf13/pflag"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
-
-// DefaultComponents is the list of components to include in the management repository by default.
-var DefaultComponents = []string{
-	"ocm-controller",
-	"flux",
-}
 
 // MpasConfig is the global configuration for the mpas CLI.
 type MpasConfig struct {
-	Kubeconfig string
-	Printer    *printer.Printer
-	Timeout    string
-	ctx        context.Context
-}
-
-// SetContext sets the context to use for operations.
-func (m *MpasConfig) SetContext(ctx context.Context) {
-	m.ctx = ctx
-}
-
-// Context returns the context to use for operations.
-func (m *MpasConfig) Context() context.Context {
-	if m.ctx == nil {
-		return context.Background()
-	}
-	return m.ctx
+	// Printer is the printer to use for output.
+	Printer *printer.Printer
+	// Timeout is the timeout to use for operations.
+	Timeout string
+	// DockerconfigPath is the path to the docker config file.
+	DockerconfigPath string
+	// KubeConfigArgs are the kubeconfig arguments.
+	KubeConfigArgs *genericclioptions.ConfigFlags
+	// PlainHTTP indicates whether to use plain HTTP instead of HTTPS.
+	PlainHTTP bool
 }
 
 // AddFlags adds the global flags to the given flag set.
 func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
-	flags.StringVar(&m.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig file")
 	flags.StringVar(&m.Timeout, "timeout", "5m", "The timeout to use for operations")
+	flags.StringVar(&m.DockerconfigPath, "dockerconfigpath", "~/.docker/config.json", "The path to the docker config file")
+	flags.BoolVar(&m.PlainHTTP, "plain-http", false, "Whether to use plain HTTP instead of HTTPS")
 }
 
 // BootstrapConfig is the configuration shared by the bootstrap commands.
 type BootstrapConfig struct {
-	Components []string
-	Owner      string
-	Repository string
-	FromFile   string
-	Registry   string
-	Hostname   string
+	Components            []string
+	Owner                 string
+	Repository            string
+	FromFile              string
+	Registry              string
+	Hostname              string
+	Path                  string
+	Interval              string
+	CommitMessageAppendix string
+	Private               bool
 }
 
 // AddFlags adds the bootstrap flags to the given flag set.
@@ -60,8 +51,12 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")
 	flags.StringVar(&m.Repository, "repository", "", "The name of the management repository")
 	flags.StringVar(&m.FromFile, "from-file", "", "The path to a file containing the bootstrap component in archive format")
-	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component")
+	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas-bootstrap-component")
 	flags.StringVar(&m.Hostname, "hostname", "", "The hostname of the Git provider")
+	flags.StringVar(&m.Path, "path", ".", "The target path to use in the management repository to store the bootstrap component")
+	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")
+	flags.StringVar(&m.CommitMessageAppendix, "commit-message-appendix", "", "The appendix to add to the commit message, e.g. [ci skip]")
+	flags.BoolVar(&m.Private, "private", false, "Whether the management repository should be private")
 }
 
 // GithubConfig is the configuration for the Github bootstrap command.

@@ -26,8 +26,11 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	cmd := New(os.Args[1:])
-	if err := cmd.Execute(); err != nil {
+	cmd, err := New(ctx, os.Args[1:])
+	if err != nil {
+		return err
+	}
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		return err
 	}
 	return nil

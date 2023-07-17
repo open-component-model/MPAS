@@ -9,18 +9,16 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 
-const (
-	defaultghTokenVar    = "GITHUB_TOKEN"
-	defaultgiteaTokenVar = "GITEA_TOKEN"
-)
-
+// NewBootstrap returns a new cobra.Command for bootstrap
 func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "bootstrap [provider] [flags]",
@@ -39,23 +37,40 @@ func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 	c := &config.GithubConfig{}
 	cmd := &cobra.Command{
-		Use:     "github [flags]",
-		Short:   "Bootstrap an mpas management repository on Github",
-		Example: `mpas bootstrap github --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			b := bootstrap.BootstrapGithubCmd{
-				Owner:      c.Owner,
-				Personal:   c.Personal,
-				Repository: c.Repository,
-				FromFile:   c.FromFile,
-				Registry:   c.Registry,
-				Hostname:   c.Hostname,
-				Components: append(config.DefaultComponents, c.Components...),
+		Use:   "github [flags]",
+		Short: "Bootstrap an mpas management repository on Github",
+		Example: `  - Bootstrap with a private organization repository
+    mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --path clusters/my-cluster
+
+    - Bootstrap with a private user repository
+    mpas bootstrap github --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --path clusters/my-cluster
+
+    - Bootstrap with a public user repository
+    mpas bootstrap github --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --private=false --path clusters/my-cluster
+
+    - Bootstrap with a public organization repository
+    mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster
+`,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			b := bootstrap.GithubCmd{
+				Owner:                 c.Owner,
+				Personal:              c.Personal,
+				Repository:            c.Repository,
+				FromFile:              c.FromFile,
+				Registry:              c.Registry,
+				DockerconfigPath:      cfg.DockerconfigPath,
+				Path:                  c.Path,
+				CommitMessageAppendix: c.CommitMessageAppendix,
+				Hostname:              c.Hostname,
+				Components:            append(env.Components, c.Components...),
 			}
 
-			token := os.Getenv(defaultghTokenVar)
+			if len(c.Components) != 0 {
+				return fmt.Errorf("additional  components are not yet supported for github")
+			}
+
+			token := os.Getenv(env.GithubTokenVar)
 			if token == "" {
-				var err error
 				token, err = passwdFromStdin("Github token: ")
 				if err != nil {
 					return fmt.Errorf("failed to read token from stdin: %w", err)
@@ -75,7 +90,17 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				return fmt.Errorf("either registry or from-file must be set")
 			}
 
-			return b.Execute(cfg)
+			b.Timeout, err = time.ParseDuration(cfg.Timeout)
+			if err != nil {
+				return err
+			}
+
+			b.Interval, err = time.ParseDuration(c.Interval)
+			if err != nil {
+				return err
+			}
+
+			return b.Execute(cmd.Context(), cfg)
 
 		},
 	}
@@ -89,23 +114,40 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 	c := &config.GiteaConfig{}
 	cmd := &cobra.Command{
-		Use:     "gitea [flags]",
-		Short:   "Bootstrap an mpas management repository on Gitea",
-		Example: `mpas bootstrap gitea --owner ocm --repository mpas --registry ghcr.io/ocm/mpas --components ocm-controller,flux --hostname gitea.example.com`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			b := bootstrap.BootstrapGiteaCmd{
-				Owner:      c.Owner,
-				Personal:   c.Personal,
-				Repository: c.Repository,
-				FromFile:   c.FromFile,
-				Registry:   c.Registry,
-				Hostname:   c.Hostname,
-				Components: append(config.DefaultComponents, c.Components...),
+		Use:   "gitea [flags]",
+		Short: "Bootstrap an mpas management repository on Gitea",
+		Example: `  - Bootstrap with a private organization repository
+    mpas bootstrap gitea --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --path clusters/my-cluster --hostname gitea.example.com
+
+    - Bootstrap with a private user repository
+    mpas bootstrap gitea --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --path clusters/my-cluster --hostname gitea.example.com
+
+    - Bootstrap with a public user repository
+    mpas bootstrap gitea --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --private=false --path clusters/my-cluster --hostname gitea.example.com
+
+    - Bootstrap with a public organization repository
+    mpas bootstrap gitea --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster --hostname gitea.example.com
+`,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			b := bootstrap.GiteaCmd{
+				Owner:                 c.Owner,
+				Personal:              c.Personal,
+				Repository:            c.Repository,
+				FromFile:              c.FromFile,
+				Registry:              c.Registry,
+				DockerconfigPath:      cfg.DockerconfigPath,
+				Path:                  c.Path,
+				CommitMessageAppendix: c.CommitMessageAppendix,
+				Hostname:              c.Hostname,
+				Components:            append(env.Components, c.Components...),
 			}
 
-			token := os.Getenv(defaultgiteaTokenVar)
+			if len(c.Components) != 0 {
+				return fmt.Errorf("additional  components are not yet supported for gitea")
+			}
+
+			token := os.Getenv(env.GiteaTokenVar)
 			if token == "" {
-				var err error
 				token, err = passwdFromStdin("Gitea token: ")
 				if err != nil {
 					return fmt.Errorf("failed to read token from stdin: %w", err)
@@ -129,7 +171,17 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				return fmt.Errorf("either registry or from-file must be set")
 			}
 
-			return b.Execute(cfg)
+			b.Timeout, err = time.ParseDuration(cfg.Timeout)
+			if err != nil {
+				return err
+			}
+
+			b.Interval, err = time.ParseDuration(c.Interval)
+			if err != nil {
+				return err
+			}
+
+			return b.Execute(cmd.Context(), cfg)
 
 		},
 	}

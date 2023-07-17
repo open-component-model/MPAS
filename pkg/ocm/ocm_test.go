@@ -5,55 +5,68 @@
 package ocm
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/open-component-model/ocm/pkg/common/accessio"
-	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
-	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func Test_OCM(t *testing.T) {
-	tmpdir := t.TempDir()
-	name := "github.com/ocm/test"
-	octx := om.New(datacontext.MODE_SHARED)
-	comp, err := NewComponent(octx, name, "v0.8.3",
-		WithProvider("ocm"),
-		WithRepositoryURL("ghcr.io/ocm/test"),
-		WithUsername("my-user"),
-		WithToken("my-token"))
-	require.NoError(t, err)
-	assert.Equal(t, name, comp.Name)
-	assert.Equal(t, "v0.8.3", comp.Version)
+type nameTag struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
 
-	// create transfert archive
-	ctf, err := CreateCTF(octx, fmt.Sprintf("%s/%s", tmpdir, "ctf"), accessio.FormatDirectory)
-	require.NoError(t, err)
-	defer ctf.Close()
+func Test_FetchLatestComponent(t *testing.T) {
+	versions := []string{"v0.1.0", "v0.2.0", "v0.3.0", "v1.0.0-alpha.1", "v1.0.0-beta.1", "v1.0.0-rc.1", "v1.0.0-rc.2", "v1.0.0"}
 
-	// add component to transfert archive
-	err = comp.AddToCTF(ctf)
-	require.NoError(t, err)
-	defer comp.Close()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v2/ocm/test/component-descriptors/test/tags/list":
+			payload := nameTag{
+				Name: "ocm/test",
+				Tags: versions,
+			}
+			data, err := json.Marshal(payload)
+			require.NoError(t, err)
+			_, err = w.Write(data)
+			require.NoError(t, err)
+		case "/v2/ocm/test/component-descriptors/test/manifests/v1.0.0":
+			manifest := `{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+  	"mediaType": "application/vnd.oci.image.config.v1+json",
+  	"digest": "sha256:1234567890",
+  	"size": 702
+  },
+  "layers": [
+  	{
+  		"mediaType": "application/vnd.oci.image.layer.v1.tar",
+  		"digest": "sha256:1234567890",
+  		"size": "1234567890"
+  	}
+  ]
+}`
+			fmt.Println(r.URL.Path)
+			w.Write([]byte(manifest))
+		default:
+			fmt.Println(r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
 
-	text := []byte("hello world")
-	fPath, err := writeFile(tmpdir, text)
+	octx := ocm.DefaultContext()
+	repo, err := makeOCIRepository(octx, srv.URL, "ocm/test")
 	require.NoError(t, err)
-	err = comp.AddResource(WithResourceName("my-file"),
-		WithResourceType("file"),
-		WithResourcePath(fPath),
-		WithResourceVersion("v0.1.0"),
-	)
+	_, cv, err := fetchLatestComponentVersion(repo, "test")
 	require.NoError(t, err)
-	err = comp.AddResource(WithResourceType("ociImage"),
-		WithResourceName("my-image"),
-		WithResourceVersion("v0.1.0"),
-		WithResourceImage("ghcr.io/my-registry/my-image:v0.1.0"))
-	require.NoError(t, err)
+	assert.Equal(t, versions[len(versions)-1], cv.Original())
 }
 
 func Test_ParseURL(t *testing.T) {
@@ -84,23 +97,10 @@ func Test_ParseURL(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			u, err := ParseURL(tc.url)
+			u, err := parseURL(tc.url)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedHost, u.Host)
 			assert.Equal(t, tc.expectedPath, u.Path)
 		})
 	}
-}
-
-func writeFile(tmpdir string, data []byte) (string, error) {
-	file, err := os.Create(filepath.Join(tmpdir, "my-file.txt"))
-	if err != nil {
-		return "", nil
-	}
-	defer file.Close()
-	err = os.WriteFile(file.Name(), data, 0644)
-	if err != nil {
-		return "", err
-	}
-	return file.Name(), nil
 }

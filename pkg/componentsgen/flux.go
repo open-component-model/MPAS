@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fluxcd/flux2/pkg/manifestgen/install"
+	"github.com/fluxcd/flux2/v2/pkg/manifestgen/install"
 )
 
 // Flux generates Flux manifests based on the given version.

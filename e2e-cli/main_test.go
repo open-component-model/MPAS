@@ -1,3 +1,6 @@
+//go:build e2e
+// +build e2e
+
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -9,8 +12,10 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +24,7 @@ import (
 func TestBootstrap_github(t *testing.T) {
 	owner, token, err := retrieveBootStrapConfigVars()
 	require.NoError(t, err)
-	bootstrapGithubCmd, err := bootstrapGithub(owner, repository, token)
+	bootstrapGithubCmd, err := bootstrapGithub(owner, token)
 	require.NoError(t, err)
 	assert.NotNil(t, bootstrapGithubCmd)
 
@@ -61,32 +66,78 @@ func retrieveBootStrapConfigVars() (string, string, error) {
 	return owner, token, nil
 }
 
-func bootstrapGithub(owner, repository, token string) (*bootstrap.BootstrapGithubCmd, error) {
-	bootstrapGithubCmd := bootstrap.BootstrapGithubCmd{
+func bootstrapGithub(owner, token string) (*bootstrap.GithubCmd, error) {
+	ctx := context.Background()
+	bootstrapGithubCmd := bootstrap.GithubCmd{
 		Owner:              owner,
 		Repository:         repository,
 		Token:              token,
+		Path:               targetPath,
+		Registry:           registry,
+		Components:         env.Components,
+		DockerconfigPath:   cfg.DockerconfigPath,
 		DestructiveActions: true,
 	}
 
-	err := bootstrapGithubCmd.Execute(&cfg)
+	// set kubeconfig
+	kubeconfig := envConf.KubeconfigFile()
+	fmt.Println("kubeconfig: ", kubeconfig)
+	cfg.KubeConfigArgs.KubeConfig = &kubeconfig
+
+	timeout, err := time.ParseDuration(cfg.Timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	interval, err := time.ParseDuration("5m")
+	if err != nil {
+		return nil, err
+	}
+
+	bootstrapGithubCmd.Timeout = timeout
+	bootstrapGithubCmd.Interval = interval
+
+	err = bootstrapGithubCmd.Execute(ctx, &cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute bootstrapGithubCmd: %w", err)
 	}
 	return &bootstrapGithubCmd, nil
 }
 
-func bootstrapGitea(owner, token, hostname string) (*bootstrap.BootstrapGiteaCmd, error) {
-	bootstrapGiteaCmd := bootstrap.BootstrapGiteaCmd{
+func bootstrapGitea(owner, token, hostname string) (*bootstrap.GiteaCmd, error) {
+	ctx := context.Background()
+	bootstrapGiteaCmd := bootstrap.GiteaCmd{
 		Owner:              owner,
 		Repository:         repository,
 		Token:              token,
 		Hostname:           hostname,
 		Personal:           true,
+		Path:               targetPath,
+		Registry:           registry,
+		TestURL:            fmt.Sprintf("http://%s/%s/%s", defautHostname, owner, repository),
+		Components:         env.Components,
+		DockerconfigPath:   cfg.DockerconfigPath,
 		DestructiveActions: true,
 	}
 
-	err := bootstrapGiteaCmd.Execute(&cfg)
+	// set kubeconfig
+	kubeconfig := envConf.KubeconfigFile()
+	cfg.KubeConfigArgs.KubeConfig = &kubeconfig
+
+	timeout, err := time.ParseDuration(cfg.Timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	interval, err := time.ParseDuration("5m")
+	if err != nil {
+		return nil, err
+	}
+
+	bootstrapGiteaCmd.Timeout = timeout
+	bootstrapGiteaCmd.Interval = interval
+
+	err = bootstrapGiteaCmd.Execute(ctx, &cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute bootstrapGiteaCmd: %w", err)
 	}
