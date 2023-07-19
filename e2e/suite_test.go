@@ -37,17 +37,17 @@ func TestMain(m *testing.M) {
 		envfuncs.CreateNamespace(namespace),
 		shared.StartGitServer(namespace),
 		shared.InstallFlux("latest"),
-		shared.RunTiltForControllers("ocm-controller", "git-controller", "replication-controller"),
+		shared.RunTiltForControllers("ocm-controller", "git-controller", "replication-controller", "mpas-project-controller", "mpas-product-controller"),
 		shared.ForwardPortForAppName("registry", 5000, stopChannelRegistry),
 		shared.ForwardPortForAppName("gitea", 3000, stopChannelGitea),
 	)
 
 	testEnv.Finish(
-		shared.RemoveGitServer(namespace),
+		//shared.RemoveGitServer(namespace),
 		shared.ShutdownPortForward(stopChannelRegistry),
 		shared.ShutdownPortForward(stopChannelGitea),
-		envfuncs.DeleteNamespace(namespace),
-		envfuncs.DestroyKindCluster(kindClusterName),
+		//envfuncs.DeleteNamespace(namespace),
+		//envfuncs.DestroyKindCluster(kindClusterName),
 	)
 
 	os.Exit(testEnv.Run(m))

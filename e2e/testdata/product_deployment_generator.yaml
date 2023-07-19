@@ -6,4 +6,4 @@ metadata:
 spec:
   subscriptionRef:
     name: podinfo
-    namespace: mpas-system
+    namespace: mpas-test-001

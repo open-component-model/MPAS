@@ -16,6 +16,12 @@ MPAS_GITHUB_REPOSITORY ?= ghcr.io/open-component-model/mpas-bootstrap-component
 # Github
 GITHUB_USERNAME ?=
 
+#Verbose Tests
+TAG ?= latest
+LOCALBIN ?= $(shell pwd)/bin
+GOTESTSUM ?= $(LOCALBIN)/gotestsum
+
+
 build:
 # omit debug info wih -s -w
 	go build -ldflags="-s -w -X main.Version=$(VERSION)" -o ./bin/mpas ./cmd/mpas
@@ -29,7 +35,15 @@ build-release-bootstrap-component:
 	go build -ldflags="-s -w -X main.Version=$(BOOTSTRAP_RELEASE_VERSION)" -o ./bin/mpas ./cmd/release-bootstrap-component
 
 e2e:
-	go test -v ./e2e/...
+	go test -v -count=1 ./e2e/...
+
+.PHONY: test-summary-tool
+test-summary-tool: ## Download gotestsum locally if necessary.
+	GOBIN=$(LOCALBIN) go install gotest.tools/gotestsum@${TAG}
+
+.PHONY: e2e-verbose
+e2e-verbose: test-summary-tool ## Runs e2e tests in verbose
+	$(GOTESTSUM) --format standard-verbose -- -count=1 ./e2e
 
 e2e-cli:
 	GITEA_TOKEN=$(GITEA_TOKEN) MPAS_MANAGEMENT_REPO_OWNER=$(MPAS_MANAGEMENT_REPO_OWNER) \

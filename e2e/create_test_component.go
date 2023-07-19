@@ -15,10 +15,10 @@ func createTestComponentVersion(t *testing.T) *features.FeatureBuilder {
 	t.Helper()
 
 	return features.New("Setup OCM component for testing").
-		Setup(setup.AddComponentVersions(podinfo(t))).
 		Setup(setup.AddComponentVersions(podinfoBackend(t))).
 		Setup(setup.AddComponentVersions(podinfoFrontend(t))).
-		Setup(setup.AddComponentVersions(podinfoRedis(t)))
+		Setup(setup.AddComponentVersions(podinfoRedis(t))).
+		Setup(setup.AddComponentVersions(podinfo(t)))
 }
 
 func podinfo(t *testing.T) setup.Component {

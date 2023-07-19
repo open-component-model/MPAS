@@ -4,14 +4,14 @@ metadata:
   name: podinfo
   namespace: mpas-system
 spec:
-  component: mpas.ocm.software/podinfo
+  component: mpas.ocm.software/podinfo #podinfo
   interval: 5s
   semver: 1.0.0
   source:
     url: http://registry.ocm-system.svc.cluster.local:5000
-  serviceAccountName: mpas-admin
-  verify:
-  - name: default
-    publicKey:
-      secretRef:
-        name: mpas-sig
+  #serviceAccountName: mpas-test-001
+  #verify:
+  #- name: default
+  #  publicKey:
+  #    secretRef:
+  #      name: mpas-sig
