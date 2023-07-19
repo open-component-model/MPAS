@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/fluxcd/flux2/pkg/manifestgen/install"
+	"github.com/fluxcd/flux2/v2/pkg/manifestgen/install"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -6,37 +6,32 @@ package release
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path"
 	"strings"
 
 	cgen "github.com/open-component-model/mpas/pkg/componentsgen"
+	"github.com/open-component-model/mpas/pkg/env"
 	"github.com/open-component-model/mpas/pkg/ocm"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
 
-const (
-	archivePathPrefix   = "mpas-bootstrap-component"
-	fluxBinURL          = "https://github.com/fluxcd/flux2/releases/download"
-	ocmBinURL           = "https://github.com/open-component-model/ocm/releases/download"
-	componentNamePrefix = "ocm.software/mpas"
-)
-
 var (
 	fluxLocalizationTemplate = `- name: %s
-	file: gotk-components.yaml
-	image: spec.template.spec.containers[0].image
-	resource:
-  	name: %s
+  file: gotk-components.yaml
+  image: spec.template.spec.containers[0].image
+  resource:
+    name: %s
 `
 	ocmLocalizationTemplate = `- name: %s
-	file: install.yaml
-	image: spec.template.spec.containers[0].image
-	resource:
-  	name: %s
+  file: install.yaml
+  image: spec.template.spec.containers[0].image
+  resource:
+    name: %s
 `
 	localizationTemplateHeader = `apiVersion: config.ocm.software/v1alpha1
 kind: ConfigData
@@ -55,35 +50,43 @@ type Releaser struct {
 	token         string
 	tmpDir        string
 	repositoryURL string
-	target        om.Repository
+	ctf           om.Repository
 }
 
 // New creates a new Releaser.
-func New(octx om.Context, username, token, tmpDir, repositoryURL string, target om.Repository) *Releaser {
+func New(octx om.Context, username, token, tmpDir, repositoryURL string, ctf om.Repository) *Releaser {
 	return &Releaser{
 		octx:          octx,
 		username:      username,
 		token:         token,
 		tmpDir:        tmpDir,
 		repositoryURL: repositoryURL,
-		target:        target,
+		ctf:           ctf,
 	}
 }
 
 // ReleaseBootstrapComponent releases the bootstrap component.
 func (r *Releaser) ReleaseBootstrapComponent(ctx context.Context, components map[string]*ocm.Component, bootstrapVersion string) error {
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/bootstrap", componentNamePrefix),
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/bootstrap", env.ComponentNamePrefix),
 		bootstrapVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, "bootstrap"))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := component.CreateComponentArchive(); err != nil {
+	if err := component.AddToCTF(r.ctf); err != nil {
 		return fmt.Errorf("failed to create component archive: %w", err)
 	}
+	defer func() {
+		er := component.Close()
+		if err == nil {
+			errors.Join(err, er)
+		}
+	}()
 
 	for ref, comp := range components {
 		if err := component.AddResource(ocm.WithResourceName(ref),
@@ -92,10 +95,6 @@ func (r *Releaser) ReleaseBootstrapComponent(ctx context.Context, components map
 			ocm.WithResourceVersion(comp.Version)); err != nil {
 			return fmt.Errorf("failed to add resource flux: %w", err)
 		}
-	}
-
-	if err := component.Transfer(r.target); err != nil {
-		return fmt.Errorf("failed to transfer component: %w", err)
 	}
 
 	return nil
@@ -107,16 +106,18 @@ func (r *Releaser) ReleaseOcmControllerComponent(ctx context.Context, ocmVersion
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ocm-controller manifests: %v", err)
 	}
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/ocm-controller", componentNamePrefix),
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.OcmControllerName),
 		ocmVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := r.release(ctx, component, &o, "ocm-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "ocm-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release ocm-controller component: %w", err)
 	}
 
@@ -129,16 +130,18 @@ func (r *Releaser) ReleaseGitControllerComponent(ctx context.Context, gitVersion
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate git-controller manifests: %v", err)
 	}
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/git-controller", componentNamePrefix),
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.GitControllerName),
 		gitVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := r.release(ctx, component, &o, "git-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "git-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release git-controller component: %w", err)
 	}
 
@@ -151,16 +154,18 @@ func (r *Releaser) ReleaseReplicationControllerComponent(ctx context.Context, re
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate replication-controller manifests: %v", err)
 	}
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/replication-controller", componentNamePrefix),
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.ReplicationControllerName),
 		replicationVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := r.release(ctx, component, &o, "replication-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "replication-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release replication-controller component: %w", err)
 	}
 
@@ -173,16 +178,18 @@ func (r *Releaser) ReleaseMpasProductControllerComponent(ctx context.Context, mp
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate mpas-product-controller manifests: %v", err)
 	}
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/mpas-product-controller", componentNamePrefix),
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.MpasProductControllerName),
 		mpasProductVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := r.release(ctx, component, &o, "mpas-product-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "mpas-product-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release mpas-product-controller component: %w", err)
 	}
 
@@ -195,16 +202,18 @@ func (r *Releaser) ReleaseMpasProjectControllerComponent(ctx context.Context, mp
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate mpas-project-controller manifests: %v", err)
 	}
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/mpas-project-controller", componentNamePrefix),
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.MpasProjectControllerName),
 		mpasProjectVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := r.release(ctx, component, &o, "mpas-project-controller", ocmLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &o, "mpas-project-controller-file", ocmLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release mpas-project-controller component: %w", err)
 	}
 
@@ -217,16 +226,18 @@ func (r *Releaser) ReleaseFluxComponent(ctx context.Context, fluxVersion, comp s
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate flux manifests: %v", err)
 	}
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/flux", componentNamePrefix),
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix,env.FluxName),
 		fluxVersion,
 		ocm.WithProvider("fluxcd"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := r.release(ctx, component, &f, "flux", fluxLocalizationTemplate); err != nil {
+	if err := r.release(ctx, r.octx, component, r.ctf, &f, env.FluxName, fluxLocalizationTemplate); err != nil {
 		return nil, fmt.Errorf("failed to release flux component: %w", err)
 	}
 
@@ -234,31 +245,39 @@ func (r *Releaser) ReleaseFluxComponent(ctx context.Context, fluxVersion, comp s
 }
 
 // ReleaseFluxCliComponent releases flux-cli.
-func (r *Releaser) ReleaseFluxCliComponent(ctx context.Context, fluxVersion, comp, targetOS, targetArch string) (*ocm.Component, error) {
+func (r *Releaser) ReleaseFluxCliComponent(ctx context.Context, fluxVersion, comp, targetOS, targetArch string) (component *ocm.Component, err error) {
 	if fluxVersion == "" {
 		return nil, fmt.Errorf("flux version is empty")
 	}
 	ver := strings.TrimPrefix(fluxVersion, "v")
 
-	binURL := fmt.Sprintf("%s/v%s/flux_%s_%s_%s.tar.gz", fluxBinURL, ver, ver, targetOS, targetArch)
-	hashURL := fmt.Sprintf("%s/v%s/flux_%s_checksums.txt", fluxBinURL, ver, ver)
+	binURL := fmt.Sprintf("%s/v%s/flux_%s_%s_%s.tar.gz", env.FluxBinURL, ver, ver, targetOS, targetArch)
+	hashURL := fmt.Sprintf("%s/v%s/flux_%s_checksums.txt", env.FluxBinURL, ver, ver)
 	b, err := getBinary(ctx, fluxVersion, r.tmpDir, binURL, hashURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get flux-cli binary: %v", err)
 	}
 
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/flux-cli", componentNamePrefix),
+	component, err = ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/flux-cli", env.ComponentNamePrefix),
 		fluxVersion,
 		ocm.WithProvider("fluxcd"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := component.CreateComponentArchive(); err != nil {
+	if err := component.AddToCTF(r.ctf); err != nil {
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
+	defer func() {
+		er := component.Close()
+		if err == nil {
+			errors.Join(err, er)
+		}
+	}()
 
 	if err := component.AddResource(ocm.WithResourceName("flux-cli"),
 		ocm.WithResourcePath(path.Join(r.tmpDir, b.Path)),
@@ -267,15 +286,11 @@ func (r *Releaser) ReleaseFluxCliComponent(ctx context.Context, fluxVersion, com
 		return nil, fmt.Errorf("failed to add resource flux: %w", err)
 	}
 
-	if err := component.Transfer(r.target); err != nil {
-		return nil, fmt.Errorf("failed to transfer component: %w", err)
-	}
-
 	return component, nil
 }
 
 // ReleaseOCMCliComponent releases ocm-cli.
-func (r *Releaser) ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, comp, targetOS, targetArch string) (*ocm.Component, error) {
+func (r *Releaser) ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, comp, targetOS, targetArch string) (component *ocm.Component, err error) {
 	if ocmCliVersion == "" {
 		return nil, fmt.Errorf("ocm version is empty")
 	}
@@ -285,25 +300,33 @@ func (r *Releaser) ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, co
 	if targetArch == "amd64" {
 		targetArch = "x86_64"
 	}
-	binURL := fmt.Sprintf("%s/v%s/ocm_%s_%s.tar.gz", ocmBinURL, ver, targetOS, targetArch)
-	hashURL := fmt.Sprintf("%s/v%s/checksums.txt", ocmBinURL, ver)
+	binURL := fmt.Sprintf("%s/v%s/ocm_%s_%s.tar.gz", env.OcmBinURL, ver, targetOS, targetArch)
+	hashURL := fmt.Sprintf("%s/v%s/checksums.txt", env.OcmBinURL, ver)
 	b, err := getBinary(ctx, ocmCliVersion, r.tmpDir, binURL, hashURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ocm-cli binary: %v", err)
 	}
 
-	component := ocm.NewComponent(r.octx,
-		fmt.Sprintf("%s/ocm-cli", componentNamePrefix),
+	component, err = ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/ocm-cli", env.ComponentNamePrefix),
 		ocmCliVersion,
 		ocm.WithProvider("ocm"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
-		ocm.WithArchivePath(path.Join(r.tmpDir, fmt.Sprintf("%s-%s", archivePathPrefix, comp))),
 		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
 
-	if err := component.CreateComponentArchive(); err != nil {
+	if err := component.AddToCTF(r.ctf); err != nil {
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
+	defer func() {
+		er := component.Close()
+		if err == nil {
+			errors.Join(err, er)
+		}
+	}()
 
 	if err := component.AddResource(ocm.WithResourceName("ocm-cli"),
 		ocm.WithResourcePath(path.Join(r.tmpDir, b.Path)),
@@ -312,17 +335,19 @@ func (r *Releaser) ReleaseOCMCliComponent(ctx context.Context, ocmCliVersion, co
 		return nil, fmt.Errorf("failed to add resource flux: %w", err)
 	}
 
-	if err := component.Transfer(r.target); err != nil {
-		return nil, fmt.Errorf("failed to transfer component: %w", err)
-	}
-
 	return component, nil
 }
 
-func (r *Releaser) release(ctx context.Context, component *ocm.Component, gen cgen.Generator, name, loc string) error {
-	if err := component.CreateComponentArchive(); err != nil {
-		return fmt.Errorf("failed to create component archive: %w", err)
+func (r *Releaser) release(ctx context.Context, octx om.Context, component *ocm.Component, ctf om.Repository, gen cgen.Generator, name, loc string) (err error) {
+	if err := component.AddToCTF(ctf); err != nil {
+		return fmt.Errorf("failed to create ctf: %w", err)
 	}
+	defer func() {
+		er := component.Close()
+		if err == nil {
+			errors.Join(err, er)
+		}
+	}()
 
 	tmpl, err := gen.GenerateLocalizationFromTemplate(localizationTemplateHeader, loc)
 	if err != nil {
@@ -358,9 +383,6 @@ func (r *Releaser) release(ctx context.Context, component *ocm.Component, gen cg
 			ocm.WithResourceVersion(nameVersion[1])); err != nil {
 			return fmt.Errorf("failed to add resource %s: %w", image, err)
 		}
-	}
-	if err := component.Transfer(r.target); err != nil {
-		return fmt.Errorf("failed to transfer component: %w", err)
 	}
 
 	return nil

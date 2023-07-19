@@ -14,7 +14,7 @@ OCM_CONTROLLER_VERSION ?= "v0.0.1"
 MPAS_GITHUB_REPOSITORY ?= ghcr.io/open-component-model/mpas-bootstrap-component
 
 # Github
-GITHUB_USERNAME ?=
+GITHUB_USERNAME ?= mpas
 
 #Verbose Tests
 TAG ?= latest
@@ -30,12 +30,13 @@ build-dev:
 # omit debug info wih -s -w
 	go build -ldflags="-s -w -X main.Version=$(DEV_VERSION)" -o ./bin/mpas ./cmd/mpas
 
+.PHONY: build-release-bootstrap-component
 build-release-bootstrap-component:
 # omit debug info wih -s -w
-	go build -ldflags="-s -w -X main.Version=$(BOOTSTRAP_RELEASE_VERSION)" -o ./bin/mpas ./cmd/release-bootstrap-component
+	go build -ldflags="-s -w -X main.Version=$(BOOTSTRAP_RELEASE_VERSION)" -o ./bin/mpas-rel ./cmd/release-bootstrap-component
 
 e2e:
-	go test -v -count=1 ./e2e/...
+	go test --tags=e2e -v ./e2e/...
 
 .PHONY: test-summary-tool
 test-summary-tool: ## Download gotestsum locally if necessary.
@@ -43,16 +44,14 @@ test-summary-tool: ## Download gotestsum locally if necessary.
 
 .PHONY: e2e-verbose
 e2e-verbose: test-summary-tool ## Runs e2e tests in verbose
-	$(GOTESTSUM) --format standard-verbose -- -count=1 ./e2e
+	$(GOTESTSUM) --format standard-verbose -- -count=1 --tags=e2e ./e2e
 
 e2e-cli:
 	GITEA_TOKEN=$(GITEA_TOKEN) MPAS_MANAGEMENT_REPO_OWNER=$(MPAS_MANAGEMENT_REPO_OWNER) \
-	MPAS_MANAGEMENT_REPO_HOSTNAME=$(MPAS_MANAGEMENT_REPO_HOSTNAME) go test -v ./e2e/... -run TestCli
+	MPAS_MANAGEMENT_REPO_HOSTNAME=$(MPAS_MANAGEMENT_REPO_HOSTNAME) go test ./e2e-cli --tags=e2e -v -count=1 -run TestBootstrap_gitea
 
 release-bootstrap-component:
-	go run ./cmd/release-bootstrap-component/main.go --flux-version $(FLUX_VERSION) OCM_CONTROLLER_VERSION=$(OCM_CONTROLLER_VERSION) \
-	--repository-url $(MPAS_GITHUB_REPOSITORY) \
-	--username $(GITHUB_USERNAME)
+	./bin/mpas-rel --repository-url $(MPAS_GITHUB_REPOSITORY) --username $(GITHUB_USERNAME)
 
 test:
 	go test -v ./pkg/... $(GO_TEST_ARGS) -coverprofile cover.out

@@ -17,7 +17,6 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	metav1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 )
 
 // from https://github.com/phoban01/gitops-component-cli/blob/main/pkg/component/handlers.go
@@ -29,7 +28,7 @@ type addFileOpts struct {
 	fileType string
 }
 
-func fileHandler(c *comparch.ComponentArchive, octx ocm.Context, opts *addFileOpts) error {
+func fileHandler(cv ocm.ComponentVersionAccess, octx ocm.Context, opts *addFileOpts) error {
 	tmpcache.Set(octx, &tmpcache.Attribute{Path: "/tmp"})
 
 	mtype, err := mimetype.DetectFile(opts.path)
@@ -54,11 +53,7 @@ func fileHandler(c *comparch.ComponentArchive, octx ocm.Context, opts *addFileOp
 		Type:     ftype,
 	}
 
-	if err := c.SetResourceBlob(r, acc, "", nil); err != nil {
-		return err
-	}
-
-	if err := c.Update(); err != nil {
+	if err := cv.SetResourceBlob(r, acc, "", nil); err != nil {
 		return err
 	}
 
@@ -71,7 +66,7 @@ type addImageOpts struct {
 	version string
 }
 
-func imageHandler(c *comparch.ComponentArchive, opts *addImageOpts) error {
+func imageHandler(cv ocm.ComponentVersionAccess, opts *addImageOpts) error {
 	r := &compdesc.ResourceMeta{
 		ElementMeta: compdesc.ElementMeta{
 			Name:    opts.name,
@@ -83,12 +78,8 @@ func imageHandler(c *comparch.ComponentArchive, opts *addImageOpts) error {
 
 	spec := ociartifact.New(opts.image)
 
-	if err := c.SetResource(r, spec); err != nil {
+	if err := cv.SetResource(r, spec); err != nil {
 		return fmt.Errorf("failed to add image: %w", err)
-	}
-
-	if err := c.Update(); err != nil {
-		return fmt.Errorf("failed to update component archive: %w", err)
 	}
 
 	return nil
@@ -100,7 +91,7 @@ type addReferenceOpts struct {
 	component string
 }
 
-func referenceHandler(c *comparch.ComponentArchive, opts *addReferenceOpts) error {
+func referenceHandler(cv ocm.ComponentVersionAccess, opts *addReferenceOpts) error {
 	r := &compdesc.ComponentReference{
 		ElementMeta: compdesc.ElementMeta{
 			Name:    opts.name,
@@ -109,12 +100,8 @@ func referenceHandler(c *comparch.ComponentArchive, opts *addReferenceOpts) erro
 		ComponentName: opts.component,
 	}
 
-	if err := c.SetReference(r); err != nil {
+	if err := cv.SetReference(r); err != nil {
 		return fmt.Errorf("failed to add reference: %w", err)
-	}
-
-	if err := c.Update(); err != nil {
-		return fmt.Errorf("failed to update component archive: %w", err)
 	}
 
 	return nil
