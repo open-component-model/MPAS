@@ -100,8 +100,8 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				return fmt.Errorf("repository must be set")
 			}
 
-			if b.Registry == "" && b.FromFile == "" {
-				return fmt.Errorf("either registry or from-file must be set")
+			if b.Registry == "" {
+				return fmt.Errorf("registry must be set")
 			}
 
 			b.Timeout, err = time.ParseDuration(cfg.Timeout)
@@ -181,8 +181,8 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				return fmt.Errorf("repository must be set")
 			}
 
-			if b.Registry == "" && b.FromFile == "" {
-				return fmt.Errorf("either registry or from-file must be set")
+			if b.Registry == "" {
+				return fmt.Errorf("registry must be set")
 			}
 
 			b.Timeout, err = time.ParseDuration(cfg.Timeout)

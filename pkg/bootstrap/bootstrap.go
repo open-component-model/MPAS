@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -249,56 +250,74 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return err
 	}
 
-	var (
-		refs    map[string]compdesc.ComponentReference
-		ocmRepo om.Repository
-		source  string
-	)
-
 	if b.fromFile != "" {
-		source = b.fromFile
-	} else {
-		source = b.registry
+		if err := b.printer.PrintSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
+			printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); err != nil {
+			return err
+		}
+		ctf, err := ocm.RepositoryFromCTF(b.fromFile)
+		if err != nil {
+			if er := b.printer.StopFailSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
+				printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); er != nil {
+				err = errors.Join(err, er)
+			}
+			return fmt.Errorf("failed to create CTF from file %q: %w", b.fromFile, err)
+		}
+		defer ctf.Close()
+
+		target, err := ocm.MakeRepositoryWithDockerConfig(b.registry, b.dockerConfigPath)
+		if err != nil {
+			if er := b.printer.StopFailSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
+				printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); er != nil {
+				err = errors.Join(err, er)
+			}
+			return fmt.Errorf("failed to create target repository: %w", err)
+		}
+		defer target.Close()
+
+		octx := om.DefaultContext()
+		// set default log level to 1 which is ERROR level to avoid printing INFO messages
+		octx.LoggingContext().SetDefaultLevel(1)
+		if err := ocm.Transfer(om.DefaultContext(), ctf, target, io.Discard); err != nil {
+			if er := b.printer.StopFailSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
+				printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); er != nil {
+				err = errors.Join(err, er)
+			}
+			return fmt.Errorf("failed to transfer CTF from %q to %q: %w", b.fromFile, b.registry, err)
+		}
+
+		if err := b.printer.StopSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
+			printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); err != nil {
+			return err
+		}
 	}
 
-	err := b.printer.PrintSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
-		printer.BoldBlue(source)))
-	if err != nil {
+	if err := b.printer.PrintSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
+		printer.BoldBlue(b.registry))); err != nil {
 		return err
 	}
-
-	if b.fromFile != "" {
-		ocmRepo, err = ocm.RepositoryFromCTF(b.fromFile)
-		if err != nil {
-			if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
-				printer.BoldBlue(source))); er != nil {
-				err = errors.Join(err, er)
-			}
-			return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
-		}
-	} else {
-		ocmRepo, err = ocm.MakeRepositoryWithDockerConfig(b.registry, b.dockerConfigPath)
-		if err != nil {
-			if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
-				printer.BoldBlue(source))); er != nil {
-				err = errors.Join(err, er)
-			}
-			return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
-		}
-	}
-	defer ocmRepo.Close()
-
-	refs, err = b.fetchBootstrapComponentReferences(ocmRepo)
+	ociRepo, err := ocm.MakeRepositoryWithDockerConfig(b.registry, b.dockerConfigPath)
 	if err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
-			printer.BoldBlue(source))); er != nil {
+		if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
+			printer.BoldBlue(b.registry))); er != nil {
 			err = errors.Join(err, er)
 		}
 		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
 	}
 
-	if err := b.printer.StopSpinner(fmt.Sprintf("Fetching bootstrap component from %s ",
-		printer.BoldBlue(source))); err != nil {
+	defer ociRepo.Close()
+
+	refs, err := b.fetchBootstrapComponentReferences(ociRepo)
+	if err != nil {
+		if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
+			printer.BoldBlue(b.registry))); er != nil {
+			err = errors.Join(err, er)
+		}
+		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
+	}
+
+	if err := b.printer.StopSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
+		printer.BoldBlue(b.registry))); err != nil {
 		return err
 	}
 
@@ -313,7 +332,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err = b.installFlux(ctx, ocmRepo, fluxRef); err != nil {
+	if err = b.installFlux(ctx, ociRepo, fluxRef); err != nil {
 		if er := b.printer.StopFailSpinner(fmt.Sprintf("Installing %s with version %s",
 			printer.BoldBlue(env.FluxName),
 			printer.BoldBlue(fluxRef.GetVersion()))); er != nil {
@@ -343,36 +362,15 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 
 		switch comp {
-		case env.OcmControllerName:
-			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "ocm-system", compNs)
+		case env.OcmControllerName, env.GitControllerName, env.ReplicationControllerName:
+			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
 			if err != nil {
 				return err
 			}
 			latestSHA = sha
 			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
-		case env.GitControllerName:
-			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "ocm-system", compNs)
-			if err != nil {
-				return err
-			}
-			latestSHA = sha
-			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
-		case env.ReplicationControllerName:
-			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "ocm-system", compNs)
-			if err != nil {
-				return err
-			}
-			latestSHA = sha
-			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
-		case env.MpasProductControllerName:
-			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "mpas-system", compNs)
-			if err != nil {
-				return err
-			}
-			latestSHA = sha
-			compNs["mpas-system"] = append(compNs["mpas-system"], comp)
-		case env.MpasProjectControllerName:
-			sha, err := b.installComponent(ctx, ocmRepo, ref, comp, "mpas-system", compNs)
+		case env.MpasProductControllerName, env.MpasProjectControllerName:
+			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
 			if err != nil {
 				return err
 			}
@@ -445,7 +443,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	return nil
 }
 
-func (b *Bootstrap) installComponent(ctx context.Context, ocmRepo om.Repository, ref compdesc.ComponentReference, comp, ns string, compNs map[string][]string) (string, error) {
+func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference, comp, ns string, compNs map[string][]string) (string, error) {
 	dir, err := mkdirTempDir(fmt.Sprintf("%s-install", comp))
 	if err != nil {
 		return "", err
@@ -465,7 +463,7 @@ func (b *Bootstrap) installComponent(ctx context.Context, ocmRepo om.Repository,
 		installedNS:           compNs,
 	}
 
-	inst, err := newComponentInstall(ref.GetComponentName(), ref.GetVersion(), ocmRepo, opts)
+	inst, err := newComponentInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
 	if err != nil {
 		return "", err
 	}
@@ -481,7 +479,7 @@ func (b *Bootstrap) installComponent(ctx context.Context, ocmRepo om.Repository,
 	return sha, nil
 }
 
-func (b *Bootstrap) installFlux(ctx context.Context, ocmRepo om.Repository, ref compdesc.ComponentReference) error {
+func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference) error {
 	dir, err := mkdirTempDir("flux-install")
 	if err != nil {
 		return err
@@ -503,7 +501,7 @@ func (b *Bootstrap) installFlux(ctx context.Context, ocmRepo om.Repository, ref 
 		token:                 b.token,
 		namespace:             env.DefaultFluxNamespace,
 	}
-	inst, err := newFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ocmRepo, opts)
+	inst, err := newFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo, opts)
 	if err != nil {
 		return err
 	}
@@ -513,8 +511,8 @@ func (b *Bootstrap) installFlux(ctx context.Context, ocmRepo om.Repository, ref 
 	return nil
 }
 
-func (b *Bootstrap) fetchBootstrapComponentReferences(ocmRepo om.Repository) (map[string]compdesc.ComponentReference, error) {
-	cv, err := ocm.FetchLatestComponentVersion(ocmRepo, env.DefaultBootstrapComponent)
+func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo om.Repository) (map[string]compdesc.ComponentReference, error) {
+	cv, err := ocm.FetchLatestComponentVersion(ociRepo, env.DefaultBootstrapComponent)
 	if err != nil {
 		return nil, err
 	}

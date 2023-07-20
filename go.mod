@@ -33,6 +33,7 @@ require (
 	github.com/open-component-model/ocm-controller v0.8.2
 	github.com/open-component-model/ocm-e2e-framework v0.4.0
 	github.com/open-component-model/replication-controller v0.3.1
+	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc4
 	github.com/oras-project/oras-credentials-go v0.2.0
 	github.com/sourcegraph/conc v0.3.0
@@ -253,7 +254,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/onsi/gomega v1.27.8 // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect

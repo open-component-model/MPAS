@@ -201,7 +201,7 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 		os.Exit(1)
 	}
 
-	if err := ocm.Transfer(octx, ctf, target); err != nil {
+	if err := ocm.Transfer(octx, ctf, target, os.Stdout); err != nil {
 		fmt.Println("Failed to transfer CTF: ", err)
 		os.Exit(1)
 	}
