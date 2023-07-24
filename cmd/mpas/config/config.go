@@ -22,6 +22,10 @@ type MpasConfig struct {
 	KubeConfigArgs *genericclioptions.ConfigFlags
 	// PlainHTTP indicates whether to use plain HTTP instead of HTTPS.
 	PlainHTTP bool
+	// Export indicates whether to export to a file.
+	Export bool
+	// ExportPath is the path to export to.
+	ExportPath string
 }
 
 // AddFlags adds the global flags to the given flag set.
@@ -29,6 +33,8 @@ func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Timeout, "timeout", "5m", "The timeout to use for operations")
 	flags.StringVar(&m.DockerconfigPath, "dockerconfigpath", "~/.docker/config.json", "The path to the docker config file")
 	flags.BoolVar(&m.PlainHTTP, "plain-http", false, "Whether to use plain HTTP instead of HTTPS")
+	flags.BoolVar(&m.Export, "export", false, "Whether to export to a file")
+	flags.StringVar(&m.ExportPath, "export-path", "", "The path to export to. Defaults to the temporary directory")
 }
 
 // BootstrapConfig is the configuration shared by the bootstrap commands.

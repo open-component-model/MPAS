@@ -21,10 +21,24 @@ import (
 // NewBootstrap returns a new cobra.Command for bootstrap
 func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "bootstrap [provider] [flags]",
-		Short:   "Bootstrap the MPAS system into a Kubernetes cluster.",
-		Long:    "Bootstrap the MPAS system into a Kubernetes cluster.",
-		Example: "mpas bootstrap [flags]",
+		Use:   "bootstrap [provider] [flags]",
+		Short: "Bootstrap the MPAS system into a Kubernetes cluster.",
+		Long:  "Bootstrap the MPAS system into a Kubernetes cluster.",
+		Example: `  - Export bootstrap commponent locally
+    mpas bootstrap --export --export-path /tmp
+`,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if !cfg.Export {
+				return fmt.Errorf("no provider specified, see mpas bootstrap --help for more information")
+			}
+			ctx := cmd.Context()
+			url := env.DefautBootstrapBundleLocation
+			err = bootstrap.Export(ctx, cfg, url)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
 	}
 
 	cmd.AddCommand(NewBootstrapGithub(cfg))
@@ -86,8 +100,8 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				return fmt.Errorf("repository must be set")
 			}
 
-			if b.Registry == "" && b.FromFile == "" {
-				return fmt.Errorf("either registry or from-file must be set")
+			if b.Registry == "" {
+				return fmt.Errorf("registry must be set")
 			}
 
 			b.Timeout, err = time.ParseDuration(cfg.Timeout)
@@ -167,8 +181,8 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				return fmt.Errorf("repository must be set")
 			}
 
-			if b.Registry == "" && b.FromFile == "" {
-				return fmt.Errorf("either registry or from-file must be set")
+			if b.Registry == "" {
+				return fmt.Errorf("registry must be set")
 			}
 
 			b.Timeout, err = time.ParseDuration(cfg.Timeout)
