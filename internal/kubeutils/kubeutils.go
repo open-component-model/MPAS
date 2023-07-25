@@ -18,7 +18,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	productv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
 	projectv1alpha1 "github.com/open-component-model/mpas-project-controller/api/v1alpha1"
-	"github.com/open-component-model/mpas/pkg/env"
+	"github.com/open-component-model/mpas/internal/env"
 	ocmv1alpha1 "github.com/open-component-model/ocm-controller/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

@@ -36,4 +36,4 @@ release-bootstrap-component:
 	./bin/mpas-rel --repository-url $(MPAS_GITHUB_REPOSITORY) --username $(GITHUB_USERNAME)
 
 test:
-	go test -v ./pkg/... $(GO_TEST_ARGS) -coverprofile cover.out
+	go test -v ./internal/... $(GO_TEST_ARGS) -coverprofile cover.out

@@ -10,8 +10,8 @@ import (
 	"path"
 
 	"github.com/open-component-model/mpas/cmd/mpas/config"
-	"github.com/open-component-model/mpas/pkg/oci"
-	"github.com/open-component-model/mpas/pkg/printer"
+	"github.com/open-component-model/mpas/internal/oci"
+	"github.com/open-component-model/mpas/internal/printer"
 )
 
 // Export exports the latest version of the component with the given name to the given path.

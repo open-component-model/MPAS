@@ -13,7 +13,7 @@ import (
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
-	"github.com/open-component-model/mpas/pkg/env"
+	"github.com/open-component-model/mpas/internal/env"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )

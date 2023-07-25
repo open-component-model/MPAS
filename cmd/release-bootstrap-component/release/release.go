@@ -12,9 +12,9 @@ import (
 	"path"
 	"strings"
 
-	cgen "github.com/open-component-model/mpas/pkg/componentsgen"
-	"github.com/open-component-model/mpas/pkg/env"
-	"github.com/open-component-model/mpas/pkg/ocm"
+	cgen "github.com/open-component-model/mpas/internal/componentsgen"
+	"github.com/open-component-model/mpas/internal/env"
+	"github.com/open-component-model/mpas/internal/ocm"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"

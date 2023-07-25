@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/open-component-model/mpas/cmd/mpas/config"
-	"github.com/open-component-model/mpas/pkg/bootstrap"
-	"github.com/open-component-model/mpas/pkg/bootstrap/provider"
-	"github.com/open-component-model/mpas/pkg/env"
-	"github.com/open-component-model/mpas/pkg/kubeutils"
+	"github.com/open-component-model/mpas/internal/bootstrap"
+	"github.com/open-component-model/mpas/internal/bootstrap/provider"
+	"github.com/open-component-model/mpas/internal/env"
+	"github.com/open-component-model/mpas/internal/kubeutils"
 )
 
 // GiteaCmd is a command for bootstrapping a Gitea repository
