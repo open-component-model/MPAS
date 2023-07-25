@@ -14,8 +14,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
-	env2 "github.com/open-component-model/mpas/pkg/env"
-	"github.com/open-component-model/mpas/pkg/printer"
+	env2 "github.com/open-component-model/mpas/internal/env"
+	"github.com/open-component-model/mpas/internal/printer"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"

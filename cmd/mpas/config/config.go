@@ -5,7 +5,7 @@
 package config
 
 import (
-	"github.com/open-component-model/mpas/pkg/printer"
+	"github.com/open-component-model/mpas/internal/printer"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )

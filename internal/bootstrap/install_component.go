@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
-	"github.com/open-component-model/mpas/pkg/env"
-	"github.com/open-component-model/mpas/pkg/kubeutils"
+	"github.com/open-component-model/mpas/internal/env"
+	"github.com/open-component-model/mpas/internal/kubeutils"
 	cfd "github.com/open-component-model/ocm-controller/pkg/configdata"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"k8s.io/cli-runtime/pkg/genericclioptions"

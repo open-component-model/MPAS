@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
-	"github.com/open-component-model/mpas/pkg/env"
-	"github.com/open-component-model/mpas/pkg/printer"
+	"github.com/open-component-model/mpas/internal/env"
+	"github.com/open-component-model/mpas/internal/printer"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
