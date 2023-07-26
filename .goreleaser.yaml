@@ -12,17 +12,16 @@ builds:
       - linux
     goarch:
       - amd64
-      # - arm64
-      # - arm
-    # goarm:
-    #   - 7
+      - arm64
+    goarm:
+      - 7
   - <<: *build_defaults
     id: darwin
     goos:
       - darwin
     goarch:
       - amd64
-      # - arm64
+      - arm64
   - <<: *build_defaults
     id: windows
     goos:
@@ -30,16 +29,12 @@ builds:
 archives:
   - name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     id: nix
-    builds: [linux, darwin]
     format: tar.gz
     files:
       - none*
-  - name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    id: windows
-    builds: [windows]
-    format: zip
-    files:
-      - none*
+    format_overrides:
+      - goos: windows
+        format: zip
 source:
   enabled: true
   name_template: '{{ .ProjectName }}_{{ .Version }}_source_code'
@@ -63,7 +58,7 @@ signs:
     output: true
 brews:
   - name: mpas
-    tap:
+    repository:
       owner: open-component-model
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
@@ -78,7 +73,6 @@ brews:
       system "#{bin}/mpas --version"
 dockers:
 - image_templates:
-    - 'open-component-model/mpas-cli:{{ .Tag }}-amd64'
     - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-amd64'
   dockerfile: Dockerfile
   use: buildx
@@ -93,50 +87,26 @@ dockers:
    - "--label=org.opencontainers.image.version={{ .Version }}"
    - "--label=org.opencontainers.image.source={{ .GitURL }}"
    - "--platform=linux/amd64"
-# - image_templates:
-#     - 'open-component-model/mpas-cli:{{ .Tag }}-arm64'
-#     - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-arm64'
-#   dockerfile: Dockerfile
-#   use: buildx
-#   goos: linux
-#   goarch: arm64
-#   build_flag_templates:
-#     - "--pull"
-#     - "--build-arg=ARCH=linux/arm64"
-#     - "--label=org.opencontainers.image.created={{ .Date }}"
-#     - "--label=org.opencontainers.image.name={{ .ProjectName }}"
-#     - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-#     - "--label=org.opencontainers.image.version={{ .Version }}"
-#     - "--label=org.opencontainers.image.source={{ .GitURL }}"
-#     - "--platform=linux/arm64"
-# - image_templates:
-#     - 'open-component-model/mpas-cli:{{ .Tag }}-arm'
-#     - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-arm'
-#   dockerfile: Dockerfile
-#   use: buildx
-#   goos: linux
-#   goarch: arm
-#   goarm: 7
-#   build_flag_templates:
-#     - "--pull"
-#     - "--build-arg=ARCH=linux/arm"
-#     - "--label=org.opencontainers.image.created={{ .Date }}"
-#     - "--label=org.opencontainers.image.name={{ .ProjectName }}"
-#     - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-#     - "--label=org.opencontainers.image.version={{ .Version }}"
-#     - "--label=org.opencontainers.image.source={{ .GitURL }}"
-#     - "--platform=linux/arm/v7"
+- image_templates:
+    - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-arm64'
+  dockerfile: Dockerfile
+  use: buildx
+  goos: linux
+  goarch: arm64
+  build_flag_templates:
+    - "--pull"
+    - "--build-arg=ARCH=linux/arm64"
+    - "--label=org.opencontainers.image.created={{ .Date }}"
+    - "--label=org.opencontainers.image.name={{ .ProjectName }}"
+    - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+    - "--label=org.opencontainers.image.version={{ .Version }}"
+    - "--label=org.opencontainers.image.source={{ .GitURL }}"
+    - "--platform=linux/arm64"
 docker_manifests:
-- name_template: 'open-component-model/mpas-cli:{{ .Tag }}'
-  image_templates:
-    - 'open-component-model/mpas-cli:{{ .Tag }}-amd64'
-    # - 'open-component-model/mpas-cli:{{ .Tag }}-arm64'
-    # - 'open-component-model/mpas-cli:{{ .Tag }}-arm'
 - name_template: 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}'
   image_templates:
     - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-amd64'
-    # - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-arm64'
-    # - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-arm'
+    - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-arm64'
 docker_signs:
   - cmd: cosign
     env:

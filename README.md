@@ -43,19 +43,19 @@ And it is possible to install the component from a local file archive by using t
 #### From a personal repository
 
 ```bash
-mpas bootstrap github --owner <owner> --repository=<my-repository> --personal --path clusters/my-cluster
+mpas bootstrap github --owner <owner> --repository <my-repository> --personal --path clusters/my-cluster
 ```
 
 #### From an organization repository
 
 ```bash
-mpas bootstrap github --owner <owner> --repository=<my-repository> --path clusters/my-cluster
+mpas bootstrap github --owner <owner> --repository <my-repository> --path clusters/my-cluster
 ```
 
 #### Bootstrap from a local component bundle
 
 It is possible to download the component bundle without installing it by using the `--export` option.
-This may ve useful to inspect the component bundle before installing it or to transport
+This may be useful to inspect the component bundle before installing it or to transport
 it to another environment.
 
 ```bash
@@ -65,10 +65,10 @@ mpas bootstrap --export --export-path /tmp
 It is then possible to install the component bundle from the local file system by using the `--from-file` option
 and the exported file.
 
-The `--registry` option is required in order to install the component bundle from a local file system.
+The `--registry` option is required to install the component bundle from a local file system.
 It will first transfer the component bundle to the registry before installing it,
 performing any configuration transformation required.
 
 ```bash
-mpas bootstrap github --owner <owner> --repository=<my-repository>  --registry <my-registry> --from-file /tmp/mpas-bundle.tar.gz --path clusters/my-cluster
+mpas bootstrap github --owner <owner> --repository <my-repository>  --registry <my-registry> --from-file /tmp/mpas-bundle.tar.gz --path clusters/my-cluster
 ```
