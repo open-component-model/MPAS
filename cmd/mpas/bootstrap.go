@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
@@ -208,7 +207,7 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 // passwdFromStdin reads a password from stdin.
 func passwdFromStdin(prompt string) (string, error) {
 	// Get the initial state of the terminal.
-	initialTermState, err := term.GetState(syscall.Stdin)
+	initialTermState, err := term.GetState(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
@@ -219,7 +218,7 @@ func passwdFromStdin(prompt string) (string, error) {
 		<-signalChan
 		fmt.Println("\n^C received, exiting")
 		// Restore the terminal to its initial state.
-		err := term.Restore(syscall.Stdin, initialTermState)
+		err := term.Restore(int(os.Stdin.Fd()), initialTermState)
 		if err != nil {
 			fmt.Printf("failed to restore terminal state: %v\n", err)
 		}
@@ -227,7 +226,7 @@ func passwdFromStdin(prompt string) (string, error) {
 	}()
 
 	fmt.Print(prompt)
-	passwd, err := term.ReadPassword(syscall.Stdin)
+	passwd, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
