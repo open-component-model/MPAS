@@ -59,8 +59,7 @@ jobs:
           mkdir -p ./output
           NOTES="./output/notes.md"
           echo '## CLI Changelog' > ${NOTES}
-          #github-release-notes -org open-component-model -repo mpas -since-latest-release -include-author >> ${NOTES}
-          github-release-notes -org open-component-model -repo mpas -include-author >> ${NOTES}
+          github-release-notes -org open-component-model -repo mpas -since-latest-release -include-author >> ${NOTES}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run GoReleaser
