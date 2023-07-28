@@ -20,7 +20,7 @@ and uses [Kubernetes](https://kubernetes.io/) as a runtime environment.
 ### Install the mpas command line tool
 
 ```bash
-curl -sfL https://raw.githubusercontent.com/open-component-model/mpas/main/install.sh | sh -
+curl -sfL https://raw.githubusercontent.com/open-component-model/mpas/main/install.sh | sudo bash
 ```
 
 or  with brew

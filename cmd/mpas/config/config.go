@@ -5,6 +5,7 @@
 package config
 
 import (
+	"github.com/open-component-model/mpas/internal/env"
 	"github.com/open-component-model/mpas/internal/printer"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -57,7 +58,7 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")
 	flags.StringVar(&m.Repository, "repository", "", "The name of the management repository")
 	flags.StringVar(&m.FromFile, "from-file", "", "The path to a file containing the bootstrap component in archive format")
-	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas-bootstrap-component")
+	flags.StringVar(&m.Registry, "registry", env.DefaultBootstrapComponentLocation, "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas-bootstrap-component")
 	flags.StringVar(&m.Hostname, "hostname", "", "The hostname of the Git provider")
 	flags.StringVar(&m.Path, "path", ".", "The target path to use in the management repository to store the bootstrap component")
 	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")
