@@ -59,9 +59,9 @@ func newProductFeature(projectRepoName string) *features.FeatureBuilder {
 		//// The stuff under product folder should be the result of the Sync request from the Snapshot to the repository.
 		//
 
-		WithStep("3.5 Check if Pull Request was created for product files", 1, assess.CheckIfPullRequestExists(projectRepoName, 1)).
-		WithStep("3.6 Merge PR", 2, setup.MergePullRequest(projectRepoName, 1)).
-		Assess("3.7 check if product files has been created", assess.CheckFileInRepoExists(
+		Assess("3.4 Check if Pull Request was created for product files", assess.CheckIfPullRequestExists(projectRepoName, 1)).
+		Assess("3.5 Merge PR", setup.MergePullRequest(projectRepoName, 1)).
+		Assess("3.6 check if product files has been created", assess.CheckFileInRepoExists(
 			assess.File{
 				Repository: projectRepoName,
 				Path:       "products/" + prodDepGenName + "/README.md",

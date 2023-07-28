@@ -9,4 +9,3 @@ spec:
     name: podinfo
     namespace: mpas-test-001
   serviceAccountName: mpas-test-001
-    

@@ -15,7 +15,6 @@ import (
 	gitv1alphav1 "github.com/open-component-model/git-controller/apis/delivery/v1alpha1"
 	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
-	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
 	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -91,18 +90,6 @@ func TestHappyPath(t *testing.T) {
 			checkIfSubscriptionExists(componentSubscriptionName, projects)).
 		Setup(shared.CreateSecret(gitCredentialName, nil, gitCredentialData, projects))
 
-	assessTargetSubscription := features.New("2.6 Validate Target & subscription").
-		Assess(fmt.Sprintf("2.7 target resource %s has been created", targetName), assess.ResourceWasCreated(assess.Object{
-			Name:      targetName,
-			Namespace: projects,
-			Obj:       &prodv1alpha1.Target{},
-		})).
-		Assess(fmt.Sprintf("2.8 componentsubscription resource %s has been created", componentSubscriptionName), assess.ResourceWasCreated(assess.Object{
-			Name:      componentSubscriptionName,
-			Namespace: projects,
-			Obj:       &rcv1alpha1.ComponentSubscription{},
-		}))
-
 	product := newProductFeature(projectRepoName)
 
 	testEnv.Test(t,
@@ -110,7 +97,6 @@ func TestHappyPath(t *testing.T) {
 		management.Feature(),
 		project.Feature(),
 		targetAndSubscription.Feature(),
-		assessTargetSubscription.Feature(),
 		product.Feature(),
 	)
 }
