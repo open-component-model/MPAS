@@ -7,6 +7,6 @@ metadata:
     target.mpas.ocm.software/ingress-enabled: "true"
 spec:
   type: kubernetes
-  access:
-    secretRef:
-      name: ingress-kubeconfig
+#  access:
+#    secretRef:
+#      name: ingress-kubeconfig

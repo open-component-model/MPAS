@@ -10,13 +10,17 @@ spec:
     credentials:
       secretRef:
         name: gitea-credentials 
-    interval: 1m
+    interval: 5s
     visibility: public #private
-    isOrganization: true
+    isOrganization: false
     domain: http://gitea.ocm-system.svc.cluster.local:3000
-    #repository:
-    #  name: mpas-project-1 #git-repo-name-mpas-project-1
     maintainers:
       - alice.bobb #maintainer-name-1
       - bob.alisson #maintainer-name-2
     existingRepositoryPolicy: adopt #fail 
+    commitTemplate:
+      email: testy@mctestface.test
+      message: Commit message
+      name: e2e-tester
+  flux:
+    interval: 5s

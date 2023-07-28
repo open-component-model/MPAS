@@ -2,8 +2,11 @@ apiVersion: mpas.ocm.software/v1alpha1
 kind: ProductDeploymentGenerator
 metadata:
   name: podinfo
-  namespace: mpas-system
+  namespace: mpas-test-001
 spec:
+  interval: 30s
   subscriptionRef:
     name: podinfo
     namespace: mpas-test-001
+  serviceAccountName: mpas-test-001
+    

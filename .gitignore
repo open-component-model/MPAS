@@ -25,3 +25,6 @@ testbin/
 
 # Docs
 site/
+
+# ignore generated certificates
+hack/certs

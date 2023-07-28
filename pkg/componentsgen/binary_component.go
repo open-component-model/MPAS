@@ -18,11 +18,11 @@ type Binary struct {
 	// Version is the version of the binary.
 	Version string
 	// Path is the path to the binary file.
-	Path    string
+	Path string
 	// Content is the content of the binary file as bytes.
 	Content []byte
 	// BinURL is the URL to the binary file.
-	BinURL  string
+	BinURL string
 	// HashURL is the URL to the checksum file.
 	HashURL string
 }

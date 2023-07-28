@@ -8,7 +8,9 @@
 package e2e
 
 import (
+	"github.com/go-logr/logr"
 	"os"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 	"testing"
 
 	"sigs.k8s.io/e2e-framework/pkg/env"
@@ -52,6 +54,6 @@ func TestMain(m *testing.M) {
 		//envfuncs.DeleteNamespace(namespace),
 		//envfuncs.DestroyKindCluster(kindClusterName),
 	)
-
+	ctrllog.SetLogger(logr.New(ctrllog.NullLogSink{}))
 	os.Exit(testEnv.Run(m))
 }

@@ -5,13 +5,12 @@ deny[msg] {
 
   msg := "Message is required"
 }
-
 deny[msg] {
   allowed_colors = ["red", "blue", "green", "yellow"]
 
-  input.color != any(allowed_colors)
+  not input.color
 
-  msg := sprintf("Color must be one of: %v", [allowed_colors])
+  msg:= "color is required"
 }
 
 deny[msg] {

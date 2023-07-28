@@ -54,7 +54,7 @@ var (
 )
 
 func newProjectFeature(projectName, projectRepoName, gitRepoUrl string) *features.FeatureBuilder {
-	project := prefix + projectName
+	projects := prefix + projectName
 	return features.New("Create Project").
 		// Required only for project.yaml file
 		Setup(setup.AddGitRepository(mpasManagementRepoName)).
@@ -74,20 +74,20 @@ func newProjectFeature(projectName, projectRepoName, gitRepoUrl string) *feature
 				sourceRefName: mpasManagementRepoName,
 			})).
 		// Validate Namespace
-		Assess(fmt.Sprintf("1.1 project namespace %s has been created", project), checkIsNamespaceReady(project)).
+		Assess(fmt.Sprintf("1.1 project namespace %s has been created", projects), checkIsNamespaceReady(projects)).
 		// Validate project RBAC (ServiceAccount, ClusterRole, Role, RoleBindings)
 		Assess(fmt.Sprintf("1.2 projects ClusterRole %s exists", projectClusterRole), checkIfClusterRoleExists(projectClusterRole)).
-		Assess(fmt.Sprintf("1.3 project service account %s has been created", project), checkIfServiceAccountExists(project)).
-		Assess(fmt.Sprintf("1.4 project role %s has been created", project), checkIfRoleExists(project)).
-		Assess(fmt.Sprintf("1.5 project RoleBindings %s has been created in namespace %s", project, project), checkIfRoleBindingsExist(project, project)).
-		Assess(fmt.Sprintf("1.6 project RoleBindings %s has been created in namespace %s", project+clusterRoleSuffix, project), checkIfRoleBindingsExist(project, project)).
-		Assess(fmt.Sprintf("1.7 project RoleBindings %s has been created in namespace %s", project, mpasNamespace), checkIfRoleBindingsExist(project, mpasNamespace)).
-		Assess(fmt.Sprintf("1.8 project SA %s can list target and componentsubscription resources in %s namespace", project, mpasNamespace),
-			checkSACanListResourcesInNamespace(project, mpasNamespace,
+		Assess(fmt.Sprintf("1.3 project service account %s has been created", projects), checkIfServiceAccountExists(projects)).
+		Assess(fmt.Sprintf("1.4 project role %s has been created", projects), checkIfRoleExists(projects)).
+		Assess(fmt.Sprintf("1.5 project RoleBindings %s has been created in namespace %s", projects, projects), checkIfRoleBindingsExist(projects, projects)).
+		Assess(fmt.Sprintf("1.6 project RoleBindings %s has been created in namespace %s", projects+clusterRoleSuffix, projects), checkIfRoleBindingsExist(projects, projects)).
+		Assess(fmt.Sprintf("1.7 project RoleBindings %s has been created in namespace %s", projects, mpasNamespace), checkIfRoleBindingsExist(projects, mpasNamespace)).
+		Assess(fmt.Sprintf("1.8 project SA %s can list target and componentsubscription resources in %s namespace", projects, projects),
+			checkSACanListResourcesInNamespace(projects, projects,
 				&prodv1alpha1.TargetList{}, &rcv1alpha1.ComponentSubscriptionList{},
 			)).
-		Assess(fmt.Sprintf("1.9 project SA %s can create resources in %s namespace", project, project), checkSACanCreateResources(
-			project,
+		Assess(fmt.Sprintf("1.9 project SA %s can create resources in %s namespace", projects, projects), checkSACanCreateResources(
+			projects,
 			&corev1.Secret{},
 			&gcv1alpha1.Repository{},
 			&prodv1alpha1.Target{},
@@ -101,40 +101,40 @@ func newProjectFeature(projectName, projectRepoName, gitRepoUrl string) *feature
 			&sourcev1.OCIRepository{},
 			&kustomizev1.Kustomization{},
 		)).
-		Assess(fmt.Sprintf("1.10 project SA %s can list target and componentsubscription resources in %s namespace", project, project),
-			checkSACanListResourcesInNamespace(project, project,
+		Assess(fmt.Sprintf("1.10 project SA %s can list target and componentsubscription resources in %s namespace", projects, projects),
+			checkSACanListResourcesInNamespace(projects, projects,
 				&prodv1alpha1.TargetList{}, &rcv1alpha1.ComponentSubscriptionList{},
 			)).
 		// Validate Git Repository & structure
 		Assess(fmt.Sprintf("1.11 project repository %s/%s/%s has been created", shared.BaseURL, shared.Owner, projectRepoName), assess.CheckRepoExists(projectRepoName)).
 		Assess("1.12 check files are created in project repo", checkRepoFileContent(projectRepoName)).
 		// Validate Flux resources for a project
-		Assess(fmt.Sprintf("1.13 check flux resources have been created in %s namespace", fluxNamespace), checkFluxGitRepositoryReady(project, mpasNamespace)).
-		Assess(fmt.Sprintf("1.14 check flux GitRepository is configured correctly in %s namespace", mpasNamespace), checkGitRepositoryConfiguration(project, strings.Join([]string{gitRepoUrl, shared.Owner, project}, "/"), "main")).
+		Assess(fmt.Sprintf("1.13 check flux resources have been created in %s namespace", fluxNamespace), checkFluxGitRepositoryReady(projects, mpasNamespace)).
+		Assess(fmt.Sprintf("1.14 check flux GitRepository is configured correctly in %s namespace", mpasNamespace), checkGitRepositoryConfiguration(projects, strings.Join([]string{gitRepoUrl, shared.Owner, projects}, "/"), "main")).
 		Assess(fmt.Sprintf("1.15 check flux kustomizations are configured correctly in %s namespace", mpasNamespace), checkKustomizationsConfiguration(mpasNamespace,
 			kustomization{
-				name:          project + "-subscriptions",
+				name:          projects + "-subscriptions",
 				path:          "subscriptions",
 				sourceRefKind: "GitRepository",
-				sourceRefName: project,
+				sourceRefName: projects,
 			},
 			kustomization{
-				name:          project + "-targets",
+				name:          projects + "-targets",
 				path:          "targets",
 				sourceRefKind: "GitRepository",
-				sourceRefName: project,
+				sourceRefName: projects,
 			},
 			kustomization{
-				name:          project + "-products",
+				name:          projects + "-products",
 				path:          "products",
 				sourceRefKind: "GitRepository",
-				sourceRefName: project,
+				sourceRefName: projects,
 			},
 			kustomization{
-				name:          project + "-generators",
+				name:          projects + "-generators",
 				path:          "generators",
 				sourceRefKind: "GitRepository",
-				sourceRefName: project,
+				sourceRefName: projects,
 			},
 		))
 }
@@ -426,127 +426,3 @@ func checkKustomizationsConfiguration(namespace string, kustomizations ...kustom
 		return ctx
 	}
 }
-
-//func checkClusterRoleExists(name string) features.Func {
-//	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-//		t.Helper()
-//
-//		r, err := resources.New(c.Client().RESTConfig())
-//		if err != nil {
-//			t.Error(err)
-//			return ctx
-//		}
-//
-//		t.Logf("checking if cluster role %s exists...", name)
-//		cr := &rbacv1.ClusterRole{}
-//		if err := r.Get(ctx, name, "", cr); err != nil {
-//			t.Error(err)
-//			return ctx
-//		}
-//
-//		return ctx
-//	}
-//}
-
-//func checkClusterRoleBindingReady(name string) features.Func {
-//	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-//		t.Helper()
-//
-//		r, err := resources.New(c.Client().RESTConfig())
-//		if err != nil {
-//			t.Error(err)
-//			return ctx
-//		}
-//
-//		t.Logf("checking if cluster role binding %s exists...", name)
-//		crb := &rbacv1.ClusterRoleBinding{}
-//		if err := r.Get(ctx, name, "", crb); err != nil {
-//			t.Error(err)
-//			return ctx
-//		}
-//
-//		return ctx
-//	}
-//}
-
-//func checkGitRepositoryConfiguration(name string, url string, branch string) features.Func {
-//	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-//		t.Helper()
-//
-//		r, err := resources.New(c.Client().RESTConfig())
-//		if err != nil {
-//			t.Error(err)
-//			return ctx
-//		}
-//
-//		t.Logf("checking if GitRepository %s has been configured correctly...", name)
-//		gr := &sourcev1.GitRepository{}
-//		if err := r.Get(ctx, name, mpasNamespace, gr); err != nil {
-//			t.Error(err)
-//			return ctx
-//		}
-//
-//		if gr.Spec.URL != url {
-//			t.Errorf("expected GitRepository %s to have URL %s, got %s", name, url, gr.Spec.URL)
-//		}
-//
-//		if gr.Spec.Reference.Branch != branch {
-//			t.Errorf("expected GitRepository %s to have branch %s, got %s", name, branch, gr.Spec.Reference.Branch)
-//		}
-//		return ctx
-//	}
-//}
-
-//	func checkKustomizationsConfiguration(kustomiations ...kustomization) features.Func {
-//		return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-//			t.Helper()
-//
-//			r, err := resources.New(c.Client().RESTConfig())
-//			if err != nil {
-//				t.Error(err)
-//				return ctx
-//			}
-//
-//			for _, ku := range kustomiations {
-//				t.Logf("checking if Kustomization %s has been configured correctly...", ku.name)
-//				k := &kustomizev1.Kustomization{}
-//				if err := r.Get(ctx, ku.name, "flux-system", k); err != nil {
-//					t.Error(err)
-//					return ctx
-//				}
-//
-//				if k.Spec.SourceRef.Kind != ku.sourceRefKind {
-//					t.Errorf("expected Kustomization %s to have sourceRef kind %s, got %s", ku.name, ku.sourceRefKind, k.Spec.SourceRef.Kind)
-//				}
-//
-//				if k.Spec.SourceRef.Name != ku.sourceRefName {
-//					t.Errorf("expected Kustomization %s to have sourceRef name %s, got %s", ku.name, ku.sourceRefName, k.Spec.SourceRef.Name)
-//				}
-//
-//				if k.Spec.Path != ku.path {
-//					t.Errorf("expected Kustomization %s to have path %s, got %s", ku.name, ku.path, k.Spec.Path)
-//				}
-//			}
-//
-//			return ctx
-//		}
-//	}
-
-//	func checkServiceAccountReady(name string) features.Func {
-//		return func(ctx context.Context, t *testing.T, env *envconf.Config) context.Context {
-//			t.Helper()
-//			r, err := resources.New(env.Client().RESTConfig())
-//			if err != nil {
-//				t.Error(err)
-//				return ctx
-//			}
-//			t.Logf("checking if service account %s exists...", name)
-//			sa := &corev1.ServiceAccount{}
-//			if err := r.Get(ctx, name, name, sa); err != nil {
-//				t.Error(err)
-//				return ctx
-//			}
-//
-//			return ctx
-//		}
-//	}

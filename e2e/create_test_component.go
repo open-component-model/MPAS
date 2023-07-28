@@ -41,7 +41,6 @@ func podinfo(t *testing.T) setup.Component {
 			Name:    "mpas.ocm.software/podinfo",
 			Version: "1.0.0",
 		},
-		Repository: "podinfo",
 		ComponentVersionModifications: []shared.ComponentModification{
 			shared.BlobResource(shared.Resource{
 				Name: "product-description",
@@ -61,7 +60,7 @@ func podinfo(t *testing.T) setup.Component {
 			shared.ComponentVersionRef(shared.ComponentRef{
 				Name:          "redis",
 				Version:       "1.0.0",
-				ComponentName: "mpas.ocm.software/podinfo/redis",
+				ComponentName: "mpas.ocm.software/redis",
 			}),
 		},
 	}
@@ -95,7 +94,6 @@ func podinfoBackend(t *testing.T) setup.Component {
 			Name:    "mpas.ocm.software/podinfo/backend",
 			Version: "1.0.0",
 		},
-		Repository: "backend",
 		ComponentVersionModifications: []shared.ComponentModification{
 			shared.BlobResource(shared.Resource{
 				Name: "config",
@@ -154,7 +152,6 @@ func podinfoFrontend(t *testing.T) setup.Component {
 			Name:    "mpas.ocm.software/podinfo/frontend",
 			Version: "1.0.0",
 		},
-		Repository: "frontend",
 		ComponentVersionModifications: []shared.ComponentModification{
 			shared.BlobResource(shared.Resource{
 				Name: "config",
@@ -213,7 +210,6 @@ func podinfoRedis(t *testing.T) setup.Component {
 			Name:    "mpas.ocm.software/redis",
 			Version: "1.0.0",
 		},
-		Repository: "redis",
 		ComponentVersionModifications: []shared.ComponentModification{
 			shared.BlobResource(shared.Resource{
 				Name: "config",

@@ -26,13 +26,13 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-logr/logr v1.2.4
 	github.com/mandelsoft/vfs v0.0.0-20230506183150-975954b82357
-	github.com/open-component-model/git-controller v0.4.1
+	github.com/open-component-model/git-controller v0.5.0
 	github.com/open-component-model/mpas-product-controller v0.1.0
 	github.com/open-component-model/mpas-project-controller v0.1.1
 	github.com/open-component-model/ocm v0.3.0-rc.3
 	github.com/open-component-model/ocm-controller v0.10.0
-	github.com/open-component-model/ocm-e2e-framework v0.4.0
-	github.com/open-component-model/replication-controller v0.3.1
+	github.com/open-component-model/ocm-e2e-framework v0.5.0
+	github.com/open-component-model/replication-controller v0.4.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5

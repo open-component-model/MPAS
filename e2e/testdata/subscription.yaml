@@ -2,14 +2,14 @@ apiVersion: delivery.ocm.software/v1alpha1
 kind: ComponentSubscription
 metadata:
   name: podinfo
-  namespace: mpas-system
+  namespace: mpas-test-001
 spec:
-  component: mpas.ocm.software/podinfo #podinfo
+  component: mpas.ocm.software/podinfo
   interval: 5s
   semver: 1.0.0
   source:
-    url: http://registry.ocm-system.svc.cluster.local:5000
-  #serviceAccountName: mpas-test-001
+    url: registry.ocm-system.svc.cluster.local:5000
+  serviceAccountName: mpas-test-001
   #verify:
   #- name: default
   #  publicKey:
