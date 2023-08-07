@@ -5,7 +5,8 @@
 package config
 
 import (
-	"github.com/open-component-model/mpas/pkg/printer"
+	"github.com/open-component-model/mpas/internal/env"
+	"github.com/open-component-model/mpas/internal/printer"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -22,6 +23,10 @@ type MpasConfig struct {
 	KubeConfigArgs *genericclioptions.ConfigFlags
 	// PlainHTTP indicates whether to use plain HTTP instead of HTTPS.
 	PlainHTTP bool
+	// Export indicates whether to export to a file.
+	Export bool
+	// ExportPath is the path to export to.
+	ExportPath string
 }
 
 // AddFlags adds the global flags to the given flag set.
@@ -29,6 +34,8 @@ func (m *MpasConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Timeout, "timeout", "5m", "The timeout to use for operations")
 	flags.StringVar(&m.DockerconfigPath, "dockerconfigpath", "~/.docker/config.json", "The path to the docker config file")
 	flags.BoolVar(&m.PlainHTTP, "plain-http", false, "Whether to use plain HTTP instead of HTTPS")
+	flags.BoolVar(&m.Export, "export", false, "Whether to export to a file")
+	flags.StringVar(&m.ExportPath, "export-path", "", "The path to export to. Defaults to the temporary directory")
 }
 
 // BootstrapConfig is the configuration shared by the bootstrap commands.
@@ -51,7 +58,7 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")
 	flags.StringVar(&m.Repository, "repository", "", "The name of the management repository")
 	flags.StringVar(&m.FromFile, "from-file", "", "The path to a file containing the bootstrap component in archive format")
-	flags.StringVar(&m.Registry, "registry", "", "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas-bootstrap-component")
+	flags.StringVar(&m.Registry, "registry", env.DefaultBootstrapComponentLocation, "The registry to use to retrieve the bootstrap component. Defaults to ghcr.io/open-component-model/mpas-bootstrap-component")
 	flags.StringVar(&m.Hostname, "hostname", "", "The hostname of the Git provider")
 	flags.StringVar(&m.Path, "path", ".", "The target path to use in the management repository to store the bootstrap component")
 	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")

@@ -38,6 +38,8 @@ const (
 	DefaultOCMHost = "ghcr.io/open-component-model"
 	// DefaultBootstrapComponentLocation is the default location of the bootstrap component.
 	DefaultBootstrapComponentLocation = "ghcr.io/open-component-model/mpas-bootstrap-component"
+	// DefautBootstrapBundleLocation is the default location of the bootstrap bundle.
+	DefautBootstrapBundleLocation = DefaultBootstrapComponentLocation + "-bundle"
 	// DefaultFluxHost is the default host for the flux components.
 	DefaultFluxHost = "ghrc.io/fluxcd"
 	// DefaultOCMInstallPath is the default path to install the ocm components.

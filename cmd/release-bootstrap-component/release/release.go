@@ -12,9 +12,9 @@ import (
 	"path"
 	"strings"
 
-	cgen "github.com/open-component-model/mpas/pkg/componentsgen"
-	"github.com/open-component-model/mpas/pkg/env"
-	"github.com/open-component-model/mpas/pkg/ocm"
+	cgen "github.com/open-component-model/mpas/internal/componentsgen"
+	"github.com/open-component-model/mpas/internal/env"
+	"github.com/open-component-model/mpas/internal/ocm"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -357,7 +357,7 @@ func (r *Releaser) release(ctx context.Context, octx om.Context, component *ocm.
 	if err != nil {
 		return fmt.Errorf("failed to generate images: %w", err)
 	}
-	err = os.WriteFile(path.Join(r.tmpDir, "config.yaml"), []byte(tmpl), 0644)
+	err = os.WriteFile(path.Join(r.tmpDir, "config.yaml"), []byte(tmpl), 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write config.yaml: %w", err)
 	}

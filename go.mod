@@ -22,39 +22,43 @@ require (
 	github.com/fluxcd/flux2/v2 v2.0.0-rc.5
 	github.com/fluxcd/go-git-providers v0.18.1-0.20230706132206-211750e8915d
 	github.com/fluxcd/kustomize-controller/api v1.0.0-rc.4
-	github.com/fluxcd/notification-controller/api v1.0.0
-	github.com/fluxcd/pkg/apis/meta v1.1.1
+	github.com/fluxcd/notification-controller/api v1.0.0-rc.4
+	github.com/fluxcd/pkg/apis/meta v1.1.0
 	github.com/fluxcd/pkg/git v0.12.3
 	github.com/fluxcd/pkg/git/gogit v0.12.0
 	github.com/fluxcd/pkg/kustomize v1.3.3
-	github.com/fluxcd/pkg/runtime v0.40.0
+	github.com/fluxcd/pkg/runtime v0.38.1
 	github.com/fluxcd/pkg/ssa v0.28.2
 	github.com/fluxcd/source-controller/api v1.0.0-rc.5
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-logr/logr v1.2.4
 	github.com/mandelsoft/vfs v0.0.0-20230506183150-975954b82357
-	github.com/open-component-model/git-controller v0.5.0
+	github.com/open-component-model/git-controller v0.4.1
 	github.com/open-component-model/mpas-product-controller v0.1.0
 	github.com/open-component-model/mpas-project-controller v0.1.1
-	github.com/open-component-model/ocm v0.3.0-rc.3
-	github.com/open-component-model/ocm-controller v0.10.0
-	github.com/open-component-model/ocm-e2e-framework v0.5.0
-	github.com/open-component-model/replication-controller v0.4.0
+	github.com/open-component-model/ocm v0.3.0-rc.1.0.20230714180211-6d7c21618cf9
+	github.com/open-component-model/ocm-controller v0.8.2
+	github.com/open-component-model/ocm-e2e-framework v0.4.0
+	github.com/open-component-model/replication-controller v0.3.1
+	github.com/opencontainers/go-digest v1.0.0
+	github.com/opencontainers/image-spec v1.1.0-rc4
+	github.com/oras-project/oras-credentials-go v0.2.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.8.3
 	github.com/theckman/yacspin v0.13.12
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	golang.org/x/term v0.9.0
 	golang.org/x/text v0.10.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.27.4
+	k8s.io/api v0.27.3
 	k8s.io/apiextensions-apiserver v0.27.3
-	k8s.io/apimachinery v0.27.4
+	k8s.io/apimachinery v0.27.3
 	k8s.io/cli-runtime v0.27.2
 	k8s.io/client-go v0.27.3
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
+	oras.land/oras-go/v2 v2.2.1
 	sigs.k8s.io/cli-utils v0.34.0
 	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/e2e-framework v0.2.0
@@ -256,8 +260,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/onsi/gomega v1.27.8 // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
@@ -324,7 +326,7 @@ require (
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/oauth2 v0.9.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.9.3 // indirect

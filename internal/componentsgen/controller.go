@@ -40,7 +40,7 @@ type Controller struct {
 // It validates the version and returns an error if the version does not exist.
 func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error {
 	if err := o.validateVersion(ctx); err != nil {
-		return fmt.Errorf("version %s does not exist for %s: %s", o.Version, o.Name, err)
+		return err
 	}
 
 	if err := o.fetch(ctx); err != nil {
@@ -94,7 +94,7 @@ func (o *Controller) validateVersion(ctx context.Context) error {
 	case http.StatusNotFound:
 		return fmt.Errorf("target version %s does not exist for %s", ver, o.Name)
 	default:
-		return fmt.Errorf("target version %s does not exist for %s, (%d)", ver, o.Name, resp.StatusCode)
+		return fmt.Errorf("error while validating version %s for %s: %s", ver, o.Name, resp.Status)
 	}
 }
 

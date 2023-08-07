@@ -2,24 +2,20 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-VERSION?="0.0.0-dev.0"
-BOOTSTRAP_RELEASE_VERSION?="v0.0.1"
+VERSION?=0.0.0-dev.0
+BOOTSTRAP_RELEASE_VERSION?=v0.1.0
 DEV_VERSION?=0.0.0-$(shell git rev-parse --abbrev-ref HEAD)-$(shell git rev-parse --short HEAD)-$(shell date +%s)
 GO_TEST_ARGS ?= -race
 TAG ?= latest
 
 # gitea e2e test
-GITEA_TOKEN ?=
-MPAS_MANAGEMENT_REPO_OWNER ?= mpas-management
-MPAS_MANAGEMENT_REPO_HOSTNAME ?= http://127.0.0.1:3000
+GITEA_TOKEN?=
+MPAS_MANAGEMENT_REPO_OWNER?=mpas-management
+MPAS_MANAGEMENT_REPO_HOSTNAME?=http://127.0.0.1:3000
 
 # Bootstrap component
-FLUX_VERSION ?= "v2.0.0-rc.5"
-OCM_CONTROLLER_VERSION ?= "v0.0.1"
-MPAS_GITHUB_REPOSITORY ?= ghcr.io/open-component-model/mpas-bootstrap-component
-
-# Github
-GITHUB_USERNAME ?= mpas
+MPAS_GITHUB_REPOSITORY?=ghcr.io/open-component-model/mpas-bootstrap-component
+GITHUB_USERNAME?=mpas
 
 ## Location to install dependencies to
 LOCALBIN ?= $(shell pwd)/bin
@@ -63,7 +59,7 @@ release-bootstrap-component:
 	./bin/mpas-rel --repository-url $(MPAS_GITHUB_REPOSITORY) --username $(GITHUB_USERNAME)
 
 test:
-	go test -v ./pkg/... $(GO_TEST_ARGS) -coverprofile cover.out
+	go test -v ./internal/... $(GO_TEST_ARGS) -coverprofile cover.out
 
 # https registry
 MKCERT_VERSION ?= v1.4.4

@@ -10,7 +10,7 @@ import (
 	"github.com/fluxcd/go-git-providers/gitea"
 	"github.com/fluxcd/go-git-providers/github"
 	"github.com/fluxcd/go-git-providers/gitprovider"
-	"github.com/open-component-model/mpas/pkg/env"
+	"github.com/open-component-model/mpas/internal/env"
 )
 
 // rewrite of https://github.com/fluxcd/flux2/tree/main/pkg/bootstrap/provider

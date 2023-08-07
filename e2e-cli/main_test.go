@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/open-component-model/mpas/cmd/mpas/bootstrap"
-	"github.com/open-component-model/mpas/pkg/env"
+	"github.com/open-component-model/mpas/internal/env"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

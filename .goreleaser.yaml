@@ -1,0 +1,119 @@
+project_name: mpas
+builds:
+  - <<: &build_defaults
+      binary: mpas
+      main: ./cmd/mpas
+      ldflags:
+        - -s -w -X main.VERSION={{ .Version }}
+      env:
+        - CGO_ENABLED=0
+    id: linux
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - 7
+  - <<: *build_defaults
+    id: darwin
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+  - <<: *build_defaults
+    id: windows
+    goos:
+      - windows
+archives:
+  - name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    id: nix
+    format: tar.gz
+    files:
+      - none*
+    format_overrides:
+      - goos: windows
+        format: zip
+source:
+  enabled: true
+  name_template: '{{ .ProjectName }}_{{ .Version }}_source_code'
+sboms:
+  - id: source
+    artifacts: source
+    documents:
+      - "{{ .ProjectName }}_{{ .Version }}_sbom.spdx.json"
+signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    certificate: '${artifact}.pem'
+    args:
+      - sign-blob
+      - "--yes"
+      - '--output-certificate=${certificate}'
+      - '--output-signature=${signature}'
+      - '${artifact}'
+    artifacts: checksum
+    output: true
+brews:
+  - name: mpas
+    repository:
+      owner: open-component-model
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    folder: Formula
+    #homepage: "https://ocm.software/"
+    description: "Mpas CLI"
+    install: |
+      bin.install "mpas"
+
+      generate_completions_from_executable(bin/"mpas", "completion")
+    test: |
+      system "#{bin}/mpas --version"
+dockers:
+- image_templates:
+    - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-amd64'
+  dockerfile: Dockerfile
+  use: buildx
+  goos: linux
+  goarch: amd64
+  build_flag_templates:
+   - "--pull"
+   - "--build-arg=ARCH=linux/amd64"
+   - "--label=org.opencontainers.image.created={{ .Date }}"
+   - "--label=org.opencontainers.image.name={{ .ProjectName }}"
+   - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+   - "--label=org.opencontainers.image.version={{ .Version }}"
+   - "--label=org.opencontainers.image.source={{ .GitURL }}"
+   - "--platform=linux/amd64"
+- image_templates:
+    - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-arm64'
+  dockerfile: Dockerfile
+  use: buildx
+  goos: linux
+  goarch: arm64
+  build_flag_templates:
+    - "--pull"
+    - "--build-arg=ARCH=linux/arm64"
+    - "--label=org.opencontainers.image.created={{ .Date }}"
+    - "--label=org.opencontainers.image.name={{ .ProjectName }}"
+    - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+    - "--label=org.opencontainers.image.version={{ .Version }}"
+    - "--label=org.opencontainers.image.source={{ .GitURL }}"
+    - "--platform=linux/arm64"
+docker_manifests:
+- name_template: 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}'
+  image_templates:
+    - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-amd64'
+    - 'ghcr.io/open-component-model/mpas-cli:{{ .Tag }}-arm64'
+docker_signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    args:
+      - sign
+      - "--yes"
+      - '${artifact}'
+    artifacts: all
+    output: true

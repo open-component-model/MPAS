@@ -10,8 +10,10 @@ import (
 	"os"
 
 	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/release"
-	"github.com/open-component-model/mpas/pkg/env"
-	"github.com/open-component-model/mpas/pkg/ocm"
+	"github.com/open-component-model/mpas/internal/env"
+	"github.com/open-component-model/mpas/internal/fs"
+	"github.com/open-component-model/mpas/internal/oci"
+	"github.com/open-component-model/mpas/internal/ocm"
 	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
@@ -19,35 +21,35 @@ import (
 )
 
 const (
-	Version = "v0.1.0"
+	Version = "v0.0.1"
+)
+
+var (
+	// The version of the flux component to use.
+	fluxVersion string
+	// The version of the ocm-controller component to use.
+	ocmControllerVersion string
+	// The version of the git-controller component to use.
+	gitControllerVersion string
+	// The version of the replication-controller component to use.
+	replicationControllerVersion string
+	// The version of the mpas-product-controller component to use.
+	mpasProductControllerVersion string
+	// The version of the mpas-project-controller component to use.
+	mpasProjectControllerVersion string
+	// The version of the ocm-cli component to use.
+	ocmCliVersion string
+	// The repository URL to use.
+	repositoryURL string
+	// The username to use.
+	username string
+	// The target os.
+	targetOS string
+	// The target arch.
+	targetArch string
 )
 
 func main() {
-	var (
-		// The version of the flux component to use.
-		fluxVersion string
-		// The version of the ocm-controller component to use.
-		ocmControllerVersion string
-		// The version of the git-controller component to use.
-		gitControllerVersion string
-		// The version of the replication-controller component to use.
-		replicationControllerVersion string
-		// The version of the mpas-product-controller component to use.
-		mpasProductControllerVersion string
-		// The version of the mpas-project-controller component to use.
-		mpasProjectControllerVersion string
-		// The version of the ocm-cli component to use.
-		ocmCliVersion string
-		// The repository URL to use.
-		repositoryURL string
-		// The username to use.
-		username string
-		// The target os.
-		targetOS string
-		// The target arch.
-		targetArch string
-	)
-
 	flag.StringVar(&fluxVersion, "flux-version", env.DefaultFluxVer, "The version of the flux component to use.")
 	flag.StringVar(&ocmControllerVersion, "ocm-controller-version", env.DefaultOcmControllerVer, "The version of the ocm-controller component to use.")
 	flag.StringVar(&gitControllerVersion, "git-controller-version", env.DefaultGitControllerVer, "The version of the git-controller component to use.")
@@ -80,12 +82,6 @@ func main() {
 
 	ctx := context.Background()
 	octx := om.New(datacontext.MODE_SHARED)
-	target, err := ocm.MakeOCIRepository(octx, repositoryURL)
-	if err != nil {
-		fmt.Println("Failed to create target: ", err)
-		os.Exit(1)
-	}
-	defer target.Close()
 
 	fmt.Println("Releasing bootstrap component...")
 	tmpDir, err := os.MkdirTemp("", "mpas-bootstrap")
@@ -95,8 +91,41 @@ func main() {
 	}
 	defer os.RemoveAll(tmpDir)
 
+	target, err := ocm.MakeOCIRepository(octx, repositoryURL)
+	if err != nil {
+		fmt.Println("Failed to create target: ", err)
+		os.Exit(1)
+	}
+	defer target.Close()
+
+	ctfPath := fmt.Sprintf("%s/%s", tmpDir, "ctf")
+	if err := releaseComponents(ctx, octx, token, tmpDir, ctfPath, target); err != nil {
+		fmt.Println("Failed to release components: ", err)
+		os.Exit(1)
+	}
+
+	src, err := fs.CreateArchive(ctfPath, "mpas-bundle.tar.gz")
+	if err != nil {
+		fmt.Println("Failed to create bundle archive: ", err)
+		os.Exit(1)
+	}
+
+	ociRepo := oci.Repository{
+		RepositoryURL: repositoryURL + "-bundle",
+		Username:      username,
+		Password:      token,
+	}
+	if err := ociRepo.PushArtifact(ctx, src, Version); err != nil {
+		fmt.Println("Failed to push bundle: ", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Release of bootstrap component successful.")
+}
+
+func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfPath string, target om.Repository) error {
 	// create transport archive
-	ctf, err := ocm.CreateCTF(octx, fmt.Sprintf("%s/%s", tmpDir, "ctf"), accessio.FormatDirectory)
+	ctf, err := ocm.CreateCTF(octx, ctfPath, accessio.FormatDirectory)
 	if err != nil {
 		fmt.Println("Failed to create CTF: ", err)
 		os.Exit(1)
@@ -172,10 +201,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := ocm.Transfer(octx, ctf, target); err != nil {
+	if err := ocm.Transfer(octx, ctf, target, os.Stdout); err != nil {
 		fmt.Println("Failed to transfer CTF: ", err)
 		os.Exit(1)
 	}
-
-	fmt.Println("Release of bootstrap component successful.")
+	return nil
 }

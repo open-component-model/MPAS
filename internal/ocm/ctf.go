@@ -6,6 +6,7 @@ package ocm
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/open-component-model/ocm/pkg/common"
@@ -33,7 +34,7 @@ func CreateCTF(ctx ocm.Context, repoPath string, opts ...accessio.Option) (CTF, 
 
 // Transfer transfers a component to a repository.
 // It accepts a target corresponding to the repository.
-func Transfer(octx ocm.Context, repo, target ocm.Repository) (rerr error) {
+func Transfer(octx ocm.Context, repo, target ocm.Repository, writer io.Writer) (rerr error) {
 	var finalize finalizer.Finalizer
 	defer finalize.FinalizeWithErrorPropagation(&rerr)
 
@@ -46,7 +47,7 @@ func Transfer(octx ocm.Context, repo, target ocm.Repository) (rerr error) {
 		return fmt.Errorf("failed to list components: %w", err)
 	}
 
-	printer := common.NewPrinter(os.Stdout)
+	printer := common.NewPrinter(writer)
 	closure := transfer.TransportClosure{}
 	transferHandler, err := standard.New(standard.Overwrite())
 	if err != nil {
