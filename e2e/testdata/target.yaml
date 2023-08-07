@@ -2,13 +2,12 @@ apiVersion: mpas.ocm.software/v1alpha1
 kind: Target
 metadata:
   name: public-cluster
-  namespace: mpas-system
+  namespace: mpas-test-001
   labels:
     target.mpas.ocm.software/ingress-enabled: "true"
 spec:
   type: kubernetes
   access:
-    targetNamespace: default
+    targetNamespace: mpas-test-001
 #    secretRef:
 #      name: ingress-kubeconfig
-   

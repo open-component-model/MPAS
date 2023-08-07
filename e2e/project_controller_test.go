@@ -10,6 +10,14 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"reflect"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/fluxcd/pkg/apis/meta"
 	fconditions "github.com/fluxcd/pkg/runtime/conditions"
 	gcv1alpha1 "github.com/open-component-model/git-controller/apis/mpas/v1alpha1"
@@ -17,14 +25,13 @@ import (
 	ocmv1alpha1 "github.com/open-component-model/ocm-controller/api/v1alpha1"
 	"github.com/open-component-model/ocm-e2e-framework/shared"
 	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
-	"strings"
-	"testing"
-	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
+	notifv1 "github.com/fluxcd/notification-controller/api/v1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -51,31 +58,32 @@ var (
 	prefix             = "mpas-"
 	projectClusterRole = "mpas-projects-clusterrole"
 	clusterRoleSuffix  = "-clusterrole"
+	hookSecretName     = "receiver-token"
+	hookSecretToken    = "supersecrettoken"
+	gitCredentialName  = getYAMLField("project.yaml", "spec.git.credentials.secretRef.name")
 )
 
 func newProjectFeature(projectName, projectRepoName, gitRepoUrl string) *features.FeatureBuilder {
 	projects := prefix + projectName
 	return features.New("Create Project").
-		// Required only for project.yaml file
 		Setup(setup.AddGitRepository(mpasManagementRepoName)).
-		Assess(fmt.Sprintf("management repository %s has been created", mpasManagementRepoName), assess.CheckRepoExists(mpasManagementRepoName)).
+		Assess(fmt.Sprintf("management git repository %s has been created", mpasManagementRepoName), assess.CheckRepoExists(mpasManagementRepoName)).
 		Setup(setup.AddFilesToGitRepository(setup.File{
 			RepoName:       mpasManagementRepoName,
 			SourceFilepath: "project.yaml",
 			DestFilepath:   "projects/test-001.yaml",
 		})).
 		Setup(setup.AddFluxSyncForRepo(mpasManagementRepoName, "projects/", namespace)).
-		Assess(fmt.Sprintf("check flux gitRepository has been created in %s namespace for reconciling project.yaml", fluxNamespace), checkFluxGitRepositoryReady(mpasManagementRepoName, fluxNamespace)).
-		Assess(fmt.Sprintf("check flux kustomizations are configured in %s namespace", fluxNamespace), checkKustomizationsConfiguration(fluxNamespace,
+		Assess(fmt.Sprintf("flux::gitRepository has been created in %s namespace", fluxNamespace), checkFluxGitRepositoryReady(mpasManagementRepoName,
+			fluxNamespace)).
+		Assess(fmt.Sprintf("flux::kustomizations are configured in %s namespace", fluxNamespace), checkKustomizationsConfiguration(fluxNamespace,
 			kustomization{
 				name:          mpasManagementRepoName,
 				path:          "projects/",
 				sourceRefKind: "GitRepository",
 				sourceRefName: mpasManagementRepoName,
 			})).
-		// Validate Namespace
 		Assess(fmt.Sprintf("1.1 project namespace %s has been created", projects), checkIsNamespaceReady(projects)).
-		// Validate project RBAC (ServiceAccount, ClusterRole, Role, RoleBindings)
 		Assess(fmt.Sprintf("1.2 projects ClusterRole %s exists", projectClusterRole), checkIfClusterRoleExists(projectClusterRole)).
 		Assess(fmt.Sprintf("1.3 project service account %s has been created", projects), checkIfServiceAccountExists(projects)).
 		Assess(fmt.Sprintf("1.4 project role %s has been created", projects), checkIfRoleExists(projects)).
@@ -105,13 +113,12 @@ func newProjectFeature(projectName, projectRepoName, gitRepoUrl string) *feature
 			checkSACanListResourcesInNamespace(projects, projects,
 				&prodv1alpha1.TargetList{}, &rcv1alpha1.ComponentSubscriptionList{},
 			)).
-		// Validate Git Repository & structure
 		Assess(fmt.Sprintf("1.11 project repository %s/%s/%s has been created", shared.BaseURL, shared.Owner, projectRepoName), assess.CheckRepoExists(projectRepoName)).
 		Assess("1.12 check files are created in project repo", checkRepoFileContent(projectRepoName)).
-		// Validate Flux resources for a project
-		Assess(fmt.Sprintf("1.13 check flux resources have been created in %s namespace", fluxNamespace), checkFluxGitRepositoryReady(projects, mpasNamespace)).
-		Assess(fmt.Sprintf("1.14 check flux GitRepository is configured correctly in %s namespace", mpasNamespace), checkGitRepositoryConfiguration(projects, strings.Join([]string{gitRepoUrl, shared.Owner, projects}, "/"), "main")).
-		Assess(fmt.Sprintf("1.15 check flux kustomizations are configured correctly in %s namespace", mpasNamespace), checkKustomizationsConfiguration(mpasNamespace,
+		Assess(fmt.Sprintf("1.13 flux resources have been created in %s namespace", fluxNamespace), checkFluxGitRepositoryReady(projects, mpasNamespace)).
+		Assess(fmt.Sprintf("1.14 flux::GitRepository is configured correctly in %s namespace", mpasNamespace), checkGitRepositoryConfiguration(projects, strings.Join([]string{gitRepoUrl,
+			shared.Owner, projects}, "/"), "main")).
+		Assess(fmt.Sprintf("1.15 flux::kustomizations are configured correctly in %s namespace", mpasNamespace), checkKustomizationsConfiguration(mpasNamespace,
 			kustomization{
 				name:          projects + "-subscriptions",
 				path:          "subscriptions",
@@ -137,61 +144,7 @@ func newProjectFeature(projectName, projectRepoName, gitRepoUrl string) *feature
 				sourceRefName: projects,
 			},
 		))
-}
 
-func checkFluxGitRepositoryReady(name string, namespace string) features.Func {
-	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-		t.Helper()
-
-		client, err := cfg.NewClient()
-		if err != nil {
-			t.Fail()
-		}
-
-		t.Logf("checking if GitRepository object %s in namespace %s is ready...", name, namespace)
-		gr := &sourcev1.GitRepository{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-		}
-
-		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
-			obj, ok := object.(*sourcev1.GitRepository)
-			if !ok {
-				return false
-			}
-
-			return fconditions.IsTrue(obj, meta.ReadyCondition)
-		}), wait.WithTimeout(time.Minute*1))
-
-		if err != nil {
-			t.Fatal(err)
-		}
-		return ctx
-	}
-}
-
-func checkIfServiceAccountExists(name string) features.Func {
-	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-		t.Helper()
-		client, err := cfg.NewClient()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Logf("checking if service account with name: %s exists", name)
-		gr := &corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: name},
-		}
-		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
-			_, ok := object.(*corev1.ServiceAccount)
-			if !ok {
-				return false
-			}
-			return true
-		}), wait.WithTimeout(time.Minute*1))
-		if err != nil {
-			t.Fatal(err)
-		}
-		return ctx
-	}
 }
 
 func checkIfClusterRoleExists(name string) features.Func {
@@ -200,6 +153,7 @@ func checkIfClusterRoleExists(name string) features.Func {
 		client, err := cfg.NewClient()
 		if err != nil {
 			t.Fatal(err)
+			return ctx
 		}
 		t.Logf("checking if cluster role with name: %s exists", name)
 		gr := &rbacv1.ClusterRole{
@@ -219,12 +173,39 @@ func checkIfClusterRoleExists(name string) features.Func {
 	}
 }
 
+func checkIfServiceAccountExists(name string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Fatal(err)
+			return ctx
+		}
+		t.Logf("checking if service account with name: %s exists", name)
+		gr := &corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: name},
+		}
+		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
+			_, ok := object.(*corev1.ServiceAccount)
+			if !ok {
+				return false
+			}
+			return true
+		}), wait.WithTimeout(time.Minute*1))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return ctx
+	}
+}
+
 func checkIfRoleExists(name string) features.Func {
 	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Helper()
 		client, err := cfg.NewClient()
 		if err != nil {
 			t.Fatal(err)
+			return ctx
 		}
 		t.Logf("checking if role with name: %s exists", name)
 		gr := &rbacv1.Role{
@@ -250,6 +231,7 @@ func checkIfRoleBindingsExist(name string, namespace string) features.Func {
 		client, err := cfg.NewClient()
 		if err != nil {
 			t.Fatal(err)
+			return ctx
 		}
 		t.Logf("checking if rolebinding with name: %s exists", name)
 		gr := &rbacv1.RoleBinding{
@@ -269,6 +251,38 @@ func checkIfRoleBindingsExist(name string, namespace string) features.Func {
 	}
 }
 
+func checkSACanCreateResources(name string, res ...k8s.Object) features.Func {
+	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+		t.Helper()
+		cfg := c.Client().RESTConfig()
+		cfg.Impersonate.UserName = fmt.Sprintf("system:serviceaccount:%s:%s", name, name)
+
+		r, err := resources.New(cfg)
+		if err != nil {
+			t.Fatal(err)
+			return ctx
+		}
+
+		for _, re := range res {
+			re.SetName("can-sa-create-resource-test")
+			re.SetNamespace(name)
+			t.Logf("checking if service account %s:%s can create %s resources in namespace %s", name, name, reflect.TypeOf(re), name)
+			err := r.Create(ctx, re)
+			// The API should attempt to authorize the request first, before validating the object schema
+			if err != nil && (apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err)) {
+				t.Fatal(err)
+			}
+
+			err = r.Delete(ctx, re)
+			// The API should attempt to authorize the request first, before validating the object schema
+			if err != nil && (apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err)) {
+				t.Fatal(err)
+			}
+		}
+		return ctx
+	}
+}
+
 func checkSACanListResourcesInNamespace(name, namespace string, res ...k8s.ObjectList) features.Func {
 	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 		t.Helper()
@@ -283,39 +297,12 @@ func checkSACanListResourcesInNamespace(name, namespace string, res ...k8s.Objec
 		}
 
 		for _, re := range res {
-			t.Logf("checking if service account %s:%s can list %s resources in namespace %s...", name, name, re.GetObjectKind().GroupVersionKind(), namespace)
+			t.Logf("checking if service account %s:%s can list %s resources in namespace %s", name, name, reflect.TypeOf(re), namespace)
 			err := r.WithNamespace(namespace).List(ctx, re)
 			if err != nil && (apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err)) {
 				t.Fatal(err)
 			}
 		}
-		return ctx
-	}
-}
-
-func checkSACanCreateResources(name string, res ...k8s.Object) features.Func {
-	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-		t.Helper()
-		cfg := c.Client().RESTConfig()
-		cfg.Impersonate.UserName = fmt.Sprintf("system:serviceaccount:%s:%s", name, name)
-
-		r, err := resources.New(cfg)
-		if err != nil {
-			t.Error(err)
-			return ctx
-		}
-
-		for _, re := range res {
-			re.SetName(name)
-			re.SetNamespace(name)
-			t.Logf("checking if service account %s:%s can create %s resources...", name, name, re.GetObjectKind().GroupVersionKind())
-			err := r.Create(ctx, re)
-			// The API should attempt to authorize the request first, before validating the object schema
-			if err != nil && (apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err)) {
-				t.Error(err)
-			}
-		}
-
 		return ctx
 	}
 }
@@ -350,6 +337,13 @@ func checkRepoFileContent(projectRepoName string) features.Func {
 	)
 }
 
+func checkFluxGitRepositoryReady(name, namespace string) features.Func {
+	return checkObjectCondition(&sourcev1.GitRepository{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}},
+		func(obj fconditions.Getter) bool {
+			return fconditions.IsTrue(obj, meta.ReadyCondition)
+		})
+}
+
 func checkGitRepositoryConfiguration(name, url, branch string) features.Func {
 	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Helper()
@@ -375,7 +369,7 @@ func checkGitRepositoryConfiguration(name, url, branch string) features.Func {
 				t.Errorf("expected GitRepository %s to have branch %s, got %s", name, branch, gr.Spec.Reference.Branch)
 				return false
 			}
-			return true
+			return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
 		}), wait.WithTimeout(time.Minute*1))
 		if err != nil {
 			t.Fatal(err)
@@ -417,11 +411,94 @@ func checkKustomizationsConfiguration(namespace string, kustomizations ...kustom
 					t.Errorf("expected Kustomization %s to have path %s, got %s", kustomization.name, kustomization.path, obj.Spec.Path)
 					return false
 				}
-				return true
+				return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, "ReconciliationSucceeded")
 			}), wait.WithTimeout(time.Minute*1))
 			if err != nil {
 				t.Fatal(err)
 			}
+		}
+		return ctx
+	}
+}
+
+func prepareReceiver(name, namespace string) (map[string]interface{}, error) {
+	gr := &notifv1.Receiver{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       notifv1.ReceiverKind,
+			APIVersion: "notification.toolkit.fluxcd.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: notifv1.ReceiverSpec{
+			Type:     notifv1.GitHubReceiver,
+			Interval: &metav1.Duration{Duration: time.Second * 5},
+			Events:   []string{"ping", "push"},
+			Resources: []notifv1.CrossNamespaceObjectReference{{
+				APIVersion: "source.toolkit.fluxcd.io/v1",
+				Kind:       sourcev1.GitRepositoryKind,
+				Name:       name,
+				Namespace:  mpasNamespace,
+			}},
+			SecretRef: meta.LocalObjectReference{Name: hookSecretName},
+		},
+	}
+
+	return runtime.DefaultUnstructuredConverter.ToUnstructured(gr)
+}
+
+func createReceiver(projectName string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+		r, err := resources.New(cfg.Client().RESTConfig())
+		if err != nil {
+			t.Error(err)
+			return ctx
+		}
+		clientset, err := dynamic.NewForConfig(cfg.Client().RESTConfig())
+		if err != nil {
+			t.Error(err)
+			return ctx
+		}
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Error(err)
+			return ctx
+		}
+		unstructuredObj, err := prepareReceiver(projectName, projectName)
+		if err != nil {
+			t.Fatal(err)
+			return ctx
+		}
+
+		fmt.Println(unstructuredObj)
+		_, err = clientset.Resource(schema.GroupVersionResource{
+			Group:    "notification.toolkit.fluxcd.io",
+			Version:  "v1",
+			Resource: "receivers",
+		}).Namespace(projectName).Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
+		if err != nil {
+			t.Fatal(err)
+			return ctx
+		}
+
+		t.Logf("checking if Reciever %s exists...", projectName)
+		receiver := &notifv1.Receiver{}
+		if err := r.Get(ctx, projectName, projectName, receiver); err != nil {
+			t.Fatal(err)
+			return ctx
+		}
+
+		err = wait.For(conditions.New(client.Resources()).ResourceMatch(receiver, func(object k8s.Object) bool {
+			obj, ok := object.(*notifv1.Receiver)
+			if !ok {
+				return false
+			}
+			return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+		}), wait.WithTimeout(time.Minute*1))
+		if err != nil {
+			t.Fatal(err)
 		}
 		return ctx
 	}

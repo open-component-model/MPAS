@@ -40,4 +40,11 @@ kubectl create secret generic \
   --from-file=caFile="${rootCAPath}" \
   --from-file=certFile="${certPath}" \
   --from-file=keyFile="${keyPath}" \
-  --dry-run=client -o yaml > ./hack/certs/registry_certs_secret.yaml
+  --dry-run=client -o yaml > ./hack/certs/registry_certs_secret_mpas.yaml
+
+kubectl create secret generic \
+  -n ocm-system registry-certs \
+  --from-file=caFile="${rootCAPath}" \
+  --from-file=certFile="${certPath}" \
+  --from-file=keyFile="${keyPath}" \
+  --dry-run=client -o yaml > ./hack/certs/registry_certs_secret_ocm.yaml

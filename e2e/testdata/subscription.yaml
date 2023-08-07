@@ -5,7 +5,7 @@ metadata:
   namespace: mpas-test-001
 spec:
   component: mpas.ocm.software/podinfo
-  interval: 5s
+  interval: 2s
   semver: 1.0.0
   source:
     url: registry.ocm-system.svc.cluster.local:5000

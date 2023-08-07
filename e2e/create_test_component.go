@@ -43,9 +43,10 @@ func podinfo(t *testing.T) setup.Component {
 		},
 		ComponentVersionModifications: []shared.ComponentModification{
 			shared.BlobResource(shared.Resource{
-				Name: "product-description",
-				Data: string(content),
-				Type: "productdescription.mpas.ocm.software",
+				Name:    "product-description",
+				Data:    string(content),
+				Type:    "productdescription.mpas.ocm.software",
+				Version: "1.0.0",
 			}),
 			shared.ComponentVersionRef(shared.ComponentRef{
 				Name:          "backend",

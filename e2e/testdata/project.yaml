@@ -1,26 +1,27 @@
 apiVersion: mpas.ocm.software/v1alpha1
 kind: Project
 metadata:
-  name: test-001 #project-name-test-1
+  name: test-001 
   namespace: mpas-system 
 spec:
   git:
     provider: gitea 
-    owner: e2e-tester #git-org-owner-test
+    owner: e2e-tester 
     credentials:
       secretRef:
         name: gitea-credentials 
-    interval: 5s
-    visibility: public #private
+    interval: 2s
+    visibility: public 
     isOrganization: false
     domain: http://gitea.ocm-system.svc.cluster.local:3000
     maintainers:
-      - alice.bobb #maintainer-name-1
-      - bob.alisson #maintainer-name-2
+      - alice.bobb 
+      - bob.alisson
     existingRepositoryPolicy: adopt #fail 
     commitTemplate:
       email: testy@mctestface.test
       message: Commit message
       name: e2e-tester
+  prune: true
   flux:
-    interval: 5s
+    interval: 2s
