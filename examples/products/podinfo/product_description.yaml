@@ -1,4 +1,4 @@
-apiVersion: meta.mpas.ocm.software/v1alpha1
+apiVersion: mpas.ocm.software/v1alpha1
 kind: ProductDescription
 metadata:
   name: podinfo
