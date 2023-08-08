@@ -1,6 +1,6 @@
 # MPAS
 
-[![REUSE status](https://api.reuse.software/badge/github.com/open-component-model/<repo-name>)](https://api.reuse.software/info/github.com/open-component-model/<repo-name>)
+[![REUSE status](https://api.reuse.software/badge/github.com/open-component-model/MPAS)](https://api.reuse.software/info/github.com/open-component-model/MPAS)
 
 # MPAS - Multi Platform Automation System
 
