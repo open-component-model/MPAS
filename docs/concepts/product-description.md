@@ -82,7 +82,7 @@ Documentation should be provided that describes the available parameters for the
 The API for a `ProductDescription` shall be as follows:
 
 ```yaml
-apiVersion: meta.mpas.ocm.software/v1alpha1
+apiVersion: mpas.ocm.software/v1alpha1
 kind: ProductDescription
 metadata:
   name: string
