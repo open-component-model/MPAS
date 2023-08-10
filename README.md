@@ -1,6 +1,7 @@
 # MPAS
 
 [![REUSE status](https://api.reuse.software/badge/github.com/open-component-model/MPAS)](https://api.reuse.software/info/github.com/open-component-model/MPAS)
+[![Go Report Card](https://goreportcard.com/badge/github.com/open-component-model/MPAS)](https://goreportcard.com/report/github.com/open-component-model/MPAS)
 
 # MPAS - Multi Platform Automation System
 
