@@ -13,6 +13,6 @@ k8s_yaml(namespace_inject(read_file('../ocm-controller/hack/certs/registry_certs
 
 include('../replication-controller/Tiltfile')
 include('../git-controller/Tiltfile')
-include('../ocm-controller/Tiltfile')
 include('../mpas-project-controller/Tiltfile')
+include('../ocm-controller/Tiltfile')
 include('../mpas-product-controller/Tiltfile')
