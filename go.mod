@@ -14,6 +14,16 @@ replace k8s.io/api => k8s.io/api v0.27.3
 
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.26.3
 
+replace github.com/open-component-model/ocm-e2e-framework => ../ocm-e2e-framework
+
+replace github.com/open-component-model/ocm-controller => ../ocm-controller
+
+replace github.com/open-component-model/mpas-product-controller => ../mpas-product-controller
+
+replace github.com/open-component-model/mpas-project-controller => ../mpas-project-controller
+
+//replace github.com/open-component-model/ocm=>../ocm
+
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/containers/image/v5 v5.23.0
@@ -22,8 +32,8 @@ require (
 	github.com/fluxcd/flux2/v2 v2.0.0-rc.5
 	github.com/fluxcd/go-git-providers v0.18.1-0.20230706132206-211750e8915d
 	github.com/fluxcd/kustomize-controller/api v1.0.0-rc.4
-	github.com/fluxcd/notification-controller/api v1.0.0-rc.4
-	github.com/fluxcd/pkg/apis/meta v1.1.0
+	github.com/fluxcd/notification-controller/api v1.0.0
+	github.com/fluxcd/pkg/apis/meta v1.1.1
 	github.com/fluxcd/pkg/git v0.12.3
 	github.com/fluxcd/pkg/git/gogit v0.12.0
 	github.com/fluxcd/pkg/kustomize v1.3.3
@@ -33,13 +43,13 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-logr/logr v1.2.4
 	github.com/mandelsoft/vfs v0.0.0-20230506183150-975954b82357
-	github.com/open-component-model/git-controller v0.4.1
+	github.com/open-component-model/git-controller v0.5.0
 	github.com/open-component-model/mpas-product-controller v0.1.0
 	github.com/open-component-model/mpas-project-controller v0.1.1
-	github.com/open-component-model/ocm v0.3.0-rc.1.0.20230714180211-6d7c21618cf9
-	github.com/open-component-model/ocm-controller v0.8.2
-	github.com/open-component-model/ocm-e2e-framework v0.4.0
-	github.com/open-component-model/replication-controller v0.3.1
+	github.com/open-component-model/ocm v0.3.0-rc.3
+	github.com/open-component-model/ocm-controller v0.10.0
+	github.com/open-component-model/ocm-e2e-framework v0.5.0
+	github.com/open-component-model/replication-controller v0.4.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc4
 	github.com/oras-project/oras-credentials-go v0.2.0
@@ -52,9 +62,9 @@ require (
 	golang.org/x/term v0.9.0
 	golang.org/x/text v0.10.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.27.3
+	k8s.io/api v0.27.4
 	k8s.io/apiextensions-apiserver v0.27.3
-	k8s.io/apimachinery v0.27.3
+	k8s.io/apimachinery v0.27.4
 	k8s.io/cli-runtime v0.27.2
 	k8s.io/client-go v0.27.3
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106

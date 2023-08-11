@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  checkout-repos-and-init-workspace:
+  run-e2e-suite:
     runs-on: ubuntu-latest
     steps:
       - name: Restore Go cache
@@ -89,7 +89,7 @@ jobs:
           go work init
           go work use mpas
           go work use ocm-controller
-          go work use mpas-product-controller
+          go work use mpas-project-controller
           go work use mpas-product-controller
           go work use replication-controller
           go work use git-controller
@@ -97,7 +97,7 @@ jobs:
       - name: Run E2E tests
         id: e2e-tests
         working-directory: mpas
-        run: make e2e
+        run: make e2e-verbose
 
       - name: Notify on Failure/Success
         id: slack-notification

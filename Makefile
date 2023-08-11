@@ -40,7 +40,7 @@ build-release-bootstrap-component:
 
 
 .PHONY e2e:
-e2e: generate-developer-certs test-summary-tool
+e2e: test-summary-tool
 	$(GOTESTSUM) --format testname -- -count=1 -tags=e2e ./e2e
 
 .PHONY: test-summary-tool
@@ -48,7 +48,7 @@ test-summary-tool: ## Download gotestsum locally if necessary.
 	GOBIN=$(LOCALBIN) go install gotest.tools/gotestsum@${TAG}
 
 .PHONY: e2e-verbose
-e2e-verbose:  generate-developer-certs test-summary-tool ## Runs e2e tests in verbose
+e2e-verbose: test-summary-tool ## Runs e2e tests in verbose
 	$(GOTESTSUM) --format standard-verbose -- -count=1 --tags=e2e ./e2e
 
 e2e-cli:

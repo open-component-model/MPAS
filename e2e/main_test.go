@@ -42,7 +42,6 @@ func TestMpasE2e(t *testing.T) {
 	t.Log("running mpas happy path tests")
 
 	projectName := getYAMLField("project.yaml", "metadata.name")
-	projects := prefix + projectName
 	projectRepoName := prefix + getYAMLField("project.yaml", "metadata.name")
 	gitRepoUrl := getYAMLField("project.yaml", "spec.git.domain")
 	gitCredentialName = getYAMLField("project.yaml", "spec.git.credentials.secretRef.name")
@@ -67,12 +66,9 @@ func TestMpasE2e(t *testing.T) {
 
 	project := newProjectFeature(projectName, projectRepoName, gitRepoUrl)
 
-	intermediateSetup := features.New("2.1 Create Receiver for gitea hook").
+	intermediateSetup := features.New("2.1 Create credentials").
 		WithStep("Create git credentials ", 1, shared.CreateSecret(gitCredentialName, nil, gitCredentialData, projectRepoName)).
-		WithStep("Create gitea hook secret", 2, shared.CreateSecret(hookSecretName, nil, map[string]string{"token": hookSecretToken}, projects)).
-		WithStep("Create registry-certs for target namespace", 2, replicateRegistryCerts(getYAMLField("target.yaml", "spec.access.targetNamespace"))).
-		WithStep("Create Receiver", 3, createReceiver(projects)).
-		WithStep("Create Web Hook", 4, setup.CreateWebhookAPI(projects, hookSecretToken))
+		WithStep("Create registry-certs for target namespace", 2, replicateRegistryCerts(getYAMLField("target.yaml", "spec.access.targetNamespace")))
 
 	product := newProductFeature(projectRepoName)
 
