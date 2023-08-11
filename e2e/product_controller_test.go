@@ -9,8 +9,6 @@ package e2e
 import (
 	"context"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
 	"strings"
 	"testing"
 	"time"
@@ -19,21 +17,23 @@ import (
 	"github.com/fluxcd/pkg/apis/meta"
 	fconditions "github.com/fluxcd/pkg/runtime/conditions"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	gitv1alphav1 "github.com/open-component-model/git-controller/apis/delivery/v1alpha1"
-	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
-	"github.com/open-component-model/ocm-controller/api/v1alpha1"
-	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
-	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
-
-	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
 	"github.com/sourcegraph/conc/pool"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
+
+	gitv1alphav1 "github.com/open-component-model/git-controller/apis/delivery/v1alpha1"
+	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
+	"github.com/open-component-model/ocm-controller/api/v1alpha1"
+	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
+	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
+	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 )
 
 func newProductFeature(projectRepoName string) *features.FeatureBuilder {
