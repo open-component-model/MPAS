@@ -26,10 +26,6 @@ testbin/
 # Docs
 site/
 
-# ignore generated certificates
-hack/certs
-!hack/certs/README.md
-
 # ignore uneccessary testdatae2e/testdata/testOCMController/podinfo/backend/manifests/*
 e2e/testdata/podinfo/backend/manifests/*
 e2e/testdata/podinfo/frontend/manifests/*

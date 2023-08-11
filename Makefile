@@ -48,8 +48,6 @@ test-summary-tool: ## Download gotestsum locally if necessary.
 	GOBIN=$(LOCALBIN) go install gotest.tools/gotestsum@${TAG}
 
 .PHONY: e2e-verbose
-e2e-verbose: test-summary-tool ## Runs e2e tests in verbose
-
 e2e-verbose: generate-developer-certs test-summary-tool ## Runs e2e tests in verbose.
 
 	$(GOTESTSUM) --format standard-verbose -- -count=1 --tags=e2e ./e2e
@@ -64,6 +62,6 @@ release-bootstrap-component:
 test:
 	go test -v ./internal/... $(GO_TEST_ARGS) -coverprofile cover.out
 
-.PHONY generate-developer-certs:
+.PHONY: generate-developer-certs
 generate-developer-certs: ## Runs generate-developer-certs in the ocm-controller project. It expects the project to exist.
 	cd ../ocm-controller && $(MAKE) generate-developer-certs

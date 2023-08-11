@@ -13,7 +13,6 @@ import (
 	"time"
 
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
-	notifv1 "github.com/fluxcd/notification-controller/api/v1"
 	fconditions "github.com/fluxcd/pkg/runtime/conditions"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	gitv1alphav1 "github.com/open-component-model/git-controller/apis/delivery/v1alpha1"
@@ -59,7 +58,6 @@ func TestMpasE2e(t *testing.T) {
 		Setup(setup.AddScheme(gitv1alphav1.AddToScheme)).
 		Setup(setup.AddScheme(prodv1alpha1.AddToScheme)).
 		Setup(setup.AddScheme(rcv1alpha1.AddToScheme)).
-		Setup(setup.AddScheme(notifv1.AddToScheme)).
 		Setup(shared.CreateSecret(gitCredentialName, nil, gitCredentialData, mpasNamespace)).
 		Assess(fmt.Sprintf("management namespace %s exists", mpasNamespace), checkIsNamespaceReady(mpasNamespace))
 

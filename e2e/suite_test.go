@@ -49,11 +49,11 @@ func TestMain(m *testing.M) {
 	)
 
 	testEnv.Finish(
-		//shared.RemoveGitServer(namespace),
+		shared.RemoveGitServer(namespace),
 		shared.ShutdownPortForward(stopChannelRegistry),
 		shared.ShutdownPortForward(stopChannelGitea),
-		//envfuncs.DeleteNamespace(namespace),
-		//envfuncs.DestroyKindCluster(kindClusterName),
+		envfuncs.DeleteNamespace(namespace),
+		envfuncs.DestroyKindCluster(kindClusterName),
 	)
 	ctrllog.SetLogger(logr.New(ctrllog.NullLogSink{}))
 	os.Exit(testEnv.Run(m))
