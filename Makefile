@@ -48,7 +48,7 @@ test-summary-tool: ## Download gotestsum locally if necessary.
 	GOBIN=$(LOCALBIN) go install gotest.tools/gotestsum@${TAG}
 
 .PHONY: e2e-verbose
-e2e-verbose:  generate-developer-certs test-summary-tool ## Runs e2e tests in verbose
+e2e-verbose:  generate-developer-certs test-summary-tool ## Runs e2e tests in verbose.
 	$(GOTESTSUM) --format standard-verbose -- -count=1 --tags=e2e ./e2e
 
 e2e-cli:
@@ -61,17 +61,6 @@ release-bootstrap-component:
 test:
 	go test -v ./internal/... $(GO_TEST_ARGS) -coverprofile cover.out
 
-# https registry
-MKCERT_VERSION ?= v1.4.4
-MKCERT ?= $(LOCALBIN)/mkcert
-UNAME ?= $(shell uname|tr '[:upper:]' '[:lower:]')
-
-.PHONY: generate-developer-certs
-generate-developer-certs: mkcert
-	./hack/create_developer_certificate_secrets.sh
-
-.PHONY: mkcert
-mkcert: $(MKCERT)
-$(MKCERT): $(LOCALBIN)
-	curl -L "https://github.com/FiloSottile/mkcert/releases/download/$(MKCERT_VERSION)/mkcert-$(MKCERT_VERSION)-$(UNAME)-amd64" -o $(LOCALBIN)/mkcert
-	chmod +x $(LOCALBIN)/mkcert
+.PHONY generate-developer-certs:
+generate-developer-certs: ## Runs generate-developer-certs in the ocm-controller project. It expects the project to exist.
+	cd ../ocm-controller && $(MAKE) generate-developer-certs

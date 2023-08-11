@@ -89,7 +89,7 @@ func bootstrapGithub(owner, token string) (*bootstrap.GithubCmd, error) {
 		return nil, err
 	}
 
-	interval, err := time.ParseDuration("5m")
+	interval, err := time.ParseDuration("1s")
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func bootstrapGitea(owner, token, hostname string) (*bootstrap.GiteaCmd, error) 
 		return nil, err
 	}
 
-	interval, err := time.ParseDuration("5m")
+	interval, err := time.ParseDuration("1s")
 	if err != nil {
 		return nil, err
 	}

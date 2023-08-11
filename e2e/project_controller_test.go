@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
@@ -10,9 +9,6 @@ package e2e
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	"reflect"
 	"strings"
 	"testing"
@@ -26,12 +22,10 @@ import (
 	"github.com/open-component-model/ocm-e2e-framework/shared"
 	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
-	notifv1 "github.com/fluxcd/notification-controller/api/v1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -58,8 +52,6 @@ var (
 	prefix             = "mpas-"
 	projectClusterRole = "mpas-projects-clusterrole"
 	clusterRoleSuffix  = "-clusterrole"
-	hookSecretName     = "receiver-token"
-	hookSecretToken    = "supersecrettoken"
 	gitCredentialName  = getYAMLField("project.yaml", "spec.git.credentials.secretRef.name")
 )
 
@@ -416,89 +408,6 @@ func checkKustomizationsConfiguration(namespace string, kustomizations ...kustom
 			if err != nil {
 				t.Fatal(err)
 			}
-		}
-		return ctx
-	}
-}
-
-func prepareReceiver(name, namespace string) (map[string]interface{}, error) {
-	gr := &notifv1.Receiver{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       notifv1.ReceiverKind,
-			APIVersion: "notification.toolkit.fluxcd.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Spec: notifv1.ReceiverSpec{
-			Type:     notifv1.GitHubReceiver,
-			Interval: &metav1.Duration{Duration: time.Second * 5},
-			Events:   []string{"ping", "push"},
-			Resources: []notifv1.CrossNamespaceObjectReference{{
-				APIVersion: "source.toolkit.fluxcd.io/v1",
-				Kind:       sourcev1.GitRepositoryKind,
-				Name:       name,
-				Namespace:  mpasNamespace,
-			}},
-			SecretRef: meta.LocalObjectReference{Name: hookSecretName},
-		},
-	}
-
-	return runtime.DefaultUnstructuredConverter.ToUnstructured(gr)
-}
-
-func createReceiver(projectName string) features.Func {
-	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-		t.Helper()
-		r, err := resources.New(cfg.Client().RESTConfig())
-		if err != nil {
-			t.Error(err)
-			return ctx
-		}
-		clientset, err := dynamic.NewForConfig(cfg.Client().RESTConfig())
-		if err != nil {
-			t.Error(err)
-			return ctx
-		}
-		client, err := cfg.NewClient()
-		if err != nil {
-			t.Error(err)
-			return ctx
-		}
-		unstructuredObj, err := prepareReceiver(projectName, projectName)
-		if err != nil {
-			t.Fatal(err)
-			return ctx
-		}
-
-		fmt.Println(unstructuredObj)
-		_, err = clientset.Resource(schema.GroupVersionResource{
-			Group:    "notification.toolkit.fluxcd.io",
-			Version:  "v1",
-			Resource: "receivers",
-		}).Namespace(projectName).Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
-		if err != nil {
-			t.Fatal(err)
-			return ctx
-		}
-
-		t.Logf("checking if Reciever %s exists...", projectName)
-		receiver := &notifv1.Receiver{}
-		if err := r.Get(ctx, projectName, projectName, receiver); err != nil {
-			t.Fatal(err)
-			return ctx
-		}
-
-		err = wait.For(conditions.New(client.Resources()).ResourceMatch(receiver, func(object k8s.Object) bool {
-			obj, ok := object.(*notifv1.Receiver)
-			if !ok {
-				return false
-			}
-			return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
-		}), wait.WithTimeout(time.Minute*1))
-		if err != nil {
-			t.Fatal(err)
 		}
 		return ctx
 	}
