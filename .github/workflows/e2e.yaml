@@ -90,7 +90,7 @@ jobs:
       - name: Initialize workspace
         run: |
           go work init
-          go work use mpas
+          go work use ../MPAS
           go work use ocm-controller
           go work use mpas-project-controller
           go work use mpas-product-controller
