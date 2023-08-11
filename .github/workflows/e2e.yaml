@@ -99,7 +99,6 @@ jobs:
 
       - name: Run E2E tests
         id: e2e-tests
-        working-directory: mpas
         run: make e2e-verbose
 
       - name: Notify on Failure/Success
