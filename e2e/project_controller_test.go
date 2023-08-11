@@ -14,18 +14,9 @@ import (
 	"testing"
 	"time"
 
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
 	"github.com/fluxcd/pkg/apis/meta"
 	fconditions "github.com/fluxcd/pkg/runtime/conditions"
-	gcv1alpha1 "github.com/open-component-model/git-controller/apis/mpas/v1alpha1"
-	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
-	ocmv1alpha1 "github.com/open-component-model/ocm-controller/api/v1alpha1"
-	"github.com/open-component-model/ocm-e2e-framework/shared"
-	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
-
-	"sigs.k8s.io/e2e-framework/klient/wait"
-	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
-
-	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -33,11 +24,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
+	gcv1alpha1 "github.com/open-component-model/git-controller/apis/mpas/v1alpha1"
+	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
+	ocmv1alpha1 "github.com/open-component-model/ocm-controller/api/v1alpha1"
+	"github.com/open-component-model/ocm-e2e-framework/shared"
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
+	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 )
 
 type kustomization struct {
