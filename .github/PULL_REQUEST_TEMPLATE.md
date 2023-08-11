@@ -47,6 +47,12 @@ https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-git
 
 Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration
 
+## Added e2e-tests?
+
+- [ ] 👍 yes
+- [ ] 🙅 no, because they aren't needed
+- [ ] 🙋 no, because I need help
+- [ ] Separate ticket for e2e-tests
 
 ## Added to documentation?
 
