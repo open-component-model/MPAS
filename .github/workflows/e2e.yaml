@@ -32,6 +32,9 @@ jobs:
     steps:
       - name: Checkout mpas repository
         uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository }}
+          path: MPAS
 
       - name: Checkout ocm-controller
         uses: actions/checkout@v3
@@ -71,7 +74,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version-file: '${{ github.workspace }}/go.mod'
+          go-version-file: '${{ github.workspace }}/MPAS/go.mod'
       - name: Restore Go cache
         uses: actions/cache@v3
         with:
@@ -90,7 +93,7 @@ jobs:
       - name: Initialize workspace
         run: |
           go work init
-          go work use .
+          go work use MPAS
           go work use ocm-controller
           go work use mpas-project-controller
           go work use mpas-product-controller
@@ -99,6 +102,7 @@ jobs:
 
       - name: Run E2E tests
         id: e2e-tests
+        working-directory: MPAS
         run: make e2e-verbose
 
       - name: Notify on Failure/Success
