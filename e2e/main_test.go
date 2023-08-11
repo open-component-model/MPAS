@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
@@ -10,6 +9,9 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
 	notifv1 "github.com/fluxcd/notification-controller/api/v1"
 	fconditions "github.com/fluxcd/pkg/runtime/conditions"
@@ -20,14 +22,11 @@ import (
 	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
-	"testing"
-	"time"
 
 	"github.com/open-component-model/ocm-controller/api/v1alpha1"
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
@@ -66,17 +65,12 @@ func TestMpasE2e(t *testing.T) {
 
 	project := newProjectFeature(projectName, projectRepoName, gitRepoUrl)
 
-	intermediateSetup := features.New("2.1 Create credentials").
-		WithStep("Create git credentials ", 1, shared.CreateSecret(gitCredentialName, nil, gitCredentialData, projectRepoName)).
-		WithStep("Create registry-certs for target namespace", 2, replicateRegistryCerts(getYAMLField("target.yaml", "spec.access.targetNamespace")))
-
 	product := newProductFeature(projectRepoName)
 
 	testEnv.Test(t,
 		setupComponent.Feature(),
 		management.Feature(),
 		project.Feature(),
-		intermediateSetup.Feature(),
 		product.Feature(),
 	)
 }
@@ -97,66 +91,6 @@ func checkIsNamespaceReady(name string) features.Func {
 			if !ok {
 				return false
 			}
-			return true
-		}), wait.WithTimeout(time.Minute*1))
-		if err != nil {
-			t.Fatal(err)
-		}
-		return ctx
-	}
-}
-
-func replicateRegistryCerts(namespace string) features.Func {
-	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-		t.Helper()
-
-		name := "registry-certs"
-		client, err := cfg.NewClient()
-		if err != nil {
-			t.Fatal(err)
-		}
-		clientset, err := kubernetes.NewForConfig(cfg.Client().RESTConfig())
-		if err != nil {
-			t.Fatal(err)
-			return ctx
-		}
-		t.Logf("checking if secret with with name: %s exists", name)
-		gr := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "ocm-system"},
-		}
-		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
-			obj, ok := object.(*corev1.Secret)
-			if !ok {
-				return false
-			}
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
-				Data: map[string][]byte{
-					"caFile":   obj.Data["caFile"],
-					"certFile": obj.Data["certFile"],
-					"keyFile":  obj.Data["keyFile"]},
-			}
-
-			_, err = clientset.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
-			if err != nil {
-				fmt.Println(err)
-				t.Fatal(err)
-			}
-
-			newSecret := corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			}
-			err = wait.For(conditions.New(cfg.Client().Resources()).ResourceMatch(&newSecret, func(object k8s.Object) bool {
-				_, ok := object.(*corev1.Secret)
-				if !ok {
-					return false
-				}
-				return true
-			}), wait.WithTimeout(time.Minute*1))
-
 			return true
 		}), wait.WithTimeout(time.Minute*1))
 		if err != nil {

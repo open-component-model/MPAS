@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
@@ -10,9 +9,6 @@ package e2e
 import (
 	"context"
 	"fmt"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
-	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 	"strings"
 	"testing"
 	"time"
@@ -20,9 +16,12 @@ import (
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
 	"github.com/fluxcd/pkg/apis/meta"
 	fconditions "github.com/fluxcd/pkg/runtime/conditions"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	gitv1alphav1 "github.com/open-component-model/git-controller/apis/delivery/v1alpha1"
 	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
 	"github.com/open-component-model/ocm-controller/api/v1alpha1"
+	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
+	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
 	"github.com/sourcegraph/conc/pool"
@@ -58,11 +57,6 @@ func newProductFeature(projectRepoName string) *features.FeatureBuilder {
 				SourceFilepath: "subscription.yaml",
 				DestFilepath:   "subscriptions/podinfo.yaml",
 			})).
-		WithSetup("Add Product Description to project git repository", setup.AddFilesToGitRepository(setup.File{
-			RepoName:       projectRepoName,
-			SourceFilepath: "product_description.yaml",
-			DestFilepath:   "products/product_description.yaml",
-		})).
 		WithSetup("Add Product Deployment Generator to project git repository", setup.AddFilesToGitRepository(setup.File{
 			RepoName:       projectRepoName,
 			SourceFilepath: "product_deployment_generator.yaml",
@@ -72,11 +66,6 @@ func newProductFeature(projectRepoName string) *features.FeatureBuilder {
 		Assess(fmt.Sprintf("3.2 ComponentSubscription %s has been created in namespace %s", componentSubscriptionName, projectRepoName), checkIfComponentSubscriptionExists(componentSubscriptionName,
 			projectRepoName)).
 		Assess(fmt.Sprintf("3.3 ProductDeploymentGenerator %s has been created in namespace %s", projectRepoName, projectRepoName), checkIfProductDeploymentGeneratorReady(prodDepGenName, projectRepoName)).
-		Assess(fmt.Sprintf("3.4 ProductDescription %s exists in namespace %s", prodDepGenName, projectRepoName), assess.ResourceWasCreated(assess.Object{
-			Name:      prodDepGenName,
-			Namespace: projectRepoName,
-			Obj:       &prodv1alpha1.ProductDescription{},
-		})).
 		Assess(fmt.Sprintf("3.5 Snapshot, Sync %s have been created in namespace %s", prodDepGenName, projectRepoName), checkSnapshotsSyncExist(prodDepGenName, projectRepoName)).
 		Assess("3.6 PR was created for product files in project repository", assess.CheckIfPullRequestExists(projectRepoName, 1)).
 		Assess("3.7 Merge PR in project repository", setup.MergePullRequest(projectRepoName, 1)).
