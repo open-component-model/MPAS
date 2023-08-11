@@ -66,9 +66,3 @@ func locateLocalTiltfile(dir string) (string, error) {
 
 	return "", fmt.Errorf("failed to find controller %s", "Tiltfile")
 }
-func print() env.Func {
-	return func(ctx context.Context, config *envconf.Config) (_ context.Context, err error) {
-		fmt.Println("------------------------------------------------------------------------------------")
-		return ctx, nil
-	}
-}
