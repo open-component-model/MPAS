@@ -30,6 +30,7 @@ jobs:
   run-e2e-suite:
     runs-on: ubuntu-latest
     steps:
+      - run: curl -s https://fluxcd.io/install.sh | sudo bash
       - name: Checkout mpas repository
         uses: actions/checkout@v3
         with:
