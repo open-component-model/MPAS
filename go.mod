@@ -8,6 +8,8 @@ replace github.com/opencontainers/go-digest => github.com/opencontainers/go-dige
 
 replace github.com/google/go-containerregistry => github.com/google/go-containerregistry v0.14.1-0.20230409045903-ed5c185df419
 
+replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.14.6
+
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/containers/image/v5 v5.23.0
