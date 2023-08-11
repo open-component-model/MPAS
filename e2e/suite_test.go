@@ -43,7 +43,9 @@ func TestMain(m *testing.M) {
 		envfuncs.CreateNamespace(namespace),
 		shared.StartGitServer(namespace),
 		shared.InstallFlux("latest"),
+		print(),
 		RunLocalTilt(),
+		print(),
 		shared.ForwardPortForAppName("registry", 5000, stopChannelRegistry),
 		shared.ForwardPortForAppName("gitea", 3000, stopChannelGitea),
 	)

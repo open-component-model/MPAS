@@ -65,14 +65,14 @@ func newProductFeature(projectRepoName string) *features.FeatureBuilder {
 			SourceFilepath: "product_deployment_generator.yaml",
 			DestFilepath:   "generators/product_deployment_generator.yaml",
 		})).
-		Assess(fmt.Sprintf("3.1 Target %s has been created in namespace %s", targetName, projectRepoName), checkIfTargetExists(targetName, projectRepoName)).
-		Assess(fmt.Sprintf("3.2 ComponentSubscription %s has been created in namespace %s", componentSubscriptionName, projectRepoName), checkIfComponentSubscriptionExists(componentSubscriptionName,
+		Assess(fmt.Sprintf("Target %s has been created in namespace %s", targetName, projectRepoName), checkIfTargetExists(targetName, projectRepoName)).
+		Assess(fmt.Sprintf("ComponentSubscription %s has been created in namespace %s", componentSubscriptionName, projectRepoName), checkIfComponentSubscriptionExists(componentSubscriptionName,
 			projectRepoName)).
-		Assess(fmt.Sprintf("3.3 ProductDeploymentGenerator %s has been created in namespace %s", projectRepoName, projectRepoName), checkIfProductDeploymentGeneratorReady(prodDepGenName, projectRepoName)).
-		Assess(fmt.Sprintf("3.5 Snapshot, Sync %s have been created in namespace %s", prodDepGenName, projectRepoName), checkSnapshotsSyncExist(prodDepGenName, projectRepoName)).
-		Assess("3.6 PR was created for product files in project repository", assess.CheckIfPullRequestExists(projectRepoName, 1)).
-		Assess("3.7 Merge PR in project repository", setup.MergePullRequest(projectRepoName, 1)).
-		Assess("3.8 product files have been created in project git repository", assess.CheckFileInRepoExists(
+		Assess(fmt.Sprintf("ProductDeploymentGenerator %s has been created in namespace %s", projectRepoName, projectRepoName), checkIfProductDeploymentGeneratorReady(prodDepGenName, projectRepoName)).
+		Assess(fmt.Sprintf("Snapshot, Sync %s have been created in namespace %s", prodDepGenName, projectRepoName), checkSnapshotsSyncExist(prodDepGenName, projectRepoName)).
+		Assess("PR was created for product files in project repository", assess.CheckIfPullRequestExists(projectRepoName, 1)).
+		Assess("Merge PR in project repository", setup.MergePullRequest(projectRepoName, 1)).
+		Assess("product files have been created in project git repository", assess.CheckFileInRepoExists(
 			assess.File{
 				Repository: projectRepoName,
 				Path:       "products/" + prodDepGenName + "/README.md"},
@@ -86,15 +86,15 @@ func newProductFeature(projectRepoName string) *features.FeatureBuilder {
 				Repository: projectRepoName,
 				Path:       "products/" + prodDepGenName + "/values.yaml"},
 		)).
-		Assess(fmt.Sprintf("3.9 ProductDeployment %s exists in namespace %s", prodDepGenName, projectRepoName), checkIfProductDeploymentExists(prodDepGenName, projectRepoName)).
-		Assess(fmt.Sprintf("3.10 if ProductDeploymentPipelines exist in namespace %s", projectRepoName), checkIfProductDeploymentPipelinesExist(projectRepoName, pipelineNames)).
-		Assess(fmt.Sprintf("3.11 ComponentVersion %s is created in namespace %s", prodDepGenName, projectRepoName), checkIsComponentVersionReady(prodDepGenName+"component-version", projectRepoName)).
-		Assess(fmt.Sprintf("3.12 Localization is Ready in namespace %s", projectRepoName), checkLocalizationReady(projectRepoName, pipelineNames)).
-		Assess(fmt.Sprintf("3.13 Configuration is Ready in namespace %s", projectRepoName), checkConfigurationReady(projectRepoName, pipelineNames)).
-		Assess(fmt.Sprintf("3.14 OCIRepository is Ready in namespace %s", projectRepoName), checkOCIRepositoryReady(projectRepoName, pipelineNames)).
-		Assess(fmt.Sprintf("3.15 Kustomization is Ready in namespace %s", projectRepoName), checkKustomizationReady(projectRepoName, pipelineNames)).
-		Assess(fmt.Sprintf("3.16 FLuxDeployer is Ready in namespace %s", projectRepoName), checkFluxDeployerReady(projectRepoName, pipelineNames)).
-		Assess(fmt.Sprintf("3.17 Deployment is Ready in namespace %s", targetNamespace), checkDeploymentsReady(targetNamespace, pipelineNames))
+		Assess(fmt.Sprintf("ProductDeployment %s exists in namespace %s", prodDepGenName, projectRepoName), checkIfProductDeploymentExists(prodDepGenName, projectRepoName)).
+		Assess(fmt.Sprintf("ProductDeploymentPipelines exist in namespace %s", projectRepoName), checkIfProductDeploymentPipelinesExist(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("ComponentVersion %s is created in namespace %s", prodDepGenName, projectRepoName), checkIsComponentVersionReady(prodDepGenName+"component-version", projectRepoName)).
+		Assess(fmt.Sprintf("Localization is Ready in namespace %s", projectRepoName), checkLocalizationReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("Configuration is Ready in namespace %s", projectRepoName), checkConfigurationReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("OCIRepository is Ready in namespace %s", projectRepoName), checkOCIRepositoryReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("Kustomization is Ready in namespace %s", projectRepoName), checkKustomizationReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("FLuxDeployer is Ready in namespace %s", projectRepoName), checkFluxDeployerReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("Deployment is Ready in namespace %s", targetNamespace), checkDeploymentsReady(targetNamespace, pipelineNames))
 }
 
 func checkIfTargetExists(name string, namespace string) features.Func {

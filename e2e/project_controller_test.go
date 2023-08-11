@@ -73,18 +73,18 @@ func newProjectFeature(projectName, projectRepoName, gitRepoUrl string) *feature
 				sourceRefKind: "GitRepository",
 				sourceRefName: mpasManagementRepoName,
 			})).
-		Assess(fmt.Sprintf("1.1 project namespace %s has been created", projects), checkIsNamespaceReady(projects)).
-		Assess(fmt.Sprintf("1.2 projects ClusterRole %s exists", projectClusterRole), checkIfClusterRoleExists(projectClusterRole)).
-		Assess(fmt.Sprintf("1.3 project service account %s has been created", projects), checkIfServiceAccountExists(projects)).
-		Assess(fmt.Sprintf("1.4 project role %s has been created", projects), checkIfRoleExists(projects)).
-		Assess(fmt.Sprintf("1.5 project RoleBindings %s has been created in namespace %s", projects, projects), checkIfRoleBindingsExist(projects, projects)).
-		Assess(fmt.Sprintf("1.6 project RoleBindings %s has been created in namespace %s", projects+clusterRoleSuffix, projects), checkIfRoleBindingsExist(projects, projects)).
-		Assess(fmt.Sprintf("1.7 project RoleBindings %s has been created in namespace %s", projects, mpasNamespace), checkIfRoleBindingsExist(projects, mpasNamespace)).
-		Assess(fmt.Sprintf("1.8 project SA %s can list target and componentsubscription resources in %s namespace", projects, projects),
+		Assess(fmt.Sprintf("project namespace %s has been created", projects), checkIsNamespaceReady(projects)).
+		Assess(fmt.Sprintf("projects ClusterRole %s exists", projectClusterRole), checkIfClusterRoleExists(projectClusterRole)).
+		Assess(fmt.Sprintf("project service account %s has been created", projects), checkIfServiceAccountExists(projects)).
+		Assess(fmt.Sprintf("project role %s has been created", projects), checkIfRoleExists(projects)).
+		Assess(fmt.Sprintf("project RoleBindings %s has been created in namespace %s", projects, projects), checkIfRoleBindingsExist(projects, projects)).
+		Assess(fmt.Sprintf("project RoleBindings %s has been created in namespace %s", projects+clusterRoleSuffix, projects), checkIfRoleBindingsExist(projects, projects)).
+		Assess(fmt.Sprintf("project RoleBindings %s has been created in namespace %s", projects, mpasNamespace), checkIfRoleBindingsExist(projects, mpasNamespace)).
+		Assess(fmt.Sprintf("project SA %s can list target and componentsubscription resources in %s namespace", projects, projects),
 			checkSACanListResourcesInNamespace(projects, projects,
 				&prodv1alpha1.TargetList{}, &rcv1alpha1.ComponentSubscriptionList{},
 			)).
-		Assess(fmt.Sprintf("1.9 project SA %s can create resources in %s namespace", projects, projects), checkSACanCreateResources(
+		Assess(fmt.Sprintf("project SA %s can create resources in %s namespace", projects, projects), checkSACanCreateResources(
 			projects,
 			&corev1.Secret{},
 			&gcv1alpha1.Repository{},
@@ -99,16 +99,16 @@ func newProjectFeature(projectName, projectRepoName, gitRepoUrl string) *feature
 			&sourcev1.OCIRepository{},
 			&kustomizev1.Kustomization{},
 		)).
-		Assess(fmt.Sprintf("1.10 project SA %s can list target and componentsubscription resources in %s namespace", projects, projects),
+		Assess(fmt.Sprintf("project SA %s can list target and componentsubscription resources in %s namespace", projects, projects),
 			checkSACanListResourcesInNamespace(projects, projects,
 				&prodv1alpha1.TargetList{}, &rcv1alpha1.ComponentSubscriptionList{},
 			)).
-		Assess(fmt.Sprintf("1.11 project repository %s/%s/%s has been created", shared.BaseURL, shared.Owner, projectRepoName), assess.CheckRepoExists(projectRepoName)).
-		Assess("1.12 check files are created in project repo", checkRepoFileContent(projectRepoName)).
-		Assess(fmt.Sprintf("1.13 flux resources have been created in %s namespace", fluxNamespace), checkFluxGitRepositoryReady(projects, mpasNamespace)).
-		Assess(fmt.Sprintf("1.14 flux::GitRepository is configured correctly in %s namespace", mpasNamespace), checkGitRepositoryConfiguration(projects, strings.Join([]string{gitRepoUrl,
+		Assess(fmt.Sprintf("project repository %s/%s/%s has been created", shared.BaseURL, shared.Owner, projectRepoName), assess.CheckRepoExists(projectRepoName)).
+		Assess("check files are created in project repo", checkRepoFileContent(projectRepoName)).
+		Assess(fmt.Sprintf("flux resources have been created in %s namespace", fluxNamespace), checkFluxGitRepositoryReady(projects, mpasNamespace)).
+		Assess(fmt.Sprintf("flux::GitRepository is configured correctly in %s namespace", mpasNamespace), checkGitRepositoryConfiguration(projects, strings.Join([]string{gitRepoUrl,
 			shared.Owner, projects}, "/"), "main")).
-		Assess(fmt.Sprintf("1.15 flux::kustomizations are configured correctly in %s namespace", mpasNamespace), checkKustomizationsConfiguration(mpasNamespace,
+		Assess(fmt.Sprintf("flux::kustomizations are configured correctly in %s namespace", mpasNamespace), checkKustomizationsConfiguration(mpasNamespace,
 			kustomization{
 				name:          projects + "-subscriptions",
 				path:          "subscriptions",
