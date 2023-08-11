@@ -39,7 +39,6 @@ func TestMain(m *testing.M) {
 	stopChannelGitea := make(chan struct{}, 1)
 
 	testEnv.Setup(
-		print(),
 		envfuncs.CreateKindCluster(kindClusterName),
 		envfuncs.CreateNamespace(namespace),
 		shared.StartGitServer(namespace),
