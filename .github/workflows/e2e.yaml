@@ -35,7 +35,7 @@ jobs:
         with:
           repository: ${{ github.repository }}
           ref: feature/56
-          path: mpas
+          path: MPAS
 
       - name: Checkout ocm-controller
         uses: actions/checkout@v3
