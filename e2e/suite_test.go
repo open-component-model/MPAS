@@ -39,13 +39,16 @@ func TestMain(m *testing.M) {
 	stopChannelGitea := make(chan struct{}, 1)
 
 	testEnv.Setup(
+		print(),
 		envfuncs.CreateKindCluster(kindClusterName),
+		print(),
 		envfuncs.CreateNamespace(namespace),
+		print(),
 		shared.StartGitServer(namespace),
+		print(),
 		shared.InstallFlux("latest"),
 		print(),
 		RunLocalTilt(),
-		print(),
 		shared.ForwardPortForAppName("registry", 5000, stopChannelRegistry),
 		shared.ForwardPortForAppName("gitea", 3000, stopChannelGitea),
 	)
