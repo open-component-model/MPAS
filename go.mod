@@ -8,7 +8,7 @@ replace github.com/opencontainers/go-digest => github.com/opencontainers/go-dige
 
 replace github.com/google/go-containerregistry => github.com/google/go-containerregistry v0.14.1-0.20230409045903-ed5c185df419
 
-replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v1.5.0
+replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v1.3.1
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
@@ -28,11 +28,11 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-logr/logr v1.2.4
 	github.com/mandelsoft/vfs v0.0.0-20230506183150-975954b82357
-	github.com/open-component-model/git-controller v0.5.0
+	github.com/open-component-model/git-controller v0.5.1-0.20230812073433-00ae32768395
 	github.com/open-component-model/mpas-product-controller v0.2.1-0.20230811120239-3d757c349b8a
 	github.com/open-component-model/mpas-project-controller v0.1.2-0.20230811114712-fb37343e8892
 	github.com/open-component-model/ocm v0.3.0-rc.3
-	github.com/open-component-model/ocm-controller v0.10.1-0.20230811163712-a549f818c68d
+	github.com/open-component-model/ocm-controller v0.10.1-0.20230812065516-ba0fa77ae8a3
 	github.com/open-component-model/ocm-e2e-framework v0.6.0
 	github.com/open-component-model/replication-controller v0.4.0
 	github.com/opencontainers/go-digest v1.0.0
