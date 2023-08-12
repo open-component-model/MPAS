@@ -101,7 +101,7 @@ jobs:
           go work use mpas-product-controller
           go work use replication-controller
           go work use git-controller
-          go work sync
+          # go work sync
 
       - name: Run E2E tests
         id: e2e-tests
