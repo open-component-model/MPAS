@@ -35,6 +35,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ${{ github.repository }}
+          ref: feature/56
           path: MPAS
 
       - name: Checkout ocm-controller
@@ -48,7 +49,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: open-component-model/mpas-project-controller
-          ref: main
+          ref: disable-flux-install
           path: mpas-project-controller
 
       - name: Checkout mpas-product-controller
