@@ -63,14 +63,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: open-component-model/replication-controller
-          ref: remove-csdk
+          ref: main
           path: replication-controller
 
       - name: Checkout git-controller
         uses: actions/checkout@v3
         with:
           repository: open-component-model/git-controller
-          ref: remove-csdk
+          ref: main
           path: git-controller
 
       - name: Setup Go
@@ -92,16 +92,6 @@ jobs:
         with:
           kustomize: '5.0.1'
           tilt: '0.32.2'
-      - name: Initialize workspace
-        run: |
-          go work init
-          go work use MPAS
-          go work use ocm-controller
-          go work use mpas-project-controller
-          go work use mpas-product-controller
-          go work use replication-controller
-          go work use git-controller
-          # go work sync
 
       - name: Run E2E tests
         id: e2e-tests
