@@ -50,7 +50,7 @@ test-summary-tool: ## Download gotestsum locally if necessary.
 .PHONY: e2e-verbose
 e2e-verbose: generate-developer-certs test-summary-tool ## Runs e2e tests in verbose.
 
-	$(GOTESTSUM) --format standard-verbose -- -count=1 -timeout=30m --tags=e2e ./e2e
+	$(GOTESTSUM) --format standard-verbose -- -count=1 -timeout=30m -tags=e2e ./e2e
 
 e2e-cli:
 	GITEA_TOKEN=$(GITEA_TOKEN) MPAS_MANAGEMENT_REPO_OWNER=$(MPAS_MANAGEMENT_REPO_OWNER) \
