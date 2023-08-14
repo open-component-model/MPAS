@@ -95,7 +95,7 @@ jobs:
       - name: Run E2E tests
         id: e2e-tests
         working-directory: MPAS
-        run: make e2e-verbose
+        run: make e2e
 
       - name: Notify on Failure/Success
         id: slack-notification
