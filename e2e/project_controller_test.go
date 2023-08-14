@@ -302,7 +302,7 @@ func checkRepoFileContent(projectRepoName string) features.Func {
 		assess.File{
 			Repository: projectRepoName,
 			Path:       "CODEOWNERS",
-			Content:    "alice.bobb\nbob.alisson\n",
+			Content:    "alice.bobbbob.alisson",
 		},
 		assess.File{
 			Repository: projectRepoName,
