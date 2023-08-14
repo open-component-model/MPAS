@@ -1,35 +1,41 @@
-name: e2e test suite
+name: e2e-mpas
 
 on:
   repository_dispatch:
-    types: [component.controlplane.mpas.updated]
+    types: [ component.controlplane.mpas.updated ]
+
+  pull_request:
+    paths-ignore:
+      - 'CODE_OF_CONDUCT.md'
+      - 'README.md'
+      - 'Contributing.md'
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
+  schedule:
+    - cron: '0 6 * * *' # 6 AM UTC everyday
+
+permissions:
+  contents: read # for actions/checkout to fetch code
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  checkout-repos-and-init-workspace:
+  run-e2e-suite:
     runs-on: ubuntu-latest
     steps:
-      - name: Restore Go cache
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '>=1.20.0'
-
+      - run: curl -s https://fluxcd.io/install.sh | sudo bash
       - name: Checkout mpas repository
         uses: actions/checkout@v3
         with:
           repository: ${{ github.repository }}
-          ref: main
-          path: mpas
+          path: MPAS
 
       - name: Checkout ocm-controller
         uses: actions/checkout@v3
@@ -37,6 +43,20 @@ jobs:
           repository: open-component-model/ocm-controller
           ref: main
           path: ocm-controller
+
+      - name: Checkout mpas-project-controller
+        uses: actions/checkout@v3
+        with:
+          repository: open-component-model/mpas-project-controller
+          ref: main
+          path: mpas-project-controller
+
+      - name: Checkout mpas-product-controller
+        uses: actions/checkout@v3
+        with:
+          repository: open-component-model/mpas-product-controller
+          ref: main
+          path: mpas-product-controller
 
       - name: Checkout replication-controller
         uses: actions/checkout@v3
@@ -52,14 +72,80 @@ jobs:
           ref: main
           path: git-controller
 
-      - name: Initialize workspace
-        run: |
-          go work init
-          go work use mpas
-          go work use ocm-controller
-          go work use replication-controller
-          go work use git-controller
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: '${{ github.workspace }}/MPAS/go.mod'
+      - name: Restore Go cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Setup Kubernetes
+        uses: helm/kind-action@v1.5.0
+        with:
+          install_only: true
+      - uses: yokawasa/action-setup-kube-tools@v0.9.2
+        with:
+          kustomize: '5.0.1'
+          tilt: '0.32.2'
 
-      - name: Run test suite
-        working-directory: mpas
-        run: go test --tags=e2e -v -count=1 ./e2e
+      - name: Run E2E tests
+        id: e2e-tests
+        working-directory: MPAS
+        run: make e2e
+
+      - name: Notify on Failure/Success
+        id: slack-notification
+        uses: slackapi/slack-github-action@v1.23.0
+        if: ${{ github.ref_name  == 'main' }}
+        with:
+          # Slack channel id, channel name, or user id to post message.
+          # See also: https://api.slack.com/methods/chat.postMessage#channels
+          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+          channel-id: 'C03NF7KH128'
+          # For posting a simple plain text message
+          payload: |
+            {
+              "text": "${{ github.repository }} e2e Tests Status: ${{ steps.e2e-tests.conclusion }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "${{ github.repository }} e2e Tests",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                   {
+                      "type": "mrkdwn",
+                      "text": "*Repository:* ${{ github.server_url }}/${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:* ${{ job.status == 'success' && ':white_check_mark:' || ':x:' }}" 
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:* ${{ github.ref_name }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Github Action:* <https://github.com/open-component-model/MPAS/actions/workflows/e2e.yaml|e2e>"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.OCM_GITHUB_SLACK_BOT_TOKEN }}

@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
@@ -9,143 +8,113 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
+	fconditions "github.com/fluxcd/pkg/runtime/conditions"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	gitv1alphav1 "github.com/open-component-model/git-controller/apis/delivery/v1alpha1"
+	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
+	"github.com/open-component-model/ocm-e2e-framework/shared"
+	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
-	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
-
-	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
-	"github.com/fluxcd/pkg/apis/meta"
-	fconditions "github.com/fluxcd/pkg/runtime/conditions"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/open-component-model/ocm-controller/api/v1alpha1"
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
 )
 
 var (
-	mpasRepoName  = "mpas-mgmt"
-	mpasNamespace = "mpas-system"
+	mpasManagementRepoName = "mpas-mgmt"
+	mpasNamespace          = "mpas-system"
 )
 
-func TestHappyPath(t *testing.T) {
+func TestMpasE2e(t *testing.T) {
 	t.Log("running mpas happy path tests")
 
 	projectName := getYAMLField("project.yaml", "metadata.name")
-	projectRepoName := getYAMLField("project.yaml", "spec.git.repository.name")
+	projectRepoName := prefix + getYAMLField("project.yaml", "metadata.name")
+	gitRepoUrl := getYAMLField("project.yaml", "spec.git.domain")
+	gitCredentialName = getYAMLField("project.yaml", "spec.git.credentials.secretRef.name")
+	gitCredentialData := map[string]string{
+		"token":    shared.TestUserToken,
+		"username": shared.Owner,
+		"password": shared.TestUserToken,
+	}
+
+	setupComponent := createTestComponentVersion(t) //createTestComponentVersion(t)
 
 	management := features.New("Configure Management Repository").
 		Setup(setup.AddScheme(v1alpha1.AddToScheme)).
 		Setup(setup.AddScheme(sourcev1.AddToScheme)).
 		Setup(setup.AddScheme(kustomizev1.AddToScheme)).
-		Setup(setup.AddGitRepository(mpasRepoName)).
-		//TODO: change this to add single gitsource and
-		// multiple kustomizations
-		Setup(setup.AddFluxSyncForRepo(mpasRepoName, "projects/", namespace)).
-		Assess("project flux resources have been created", checkFluxResourcesReady(mpasRepoName)).
-		Setup(setup.CreateNamespace(mpasNamespace))
+		Setup(setup.AddScheme(gitv1alphav1.AddToScheme)).
+		Setup(setup.AddScheme(prodv1alpha1.AddToScheme)).
+		Setup(setup.AddScheme(rcv1alpha1.AddToScheme)).
+		Setup(shared.CreateSecret(gitCredentialName, nil, gitCredentialData, mpasNamespace)).
+		Assess(fmt.Sprintf("management namespace %s exists", mpasNamespace), checkIsNamespaceReady(mpasNamespace))
 
-	setupComponent := createTestComponentVersion(t)
+	project := newProjectFeature(projectName, projectRepoName, gitRepoUrl)
 
-	project := newProjectFeature(mpasRepoName, mpasNamespace, projectName, projectRepoName)
-
-	target := features.New("Add a target").
-		Setup(setup.AddFilesToGitRepository(
-			setup.File{
-				RepoName:       mpasRepoName,
-				SourceFilepath: "target.yaml",
-				DestFilepath:   "targets/ingress-target.yaml",
-			},
-		))
-
-	subscription := features.New("Create a subscription").
-		Setup(setup.AddFilesToGitRepository(
-			setup.File{
-				RepoName:       mpasRepoName,
-				SourceFilepath: "subscription.yaml",
-				DestFilepath:   "subscriptions/podinfo.yaml",
-			},
-		))
-
-	product := newProductFeature(mpasRepoName, mpasNamespace, projectRepoName)
+	product := newProductFeature(projectRepoName)
 
 	testEnv.Test(t,
 		setupComponent.Feature(),
 		management.Feature(),
 		project.Feature(),
-		target.Feature(),
-		subscription.Feature(),
 		product.Feature(),
 	)
 }
 
-func checkNamespaceReady(ns string) features.Func {
-	return func(ctx context.Context, t *testing.T, env *envconf.Config) context.Context {
+func checkIsNamespaceReady(name string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Helper()
-		t.Logf("checking if namespace %s exists...", ns)
-
-		r, err := resources.New(env.Client().RESTConfig())
+		client, err := cfg.NewClient()
 		if err != nil {
-			t.Error(err)
-			return ctx
+			t.Fatal(err)
 		}
-
-		if err := r.Get(ctx, ns, ns, &corev1.Namespace{}); err != nil {
-			t.Error(err)
-			return ctx
+		t.Logf("checking if namespace with name: %s exists", name)
+		gr := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{Name: name},
 		}
-
-		t.Logf("namespace %s exists.", ns)
+		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
+			_, ok := object.(*corev1.Namespace)
+			if !ok {
+				return false
+			}
+			return true
+		}), wait.WithTimeout(time.Minute*1))
+		if err != nil {
+			t.Fatal(err)
+		}
 		return ctx
 	}
 }
 
-func checkFluxResourcesReady(name string) features.Func {
+func checkObjectCondition(conditionObject k8s.Object, condition func(getter fconditions.Getter) bool) features.Func {
 	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Helper()
 
 		client, err := cfg.NewClient()
 		if err != nil {
-			t.Fail()
-		}
-
-		t.Logf("checking if GitRepository object %s is ready...", name)
-		gr := &sourcev1.GitRepository{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "flux-system"},
-		}
-
-		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
-			obj, ok := object.(*sourcev1.GitRepository)
-			if !ok {
-				return false
-			}
-
-			return fconditions.IsTrue(obj, meta.ReadyCondition)
-		}), wait.WithTimeout(time.Minute*1))
-
-		if err != nil {
 			t.Fatal(err)
 		}
 
-		t.Logf("checking if Kustomization object %s is ready...", name)
-		kust := &kustomizev1.Kustomization{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "flux-system"},
-		}
+		t.Logf("checking readiness of object with name: %s", conditionObject.GetName())
 
-		err = wait.For(conditions.New(client.Resources()).ResourceMatch(kust, func(object k8s.Object) bool {
-			obj, ok := object.(*kustomizev1.Kustomization)
+		err = wait.For(conditions.New(client.Resources()).ResourceMatch(conditionObject, func(object k8s.Object) bool {
+			obj, ok := object.(fconditions.Getter)
 			if !ok {
 				return false
 			}
-
-			return fconditions.IsTrue(obj, meta.ReadyCondition)
+			return condition(obj)
 		}), wait.WithTimeout(time.Minute*1))
 
 		if err != nil {
@@ -154,4 +123,12 @@ func checkFluxResourcesReady(name string) features.Func {
 
 		return ctx
 	}
+}
+func reasonMatches(from fconditions.Getter, reason string) bool {
+	for _, condition := range from.GetConditions() {
+		if condition.Reason == reason {
+			return true
+		}
+	}
+	return false
 }

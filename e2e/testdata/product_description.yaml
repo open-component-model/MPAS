@@ -1,15 +1,12 @@
-apiVersion: meta.mpas.ocm.software/v1alpha1
+apiVersion: mpas.ocm.software/v1alpha1
 kind: ProductDescription
 metadata:
   name: podinfo
 spec:
-  description: |
-    Podinfo is a tiny web application made with Go that showcases best practices of running microservices
-    in Kubernetes. Podinfo is used by CNCF projects like Flux and Flagger for end-to-end testing and workshops.
-    This product creates a podinfo deployment consisting of a frontend, backend & redis-based cache.
+  description: Podinfo is a tiny web application made with Go that showcases best practices of running microservices in Kubernetes. Podinfo is used by CNCF projects like Flux and Flagger for end-to-end testing and workshops. This product creates a podinfo deployment consisting of a frontend, backend & redis-based cache.
   pipelines:
   - name: backend
-    targetRoleName: ingress
+    targetRoleName: public-cluster
     source:
       name: manifests
       version: 1.0.0
@@ -37,7 +34,7 @@ spec:
       referencePath:
       - name: backend
   - name: frontend
-    targetRoleName: ingress
+    targetRoleName: public-cluster
     source:
       name: manifests
       version: 1.0.0
@@ -64,8 +61,8 @@ spec:
       version: 1.0.0
       referencePath:
       - name: frontend
-  - name: cache
-    targetRoleName: ingress
+  - name: redis
+    targetRoleName: public-cluster
     source:
       name: manifests
       version: 1.0.0
@@ -93,7 +90,7 @@ spec:
       referencePath:
       - name: redis
   targetRoles:
-  - name: ingress
+  - name: public-cluster
     type: kubernetes
     selector:
       matchLabels:

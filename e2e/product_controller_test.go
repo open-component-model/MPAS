@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
@@ -9,16 +8,20 @@ package e2e
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta2"
 	"github.com/fluxcd/pkg/apis/meta"
 	fconditions "github.com/fluxcd/pkg/runtime/conditions"
-	"github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/sourcegraph/conc/pool"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -28,113 +31,165 @@ import (
 	gitv1alphav1 "github.com/open-component-model/git-controller/apis/delivery/v1alpha1"
 	prodv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
 	"github.com/open-component-model/ocm-controller/api/v1alpha1"
-
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/assess"
 	"github.com/open-component-model/ocm-e2e-framework/shared/steps/setup"
+	rcv1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 )
 
-func newProductFeature(mpasRepoName, mpasNamespace, projectRepoName string) *features.FeatureBuilder {
-	// Product deployment
-	product := features.New("Reconcile product deployment")
+func newProductFeature(projectRepoName string) *features.FeatureBuilder {
+	prodDepGenName := getYAMLField("product_deployment_generator.yaml", "metadata.name")
+	targetName := getYAMLField("target.yaml", "metadata.name")
+	targetNamespace := getYAMLField("target.yaml", "spec.access.targetNamespace")
+	componentSubscriptionName := getYAMLField("subscription.yaml", "metadata.name")
+	pipelineNames := []string{
+		getYAMLField("product_description.yaml", "spec.pipelines[0].name"),
+		getYAMLField("product_description.yaml", "spec.pipelines[1].name"),
+		getYAMLField("product_description.yaml", "spec.pipelines[2].name")}
 
-	// Setup
-	product = product.
-		Setup(setup.AddFilesToGitRepository(setup.File{
-			RepoName:       mpasRepoName,
+	return features.New("Reconcile Product Deployment").
+		WithSetup("Create registry-certs for target namespace", replicateRegistryCerts(getYAMLField("target.yaml", "spec.access.targetNamespace"))).
+		WithSetup("Add Target to project git repository", setup.AddFilesToGitRepository(
+			setup.File{
+				RepoName:       projectRepoName,
+				SourceFilepath: "target.yaml",
+				DestFilepath:   "targets/ingress-target.yaml",
+			})).
+		WithSetup("Add Subscription to project git repository", setup.AddFilesToGitRepository(
+			setup.File{
+				RepoName:       projectRepoName,
+				SourceFilepath: "subscription.yaml",
+				DestFilepath:   "subscriptions/podinfo.yaml",
+			})).
+		WithSetup("Add Product Deployment Generator to project git repository", setup.AddFilesToGitRepository(setup.File{
+			RepoName:       projectRepoName,
 			SourceFilepath: "product_deployment_generator.yaml",
-			DestFilepath:   "generators/mpas-podinfo-001.yaml",
+			DestFilepath:   "generators/product_deployment_generator.yaml",
 		})).
-		Assess("management repository has been created", assess.CheckRepoExists(mpasRepoName)).
-		Assess("management namespace has been created", checkNamespaceReady(mpasNamespace))
-
-	// Pre-flight check
-	product = product.
-		Assess("project repository has been created", assess.CheckRepoExists(projectRepoName)).
-		Assess("check files are created in project repo", assess.CheckRepoFileContent(
+		Assess(fmt.Sprintf("Target %s has been created in namespace %s", targetName, projectRepoName), checkIfTargetExists(targetName, projectRepoName)).
+		Assess(fmt.Sprintf("ComponentSubscription %s has been created in namespace %s", componentSubscriptionName, projectRepoName), checkIfComponentSubscriptionExists(componentSubscriptionName,
+			projectRepoName)).
+		Assess(fmt.Sprintf("ProductDeploymentGenerator %s has been created in namespace %s", projectRepoName, projectRepoName), checkIfProductDeploymentGeneratorReady(prodDepGenName, projectRepoName)).
+		Assess(fmt.Sprintf("Snapshot, Sync %s have been created in namespace %s", prodDepGenName, projectRepoName), checkSnapshotsSyncExist(prodDepGenName, projectRepoName)).
+		Assess("PR was created for product files in project repository", assess.CheckIfPullRequestExists(projectRepoName, 1)).
+		Assess("Merge PR in project repository", setup.MergePullRequest(projectRepoName, 1)).
+		Assess("product files have been created in project git repository", assess.CheckFileInRepoExists(
 			assess.File{
 				Repository: projectRepoName,
-				Path:       "CODEOWNERS",
-				Content:    "@alive.bobb\n@bob.alisson",
-			},
+				Path:       "products/" + prodDepGenName + "/README.md"},
 			assess.File{
 				Repository: projectRepoName,
-				Path:       "generators/.gitkeep",
-				Content:    "",
-			},
+				Path:       "products/" + prodDepGenName + "/kustomization.yaml"},
 			assess.File{
 				Repository: projectRepoName,
-				Path:       "products/.gitkeep",
-				Content:    "",
-			},
+				Path:       "products/" + prodDepGenName + "/product-deployment.yaml"},
 			assess.File{
 				Repository: projectRepoName,
-				Path:       "subscriptions/.gitkeep",
-				Content:    "",
-			},
-			assess.File{
-				Repository: projectRepoName,
-				Path:       "targets/.gitkeep",
-				Content:    "",
-			},
-		))
+				Path:       "products/" + prodDepGenName + "/values.yaml"},
+		)).
+		Assess(fmt.Sprintf("ProductDeployment %s exists in namespace %s", prodDepGenName, projectRepoName), checkIfProductDeploymentExists(prodDepGenName, projectRepoName)).
+		Assess(fmt.Sprintf("ProductDeploymentPipelines exist in namespace %s", projectRepoName), checkIfProductDeploymentPipelinesExist(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("ComponentVersion %s is created in namespace %s", prodDepGenName, projectRepoName), checkIsComponentVersionReady(prodDepGenName+"component-version", projectRepoName)).
+		Assess(fmt.Sprintf("Localization is Ready in namespace %s", projectRepoName), checkLocalizationReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("Configuration is Ready in namespace %s", projectRepoName), checkConfigurationReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("OCIRepository is Ready in namespace %s", projectRepoName), checkOCIRepositoryReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("Kustomization is Ready in namespace %s", projectRepoName), checkKustomizationReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("FLuxDeployer is Ready in namespace %s", projectRepoName), checkFluxDeployerReady(projectRepoName, pipelineNames)).
+		Assess(fmt.Sprintf("Deployment is Ready in namespace %s", targetNamespace), checkDeploymentsReady(targetNamespace, pipelineNames))
+}
 
-	product = product.
-		Assess("check if product deployment generator exists", assess.ResourceWasCreated(assess.Object{
-			Name:      "podinfo",
-			Namespace: mpasNamespace,
-			Obj:       &prodv1alpha1.ProductDeploymentGenerator{},
-		})).
-		Assess("check status of product deployment generator", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			t.Helper()
-			t.Log("waiting for condition ready on the product deployment generator")
-			client, err := cfg.NewClient()
-			if err != nil {
-				t.Fail()
-			}
-
-			productGenerator := &prodv1alpha1.ProductDeploymentGenerator{
-				ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
-			}
-
-			err = wait.For(conditions.New(client.Resources()).ResourceMatch(productGenerator, func(object k8s.Object) bool {
-				cvObj, ok := object.(*prodv1alpha1.ProductDeploymentGenerator)
-				if !ok {
-					return false
-				}
-
-				return fconditions.IsTrue(cvObj, meta.ReadyCondition)
-			}), wait.WithTimeout(time.Minute*2))
-			if err != nil {
-				t.Fatal(err)
-			}
-
+func checkIfTargetExists(name string, namespace string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Fatal(err)
 			return ctx
-		})
+		}
+		t.Logf("checking if target %s in namespace %s exists", name, namespace)
+		gr := &prodv1alpha1.Target{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+		}
+		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
+			_, ok := object.(*prodv1alpha1.Target)
+			if !ok {
+				return false
+			}
+			return true
+		}), wait.WithTimeout(time.Minute*1))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return ctx
+	}
+}
 
-	product = product.Assess("wait for product objects to be created", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+func checkIfComponentSubscriptionExists(name, namespace string) features.Func {
+	return checkObjectCondition(&rcv1alpha1.ComponentSubscription{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}},
+		func(obj fconditions.Getter) bool {
+			return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+		})
+}
+
+func checkIfProductDeploymentGeneratorReady(name, namespace string) features.Func {
+	return checkObjectCondition(&prodv1alpha1.ProductDeploymentGenerator{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}},
+		func(obj fconditions.Getter) bool {
+			return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+		})
+}
+
+func checkSnapshotsSyncExist(name, namespace string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Helper()
 
-		t.Log("waiting for snapshot, git sync and product deployment")
+		t.Log("waiting for snapshot, git sync")
 
 		client, err := cfg.NewClient()
 		if err != nil {
-			t.Fail()
-		}
-
-		productGenerator := &prodv1alpha1.ProductDeploymentGenerator{
-			ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
+			t.Fatal(err)
+			return ctx
 		}
 		snapshotForGeneratorContent := &v1alpha1.Snapshot{
-			ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
+			ObjectMeta: metav1.ObjectMeta{Namespace: namespace},
 		}
 		syncRequest := &gitv1alphav1.Sync{
-			ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
+			ObjectMeta: metav1.ObjectMeta{Namespace: namespace},
 		}
 
 		objs := []k8s.Object{
-			productGenerator, snapshotForGeneratorContent, syncRequest,
+			snapshotForGeneratorContent, syncRequest,
 		}
 
+		snapshotList := &v1alpha1.SnapshotList{}
+		syncList := &gitv1alphav1.SyncList{}
+
+		err = client.Resources().List(ctx, snapshotList)
+		if err != nil {
+			t.Fatal(err)
+			return ctx
+		}
+		for _, snapshot := range snapshotList.Items {
+			if snapshot.ObjectMeta.Namespace == namespace && strings.Contains(snapshot.ObjectMeta.Name, name) {
+				snapshotForGeneratorContent.ObjectMeta.Name = snapshot.Name
+			}
+		}
+		if len(snapshotForGeneratorContent.ObjectMeta.Name) == 0 {
+			t.Fatal("Snapshot for Generator Content not Found")
+		}
+
+		err = client.Resources().List(ctx, syncList)
+		if err != nil {
+			t.Fatal(err)
+			return ctx
+		}
+		for _, sync := range syncList.Items {
+			if sync.ObjectMeta.Namespace == namespace && strings.Contains(sync.ObjectMeta.Name, name+"-sync") {
+				syncRequest.ObjectMeta.Name = sync.Name
+			}
+		}
+
+		if len(syncRequest.ObjectMeta.Name) == 0 {
+			t.Fatal("Sync for Product not Found")
+		}
 		p := pool.New().WithErrors()
 
 		for _, obj := range objs {
@@ -142,7 +197,7 @@ func newProductFeature(mpasRepoName, mpasNamespace, projectRepoName string) *fea
 			p.Go(func() error {
 				return wait.For(conditions.New(client.Resources()).ResourceMatch(objCopy, func(object k8s.Object) bool {
 					return true
-				}), wait.WithTimeout(time.Minute*2))
+				}), wait.WithTimeout(time.Minute*1))
 			})
 		}
 
@@ -151,23 +206,55 @@ func newProductFeature(mpasRepoName, mpasNamespace, projectRepoName string) *fea
 		}
 
 		return ctx
+	}
+}
+
+func checkIfProductDeploymentPipelinesExist(namespace string, pipelineNames []string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, obj := range pipelineNames {
+			resource := &prodv1alpha1.ProductDeploymentPipeline{
+				ObjectMeta: metav1.ObjectMeta{Name: obj, Namespace: namespace},
+			}
+
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(resource, func(object k8s.Object) bool {
+				obj, ok := object.(*prodv1alpha1.ProductDeploymentPipeline)
+				if !ok {
+					return false
+				}
+				return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+			}), wait.WithTimeout(time.Minute*1))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		return ctx
+	}
+}
+
+func checkIsComponentVersionReady(name, namespace string) features.Func {
+	return checkObjectCondition(&v1alpha1.ComponentVersion{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+	}, func(obj fconditions.Getter) bool {
+		return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
 	})
+}
 
-	// Check if repository contains stuff under `products` folder.
-	// The stuff under product folder should be the result of the Sync request from the Snapshot to the repository.
-	product = product.
-		Assess("check if product files has been created", assess.CheckRepoFileContent(
-			assess.File{
-				Repository: projectRepoName,
-				Path:       "products/<pending>",
-				Content:    "",
-			},
-		))
+func checkIfProductDeploymentExists(name, namespace string) features.Func {
+	return checkObjectCondition(&prodv1alpha1.ProductDeployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}},
+		func(obj fconditions.Getter) bool {
+			return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+		})
+}
 
-	// Wait for flux to pick it up and apply it to the cluster.
-
-	// Once it's validated and reconciled, check if a `ProductDeployment` is created.
-	product = product.Assess("wait for ProductDeployment to exist", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+func checkLocalizationReady(namespace string, pipelineNames []string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Helper()
 
 		client, err := cfg.NewClient()
@@ -175,81 +262,226 @@ func newProductFeature(mpasRepoName, mpasNamespace, projectRepoName string) *fea
 			t.Fail()
 		}
 
-		productDeployment := &prodv1alpha1.ProductDeployment{
-			ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
-		}
+		for _, obj := range pipelineNames {
+			resource := &v1alpha1.Localization{
+				ObjectMeta: metav1.ObjectMeta{Name: obj + "-localization", Namespace: namespace},
+			}
 
-		if err := wait.For(conditions.New(client.Resources()).ResourceMatch(productDeployment, func(object k8s.Object) bool {
-			return true
-		}), wait.WithTimeout(time.Minute*2)); err != nil {
-			t.Fatal(err)
-		}
-
-		return ctx
-	})
-
-	// Wait for ComponentVersion, Loc, Configuration, Flux OCI
-	product = product.Assess("wait for ComponentVersion, Localization, Configuration and Flux OCI to exist",
-		func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			t.Helper()
-
-			client, err := cfg.NewClient()
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(resource, func(object k8s.Object) bool {
+				obj, ok := object.(*v1alpha1.Localization)
+				if !ok {
+					return false
+				}
+				return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+			}), wait.WithTimeout(time.Minute*1))
 			if err != nil {
-				t.Fail()
-			}
-
-			componentVersion := &v1alpha1.ComponentVersion{
-				ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
-			}
-			localization := &v1alpha1.Localization{
-				ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
-			}
-			configuration := &v1alpha1.Configuration{
-				ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
-			}
-			fluxOci := &v1beta2.OCIRepository{
-				ObjectMeta: metav1.ObjectMeta{Name: "podinfo", Namespace: mpasNamespace},
-			}
-
-			objs := []k8s.Object{
-				componentVersion, localization, configuration, fluxOci,
-			}
-
-			p := pool.New().WithErrors()
-
-			for _, obj := range objs {
-				objCopy := obj
-				p.Go(func() error {
-					return wait.For(conditions.New(client.Resources()).ResourceMatch(objCopy, func(object k8s.Object) bool {
-						return true
-					}), wait.WithTimeout(time.Minute*2))
-				})
-			}
-
-			if err := p.Wait(); err != nil {
 				t.Fatal(err)
 			}
+		}
+		return ctx
+	}
+}
 
-			return ctx
-		})
+func checkConfigurationReady(namespace string, pipelineNames []string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
 
-	// Validate podinfo deployment at target?
-	product = product.Assess("wait for podinfo deployment to become ready", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Fail()
+		}
+
+		for _, obj := range pipelineNames {
+			resource := &v1alpha1.Configuration{
+				ObjectMeta: metav1.ObjectMeta{Name: obj + "-configuration", Namespace: namespace},
+			}
+
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(resource, func(object k8s.Object) bool {
+				obj, ok := object.(*v1alpha1.Configuration)
+				if !ok {
+					return false
+				}
+				return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+			}), wait.WithTimeout(time.Minute*1))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		return ctx
+	}
+}
+
+func checkFluxDeployerReady(namespace string, pipelineNames []string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Fail()
+		}
+
+		for _, obj := range pipelineNames {
+			resource := &v1alpha1.FluxDeployer{
+				ObjectMeta: metav1.ObjectMeta{Name: obj + "-kustomization", Namespace: namespace},
+			}
+
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(resource, func(object k8s.Object) bool {
+				obj, ok := object.(*v1alpha1.FluxDeployer)
+				if !ok {
+					return false
+				}
+				return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+			}), wait.WithTimeout(time.Minute*1))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		return ctx
+	}
+}
+
+func checkOCIRepositoryReady(namespace string, pipelineNames []string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Fail()
+		}
+
+		for _, obj := range pipelineNames {
+			resource := &sourcev1.OCIRepository{
+				ObjectMeta: metav1.ObjectMeta{Name: obj + "-kustomization", Namespace: namespace},
+			}
+
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(resource, func(object k8s.Object) bool {
+				obj, ok := object.(*sourcev1.OCIRepository)
+				if !ok {
+					return false
+				}
+				return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, meta.SucceededReason)
+			}), wait.WithTimeout(time.Minute*1))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		return ctx
+	}
+}
+
+func checkKustomizationReady(namespace string, pipelineNames []string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Fail()
+		}
+
+		for _, obj := range pipelineNames {
+			resource := &kustomizev1.Kustomization{
+				ObjectMeta: metav1.ObjectMeta{Name: obj + "-kustomization", Namespace: namespace},
+			}
+
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(resource, func(object k8s.Object) bool {
+				obj, ok := object.(*kustomizev1.Kustomization)
+				if !ok {
+					return false
+				}
+				return fconditions.IsTrue(obj, meta.ReadyCondition) && reasonMatches(obj, "ReconciliationSucceeded")
+			}), wait.WithTimeout(time.Minute*1))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		return ctx
+	}
+}
+
+func checkDeploymentsReady(namespace string, pipelineNames []string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+
+		client, err := cfg.NewClient()
+		if err != nil {
+			t.Fail()
+		}
+
+		for _, obj := range pipelineNames {
+			resource := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{Name: obj, Namespace: namespace},
+			}
+
+			err = wait.For(conditions.New(client.Resources()).ResourceMatch(resource, func(object k8s.Object) bool {
+				obj, ok := object.(*appsv1.Deployment)
+				if !ok {
+					return false
+				}
+				return obj.Status.ReadyReplicas > 0
+			}), wait.WithTimeout(time.Minute*1))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		return ctx
+	}
+}
+func replicateRegistryCerts(namespace string) features.Func {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		t.Helper()
+
+		name := "registry-certs"
 		client, err := cfg.NewClient()
 		if err != nil {
 			t.Fatal(err)
 		}
-		// check backend, frontend, redis?
-		dep := appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{Name: "podinfo-backend", Namespace: cfg.Namespace()},
+		clientset, err := kubernetes.NewForConfig(cfg.Client().RESTConfig())
+		if err != nil {
+			t.Fatal(err)
+			return ctx
 		}
-		// wait for the deployment to finish becoming available
-		err = wait.For(conditions.New(client.Resources()).DeploymentConditionMatch(&dep, appsv1.DeploymentAvailable, v1.ConditionTrue), wait.WithTimeout(time.Minute*10))
+		t.Logf("checking if secret with with name: %s exists", name)
+		gr := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "ocm-system"},
+		}
+		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
+			obj, ok := object.(*corev1.Secret)
+			if !ok {
+				return false
+			}
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Data: map[string][]byte{
+					"caFile":   obj.Data["caFile"],
+					"certFile": obj.Data["certFile"],
+					"keyFile":  obj.Data["keyFile"]},
+			}
+
+			_, err = clientset.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
+			if err != nil {
+				fmt.Println(err)
+				t.Fatal(err)
+			}
+
+			newSecret := corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+			}
+			err = wait.For(conditions.New(cfg.Client().Resources()).ResourceMatch(&newSecret, func(object k8s.Object) bool {
+				_, ok := object.(*corev1.Secret)
+				if !ok {
+					return false
+				}
+				return true
+			}), wait.WithTimeout(time.Minute*1))
+
+			return true
+		}), wait.WithTimeout(time.Minute*1))
 		if err != nil {
 			t.Fatal(err)
 		}
 		return ctx
-	})
-
-	return product
+	}
 }

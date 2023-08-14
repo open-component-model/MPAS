@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*.idea
 
 # Test binary, built with `go test -c`
 *.test
@@ -24,3 +25,8 @@ testbin/
 
 # Docs
 site/
+
+# ignore uneccessary testdatae2e/testdata/testOCMController/podinfo/backend/manifests/*
+e2e/testdata/podinfo/backend/manifests/*
+e2e/testdata/podinfo/frontend/manifests/*
+e2e/testdata/podinfo/redis/manifests/*

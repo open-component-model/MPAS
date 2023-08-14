@@ -6,15 +6,22 @@ metadata:
 spec:
   git:
     provider: gitea
-    owner: open-component-model
-    isOrganisation: true
-    repository:
-      name: mpas-project-1
-      maintainers:
-      - alice.bobb
-      - bob.alisson
-      visibility: private
-      exisitingRepositoryPolicy: fail
+    owner: e2e-tester
     credentials:
       secretRef:
         name: gitea-credentials
+    interval: 2s
+    visibility: public
+    isOrganization: false
+    domain: http://gitea.ocm-system.svc.cluster.local:3000
+    maintainers:
+      - alice.bobb
+      - bob.alisson
+    existingRepositoryPolicy: adopt #fail
+    commitTemplate:
+      email: testy@mctestface.test
+      message: Commit message
+      name: e2e-tester
+  prune: true
+  flux:
+    interval: 2s

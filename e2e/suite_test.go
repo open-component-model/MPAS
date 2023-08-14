@@ -11,6 +11,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-logr/logr"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
+
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/envfuncs"
@@ -40,7 +43,7 @@ func TestMain(m *testing.M) {
 		envfuncs.CreateNamespace(namespace),
 		shared.StartGitServer(namespace),
 		shared.InstallFlux("latest"),
-		shared.RunTiltForControllers("ocm-controller", "git-controller", "replication-controller"),
+		RunLocalTilt(),
 		shared.ForwardPortForAppName("registry", 5000, stopChannelRegistry),
 		shared.ForwardPortForAppName("gitea", 3000, stopChannelGitea),
 	)
@@ -52,6 +55,6 @@ func TestMain(m *testing.M) {
 		envfuncs.DeleteNamespace(namespace),
 		envfuncs.DestroyKindCluster(kindClusterName),
 	)
-
+	ctrllog.SetLogger(logr.New(ctrllog.NullLogSink{}))
 	os.Exit(testEnv.Run(m))
 }
