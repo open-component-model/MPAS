@@ -1,0 +1,61 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: # manifests generated during bootstrap
+  - install.yaml
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: registry
+      namespace: ocm-system
+    spec:
+      template:
+        spec:
+          containers:
+            - name: registry
+              env:
+                - name: REGISTRY_HTTP_TLS_CERTIFICATE
+                  value: "/certs/cert.pem"
+                - name: REGISTRY_HTTP_TLS_KEY
+                  value: "/certs/key.pem"
+                - name: REGISTRY_HTTP_TLS_CLIENTCAS_0
+                  value: "/certs/ca.pem"
+              volumeMounts:
+                - mountPath: "/certs"
+                  name: "registry-certs"
+          volumes:
+            - name: "registry-certs"
+              secret:
+                secretName: "registry-certs"
+                items:
+                  - key: "certFile"
+                    path: "cert.pem"
+                  - key: "keyFile"
+                    path: "key.pem"
+                  - key: "caFile"
+                    path: "ca.pem"
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ocm-controller
+      namespace: ocm-system
+    spec:
+      template:
+        spec:
+          containers:
+            - name: manager
+              env:
+                - name: REGISTRY_ROOT_CERTIFICATE # optionally define to override default location
+                  value: /certs/ca.pem
+              volumeMounts:
+                - mountPath: "/certs"
+                  name: "certificates"
+          volumes:
+            - name: "certificates"
+              secret:
+                secretName: "registry-certs"
+                items:
+                  - key: "ca.pem"
+                    path: "ca.pem"

@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: # manifests generated during bootstrap
+  - install.yaml
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: git-controller
+      namespace: ocm-system
+    spec:
+      template:
+        spec:
+          containers:
+            - name: manager
+              env:
+                - name: REGISTRY_ROOT_CERTIFICATE # optionally define to override default location
+                  value: /certs/ca.pem
+              volumeMounts:
+                - mountPath: "/certs"
+                  name: "certificates"
+          volumes:
+            - name: "certificates"
+              secret:
+                secretName: "registry-certs"
+                items:
+                  - key: "ca.pem"
+                    path: "ca.pem"

@@ -6,12 +6,39 @@ package componentsgen
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
 )
+
+var (
+	//go:embed patches/kustomize_ocm-controller.yaml
+	ocmControllerPatch []byte
+	//go:embed patches/kustomize_git-controller.yaml
+	gitControllerPatch []byte
+	//go:embed patches/kustomize_replication-controller.yaml
+	replicationControllerPatch []byte
+	//go:embed patches/kustomize_mpas-product-controller.yaml
+	mpasProductControllerPatch []byte
+	//go:embed patches/kustomize_mpas-project-controller.yaml
+	mpasProjectControllerPatch []byte
+)
+
+// patchMap maps all patches to the controllers.
+var patchMap = map[string][]byte{
+	"ocm-controller":          ocmControllerPatch,
+	"git-controller":          gitControllerPatch,
+	"replication-controller":  replicationControllerPatch,
+	"mpas-project-controller": mpasProjectControllerPatch,
+	"mpas-product-controller": mpasProductControllerPatch,
+}
 
 const (
 	defaultRegistry = "ghcr.io/open-component-model"
@@ -45,6 +72,11 @@ func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error
 
 	if err := o.fetch(ctx); err != nil {
 		return fmt.Errorf("failed to download install.yaml file: %w", err)
+	}
+
+	// TODO: Make the certificate secret name configurable.
+	if err := o.applyCertificatePatch(); err != nil {
+		return fmt.Errorf("failed to apply patch to install.yaml file: %w", err)
 	}
 
 	if tmpDir != "" {
@@ -168,4 +200,35 @@ func (o *Controller) GenerateImages() (map[string][]string, error) {
 // GetPath returns the path to the manifests.
 func (o *Controller) GetPath() string {
 	return o.Path
+}
+
+func (o *Controller) applyCertificatePatch() (err error) {
+	patch, ok := patchMap[o.Name]
+	if !ok {
+		return fmt.Errorf("no patch exists for controller with name: %s", o.Name)
+	}
+
+	fs := filesys.MakeFsInMemory()
+	if err := fs.WriteFile("kustomization.yaml", patch); err != nil {
+		return fmt.Errorf("failed to create kustomization file: %w", err)
+	}
+
+	if err := fs.WriteFile("install.yaml", []byte(*o.Content)); err != nil {
+		return fmt.Errorf("failed to create install file: %w", err)
+	}
+
+	kustomizer := krusty.MakeKustomizer(krusty.MakeDefaultOptions())
+	result, err := kustomizer.Run(fs, ".")
+	if err != nil {
+		return fmt.Errorf("failed to run kustomize for controller %s: %w", o.Name, err)
+	}
+
+	asYaml, err := result.AsYaml()
+	if err != nil {
+		return fmt.Errorf("failed to create yaml from kustomize result: %w", err)
+	}
+
+	o.Content = pointer.String(string(asYaml))
+
+	return nil
 }
