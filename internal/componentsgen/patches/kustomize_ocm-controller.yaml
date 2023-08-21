@@ -27,7 +27,7 @@ patchesStrategicMerge:
           volumes:
             - name: "registry-certs"
               secret:
-                secretName: "registry-certs"
+                secretName: <SECRET-NAME>
                 items:
                   - key: "certFile"
                     path: "cert.pem"
@@ -55,7 +55,7 @@ patchesStrategicMerge:
           volumes:
             - name: "certificates"
               secret:
-                secretName: "registry-certs"
+                secretName: <SECRET-NAME>
                 items:
                   - key: "ca.pem"
                     path: "ca.pem"

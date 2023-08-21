@@ -47,6 +47,8 @@ var (
 	targetOS string
 	// The target arch.
 	targetArch string
+	// The name of the certificate for the ocm registry.
+	registryCertificateSecretName string
 )
 
 func main() {
@@ -61,6 +63,7 @@ func main() {
 	flag.StringVar(&username, "username", "", "The username to use.")
 	flag.StringVar(&targetOS, "target-os", "linux", "The target OS to use.")
 	flag.StringVar(&targetArch, "target-arch", "amd64", "The target arch to use.")
+	flag.StringVar(&registryCertificateSecretName, "registry-certificate-secret-name", "registry-certs", "The name of the secret used for the registry certificates.")
 
 	flag.Parse()
 
@@ -99,7 +102,7 @@ func main() {
 	defer target.Close()
 
 	ctfPath := fmt.Sprintf("%s/%s", tmpDir, "ctf")
-	if err := releaseComponents(ctx, octx, token, tmpDir, ctfPath, target); err != nil {
+	if err := releaseComponents(ctx, octx, token, tmpDir, ctfPath, target, registryCertificateSecretName); err != nil {
 		fmt.Println("Failed to release components: ", err)
 		os.Exit(1)
 	}
@@ -123,7 +126,7 @@ func main() {
 	fmt.Println("Release of bootstrap component successful.")
 }
 
-func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfPath string, target om.Repository) error {
+func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfPath string, target om.Repository, registryCertificateSecretName string) error {
 	// create transport archive
 	ctf, err := ocm.CreateCTF(octx, ctfPath, accessio.FormatDirectory)
 	if err != nil {
@@ -132,7 +135,7 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 	}
 	defer ctf.Close()
 
-	r := release.New(octx, username, token, tmpDir, repositoryURL, ctf)
+	r := release.New(octx, username, token, tmpDir, repositoryURL, ctf, registryCertificateSecretName)
 
 	generatedComponents := make(map[string]*ocm.Component)
 	for _, comp := range env.Components {
