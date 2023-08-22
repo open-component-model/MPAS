@@ -9,15 +9,16 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/open-component-model/ocm/pkg/common/accessio"
+	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
+	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
+	flag "github.com/spf13/pflag"
+
 	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/release"
 	"github.com/open-component-model/mpas/internal/env"
 	"github.com/open-component-model/mpas/internal/fs"
 	"github.com/open-component-model/mpas/internal/oci"
 	"github.com/open-component-model/mpas/internal/ocm"
-	"github.com/open-component-model/ocm/pkg/common/accessio"
-	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
-	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
-	flag "github.com/spf13/pflag"
 )
 
 const (
@@ -63,7 +64,7 @@ func main() {
 	flag.StringVar(&username, "username", "", "The username to use.")
 	flag.StringVar(&targetOS, "target-os", "linux", "The target OS to use.")
 	flag.StringVar(&targetArch, "target-arch", "amd64", "The target arch to use.")
-	flag.StringVar(&registryCertificateSecretName, "ocm-registry-certificate-secret-name", "ocm-registry-tls-certs", "The name of the secret used for the ocm registry certificates.")
+	flag.StringVar(&registryCertificateSecretName, "ocm-registry-tls-secret-name", "ocm-registry-tls-certs", "The name of the secret used for the ocm registry certificates.")
 
 	flag.Parse()
 

@@ -82,7 +82,7 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 			}
 
 			// If developer certificates are enabled, create a secret holding generated certificates.
-			if c.Certificates.Dev {
+			if c.Certificates.GenerateSelfSigned {
 				b.DeveloperCertificateName = c.Certificates.Name
 			}
 
@@ -164,7 +164,7 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 			}
 
 			// If developer certificates are enabled, create a secret holding generated certificates.
-			if c.Certificates.Dev {
+			if c.Certificates.GenerateSelfSigned {
 				b.DeveloperCertificateName = c.Certificates.Name
 			}
 
