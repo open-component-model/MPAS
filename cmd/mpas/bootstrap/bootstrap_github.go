@@ -52,7 +52,9 @@ type GithubCmd struct {
 	Components []string
 	// DestructiveActions indicates whether destructive actions are allowed
 	DestructiveActions bool
-	bootstrapper       *bootstrap.Bootstrap
+	// DeveloperCertificateName defines if a developer certificate has to be provided or not
+	DeveloperCertificateName string
+	bootstrapper             *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -114,6 +116,7 @@ func (b *GithubCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 		bootstrap.WithTimeout(b.Timeout),
 		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
 		bootstrap.WithVisibility(visibility),
+		bootstrap.WithDevCertificate(b.DeveloperCertificateName),
 	)
 
 	if err != nil {

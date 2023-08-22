@@ -63,6 +63,9 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 
     - Bootstrap with a public organization repository
     mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster
+
+	- Bootstrap with developer certificates for the ocm registry
+	mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --ocm-registry-tls-secret-name registry-certs --ocm-registry-tls-dev
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.GithubCmd{
@@ -76,6 +79,11 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				CommitMessageAppendix: c.CommitMessageAppendix,
 				Hostname:              c.Hostname,
 				Components:            append(env.Components, c.Components...),
+			}
+
+			// If developer certificates are enabled, create a secret holding generated certificates.
+			if c.Certificates.Dev {
+				b.DeveloperCertificateName = c.Certificates.Name
 			}
 
 			if len(c.Components) != 0 {
@@ -153,6 +161,11 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				CommitMessageAppendix: c.CommitMessageAppendix,
 				Hostname:              c.Hostname,
 				Components:            append(env.Components, c.Components...),
+			}
+
+			// If developer certificates are enabled, create a secret holding generated certificates.
+			if c.Certificates.Dev {
+				b.DeveloperCertificateName = c.Certificates.Name
 			}
 
 			if len(c.Components) != 0 {

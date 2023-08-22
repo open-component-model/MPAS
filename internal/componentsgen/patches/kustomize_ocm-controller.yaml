@@ -57,5 +57,5 @@ patchesStrategicMerge:
               secret:
                 secretName: <SECRET-NAME>
                 items:
-                  - key: "ca.pem"
+                  - key: "caFile"
                     path: "ca.pem"

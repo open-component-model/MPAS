@@ -63,7 +63,7 @@ func main() {
 	flag.StringVar(&username, "username", "", "The username to use.")
 	flag.StringVar(&targetOS, "target-os", "linux", "The target OS to use.")
 	flag.StringVar(&targetArch, "target-arch", "amd64", "The target arch to use.")
-	flag.StringVar(&registryCertificateSecretName, "registry-certificate-secret-name", "registry-certs", "The name of the secret used for the registry certificates.")
+	flag.StringVar(&registryCertificateSecretName, "ocm-registry-certificate-secret-name", "ocm-registry-tls-certs", "The name of the secret used for the ocm registry certificates.")
 
 	flag.Parse()
 

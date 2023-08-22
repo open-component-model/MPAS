@@ -50,8 +50,10 @@ type GiteaCmd struct {
 	// DestructiveActions indicates whether destructive actions are allowed
 	DestructiveActions bool
 	// TestURL is the URL to use for testing the management repository
-	TestURL      string
-	bootstrapper *bootstrap.Bootstrap
+	TestURL string
+	// DeveloperCertificateName defines if a developer certificate has to be provided or not
+	DeveloperCertificateName string
+	bootstrapper             *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -113,6 +115,7 @@ func (b *GiteaCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
 		bootstrap.WithVisibility(visibility),
 		bootstrap.WithTestURL(b.TestURL),
+		bootstrap.WithDevCertificate(b.DeveloperCertificateName),
 	)
 
 	if err != nil {
