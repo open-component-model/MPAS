@@ -53,7 +53,9 @@ type GiteaCmd struct {
 	TestURL string
 	// DeveloperCertificateName defines if a developer certificate has to be provided or not
 	DeveloperCertificateName string
-	bootstrapper             *bootstrap.Bootstrap
+	// CaFile defines and optional root certificate for the git repository used by flux.
+	CaFile       string
+	bootstrapper *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -116,6 +118,7 @@ func (b *GiteaCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 		bootstrap.WithVisibility(visibility),
 		bootstrap.WithTestURL(b.TestURL),
 		bootstrap.WithDevCertificate(b.DeveloperCertificateName),
+		bootstrap.WithRootFile(b.CaFile),
 	)
 
 	if err != nil {

@@ -26,7 +26,7 @@ type Flux struct {
 	Content *string
 }
 
-// GenerateFluxManifests generates Flux manifests for the given version.
+// GenerateManifests generates Flux manifests for the given version.
 // If the version is invalid, an error is returned.
 func (f *Flux) GenerateManifests(ctx context.Context, tmpDir string) error {
 	if err := f.validateFluxVersion(f.Version); err != nil {

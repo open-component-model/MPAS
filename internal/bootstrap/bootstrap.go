@@ -60,6 +60,7 @@ type options struct {
 	printer                        *printer.Printer
 	testURL                        string
 	developerCertificateSecretName string
+	caFile                         string
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -73,6 +74,12 @@ type Bootstrap struct {
 	repository     gitprovider.UserRepository
 	url            string
 	options
+}
+
+func WithRootFile(caFile string) Option {
+	return func(o *options) {
+		o.caFile = caFile
+	}
 }
 
 // WithDevCertificate generate a developer certificate. Otherwise, the secret holding the certs is expected to exist.
@@ -532,6 +539,14 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 	}
 	defer os.RemoveAll(dir)
 
+	var caBundle []byte
+	if b.caFile != "" {
+		caBundle, err = os.ReadFile(b.caFile)
+		if err != nil {
+			return fmt.Errorf("failed to read CA file: %w", err)
+		}
+	}
+
 	opts := &fluxOptions{
 		kubeClient:            b.kubeclient,
 		restClientGetter:      b.restClientGetter,
@@ -546,6 +561,7 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 		timeout:               b.timeout,
 		token:                 b.token,
 		namespace:             env.DefaultFluxNamespace,
+		caFile:                caBundle,
 	}
 	inst, err := newFluxInstall(ref.GetComponentName(), ref.GetVersion(), b.owner, ociRepo, opts)
 	if err != nil {

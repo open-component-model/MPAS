@@ -79,6 +79,7 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				CommitMessageAppendix: c.CommitMessageAppendix,
 				Hostname:              c.Hostname,
 				Components:            append(env.Components, c.Components...),
+				CaFile:                c.CaFile,
 			}
 
 			// If developer certificates are enabled, create a secret holding generated certificates.
@@ -161,6 +162,7 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				CommitMessageAppendix: c.CommitMessageAppendix,
 				Hostname:              c.Hostname,
 				Components:            append(env.Components, c.Components...),
+				CaFile:                c.CaFile,
 			}
 
 			// If developer certificates are enabled, create a secret holding generated certificates.

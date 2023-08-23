@@ -54,7 +54,9 @@ type GithubCmd struct {
 	DestructiveActions bool
 	// DeveloperCertificateName defines if a developer certificate has to be provided or not
 	DeveloperCertificateName string
-	bootstrapper             *bootstrap.Bootstrap
+	// CaFile defines and optional root certificate for the git repository used by flux.
+	CaFile       string
+	bootstrapper *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -117,6 +119,7 @@ func (b *GithubCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
 		bootstrap.WithVisibility(visibility),
 		bootstrap.WithDevCertificate(b.DeveloperCertificateName),
+		bootstrap.WithRootFile(b.CaFile),
 	)
 
 	if err != nil {
