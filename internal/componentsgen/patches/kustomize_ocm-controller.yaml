@@ -23,9 +23,9 @@ patchesStrategicMerge:
                   value: "/certs/ca.pem"
               volumeMounts:
                 - mountPath: "/certs"
-                  name: "registry-certs"
+                  name: "ocm-registry-tls-certs"
           volumes:
-            - name: "registry-certs"
+            - name: "ocm-registry-tls-certs"
               secret:
                 secretName: <SECRET-NAME>
                 items:

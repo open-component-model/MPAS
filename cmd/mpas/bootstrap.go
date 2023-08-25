@@ -65,7 +65,7 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
     mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster
 
 	- Bootstrap with developer certificates for the ocm registry
-	mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --ocm-registry-tls-secret-name registry-certs --ocm-registry-tls-dev
+	mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --ocm-registry-tls-secret-name ocm-registry-tls-certs --ocm-registry-tls-dev
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.GithubCmd{
