@@ -46,11 +46,9 @@ patchesStrategicMerge:
         spec:
           containers:
             - name: manager
-              env:
-                - name: REGISTRY_ROOT_CERTIFICATE # optionally define to override default location
-                  value: /certs/ca.pem
               volumeMounts:
-                - mountPath: "/certs"
+                - mountPath: "/etc/ssl/certs/registry-root.pem"
+                  subPath: "registry-root.pem"
                   name: "certificates"
           volumes:
             - name: "certificates"
@@ -58,4 +56,5 @@ patchesStrategicMerge:
                 secretName: <SECRET-NAME>
                 items:
                   - key: "caFile"
-                    path: "ca.pem"
+                    path: "registry-root.pem"
+
