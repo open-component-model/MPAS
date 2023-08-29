@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/open-component-model/mpas/internal/env"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -98,7 +99,7 @@ func Test_Controller(t *testing.T) {
 				Version:       tc.version,
 				ReleaseAPIURL: server.URL,
 				ReleaseURL:    server.URL,
-				Registry:      defaultRegistry,
+				Registry:      env.DefaultOCMHost,
 			}
 			err := c.GenerateManifests(context.Background(), tmpDir)
 			if tc.expectedErr {

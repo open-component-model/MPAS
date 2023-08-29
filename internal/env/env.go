@@ -46,6 +46,8 @@ const (
 	DefaultOCMInstallPath = "ocm-system"
 	// DefaultFluxNamespace is the default namespace to install the flux components.
 	DefaultFluxNamespace = "flux-system"
+	// RegistryTLSSecretName is the name of the secret in which we store the TLS creds for the in-cluster registry.
+	RegistryTLSSecretName = "ocm-registry-tls-certs"
 )
 
 const (

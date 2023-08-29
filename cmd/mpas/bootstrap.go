@@ -64,27 +64,23 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
     - Bootstrap with a public organization repository
     mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster
 
-	- Bootstrap with developer certificates for the ocm registry
-	mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --ocm-registry-tls-secret-name ocm-registry-tls-certs --ocm-registry-tls-dev
+    - Bootstrap with developer certificates for the ocm registry
+    mpas bootstrap github --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --dev
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.GithubCmd{
-				Owner:                 c.Owner,
-				Personal:              c.Personal,
-				Repository:            c.Repository,
-				FromFile:              c.FromFile,
-				Registry:              c.Registry,
-				DockerconfigPath:      cfg.DockerconfigPath,
-				Path:                  c.Path,
-				CommitMessageAppendix: c.CommitMessageAppendix,
-				Hostname:              c.Hostname,
-				Components:            append(env.Components, c.Components...),
-				CaFile:                c.CaFile,
-			}
-
-			// If developer certificates are enabled, create a secret holding generated certificates.
-			if c.Certificates.GenerateSelfSigned {
-				b.DeveloperCertificateName = c.Certificates.Name
+				Owner:                         c.Owner,
+				Personal:                      c.Personal,
+				Repository:                    c.Repository,
+				FromFile:                      c.FromFile,
+				Registry:                      c.Registry,
+				DockerconfigPath:              cfg.DockerconfigPath,
+				Path:                          c.Path,
+				CommitMessageAppendix:         c.CommitMessageAppendix,
+				Hostname:                      c.Hostname,
+				Components:                    append(env.Components, c.Components...),
+				CaFile:                        c.CaFile,
+				GenerateSelfSignedCertificate: c.GenerateSelfSigned,
 			}
 
 			if len(c.Components) != 0 {
@@ -149,25 +145,24 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 
     - Bootstrap with a public organization repository
     mpas bootstrap gitea --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster --hostname gitea.example.com
+
+    - Bootstrap with developer certificates for the ocm registry
+    mpas bootstrap gitea --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --dev
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.GiteaCmd{
-				Owner:                 c.Owner,
-				Personal:              c.Personal,
-				Repository:            c.Repository,
-				FromFile:              c.FromFile,
-				Registry:              c.Registry,
-				DockerconfigPath:      cfg.DockerconfigPath,
-				Path:                  c.Path,
-				CommitMessageAppendix: c.CommitMessageAppendix,
-				Hostname:              c.Hostname,
-				Components:            append(env.Components, c.Components...),
-				CaFile:                c.CaFile,
-			}
-
-			// If developer certificates are enabled, create a secret holding generated certificates.
-			if c.Certificates.GenerateSelfSigned {
-				b.DeveloperCertificateName = c.Certificates.Name
+				Owner:                         c.Owner,
+				Personal:                      c.Personal,
+				Repository:                    c.Repository,
+				FromFile:                      c.FromFile,
+				Registry:                      c.Registry,
+				DockerconfigPath:              cfg.DockerconfigPath,
+				Path:                          c.Path,
+				CommitMessageAppendix:         c.CommitMessageAppendix,
+				Hostname:                      c.Hostname,
+				Components:                    append(env.Components, c.Components...),
+				CaFile:                        c.CaFile,
+				GenerateSelfSignedCertificate: c.GenerateSelfSigned,
 			}
 
 			if len(c.Components) != 0 {

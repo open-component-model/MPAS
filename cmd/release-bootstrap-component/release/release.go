@@ -46,13 +46,12 @@ localization:
 
 // Releaser releases the bootstrap component and its dependencies.
 type Releaser struct {
-	octx                          om.Context
-	username                      string
-	token                         string
-	tmpDir                        string
-	repositoryURL                 string
-	ctf                           om.Repository
-	registryCertificateSecretName string
+	octx          om.Context
+	username      string
+	token         string
+	tmpDir        string
+	repositoryURL string
+	ctf           om.Repository
 }
 
 // New creates a new Releaser.
@@ -60,16 +59,14 @@ func New(
 	octx om.Context,
 	username, token, tmpDir, repositoryURL string,
 	ctf om.Repository,
-	registryCertificateSecretName string,
 ) *Releaser {
 	return &Releaser{
-		octx:                          octx,
-		username:                      username,
-		token:                         token,
-		tmpDir:                        tmpDir,
-		repositoryURL:                 repositoryURL,
-		ctf:                           ctf,
-		registryCertificateSecretName: registryCertificateSecretName,
+		octx:          octx,
+		username:      username,
+		token:         token,
+		tmpDir:        tmpDir,
+		repositoryURL: repositoryURL,
+		ctf:           ctf,
 	}
 }
 
@@ -122,7 +119,6 @@ func (r *Releaser) ReleaseOcmControllerComponent(
 		"ocm-controller",
 		ocmVersion,
 		r.tmpDir,
-		r.registryCertificateSecretName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ocm-controller manifests: %v", err)
@@ -155,7 +151,6 @@ func (r *Releaser) ReleaseGitControllerComponent(
 		"git-controller",
 		gitVersion,
 		r.tmpDir,
-		r.registryCertificateSecretName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate git-controller manifests: %v", err)
@@ -188,7 +183,6 @@ func (r *Releaser) ReleaseReplicationControllerComponent(
 		"replication-controller",
 		replicationVersion,
 		r.tmpDir,
-		r.registryCertificateSecretName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate replication-controller manifests: %v", err)
@@ -221,7 +215,6 @@ func (r *Releaser) ReleaseMpasProductControllerComponent(
 		"mpas-product-controller",
 		mpasProductVersion,
 		r.tmpDir,
-		r.registryCertificateSecretName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate mpas-product-controller manifests: %v", err)
@@ -254,7 +247,6 @@ func (r *Releaser) ReleaseMpasProjectControllerComponent(
 		"mpas-project-controller",
 		mpasProjectVersion,
 		r.tmpDir,
-		r.registryCertificateSecretName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate mpas-project-controller manifests: %v", err)
@@ -489,18 +481,17 @@ func generateFlux(ctx context.Context, version, tmpDir string) (cgen.Flux, error
 
 func generateController(
 	ctx context.Context,
-	name, version, tmpDir, secretName string,
+	name, version, tmpDir string,
 ) (cgen.Controller, error) {
 	if version == "" {
 		return cgen.Controller{}, fmt.Errorf("contoller version is empty")
 	}
 
 	o := cgen.Controller{
-		Name:                  name,
-		Version:               version,
-		ReleaseURL:            fmt.Sprintf(releaseURL, name),
-		ReleaseAPIURL:         fmt.Sprintf(releaseAPIURL, name),
-		CertificateSecretName: secretName,
+		Name:          name,
+		Version:       version,
+		ReleaseURL:    fmt.Sprintf(releaseURL, name),
+		ReleaseAPIURL: fmt.Sprintf(releaseAPIURL, name),
 	}
 	err := o.GenerateManifests(ctx, tmpDir)
 	return o, err

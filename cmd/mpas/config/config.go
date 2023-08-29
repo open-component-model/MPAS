@@ -50,11 +50,8 @@ type BootstrapConfig struct {
 	Interval              string
 	CommitMessageAppendix string
 	Private               bool
-	Certificates          struct {
-		Name               string
-		GenerateSelfSigned bool
-	}
-	CaFile string
+	GenerateSelfSigned    bool
+	CaFile                string
 }
 
 // AddFlags adds the bootstrap flags to the given flag set.
@@ -69,8 +66,7 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")
 	flags.StringVar(&m.CommitMessageAppendix, "commit-message-appendix", "", "The appendix to add to the commit message, e.g. [ci skip]")
 	flags.BoolVar(&m.Private, "private", false, "Whether the management repository should be private")
-	flags.StringVar(&m.Certificates.Name, "ocm-registry-tls-secret-name", "ocm-registry-tls-certs", "The name of the secret in which to store self-signed registry certificates. This should match the generated component's secret name.")
-	flags.BoolVar(&m.Certificates.GenerateSelfSigned, "ocm-registry-tls-dev", false, "Generate self-signed tls certificate for the ocm registry.")
+	flags.BoolVar(&m.GenerateSelfSigned, "dev", false, "Generate self-signed tls certificate for the ocm registry.")
 	flags.StringVar(&m.CaFile, "ca-file", "", "Root certificate for the remote git server.")
 }
 

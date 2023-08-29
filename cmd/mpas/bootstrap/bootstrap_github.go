@@ -52,8 +52,8 @@ type GithubCmd struct {
 	Components []string
 	// DestructiveActions indicates whether destructive actions are allowed
 	DestructiveActions bool
-	// DeveloperCertificateName defines if a developer certificate has to be provided or not
-	DeveloperCertificateName string
+	// GenerateSelfSignedCertificate defines if a developer certificate has to be provided or not
+	GenerateSelfSignedCertificate bool
 	// CaFile defines and optional root certificate for the git repository used by flux.
 	CaFile       string
 	bootstrapper *bootstrap.Bootstrap
@@ -118,7 +118,7 @@ func (b *GithubCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 		bootstrap.WithTimeout(b.Timeout),
 		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
 		bootstrap.WithVisibility(visibility),
-		bootstrap.WithDevCertificate(b.DeveloperCertificateName),
+		bootstrap.WithGenerateDevCertificate(b.GenerateSelfSignedCertificate),
 		bootstrap.WithRootFile(b.CaFile),
 	)
 

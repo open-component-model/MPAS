@@ -28,39 +28,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	ocmSystemNamespace  = "ocm-system"
-	mpasSystemNamespace = "mpas-system"
-)
-
 var (
 	errReconciledWithWarning = errors.New("reconciled with warning")
 )
 
 // options contains the options to be used during bootstrap
 type options struct {
-	description                    string
-	defaultBranch                  string
-	visibility                     string
-	personal                       bool
-	owner                          string
-	token                          string
-	repositoryName                 string
-	targetPath                     string
-	commitMessageAppendix          string
-	fromFile                       string
-	registry                       string
-	dockerConfigPath               string
-	transportType                  string
-	kubeclient                     client.Client
-	restClientGetter               genericclioptions.RESTClientGetter
-	components                     []string
-	interval                       time.Duration
-	timeout                        time.Duration
-	printer                        *printer.Printer
-	testURL                        string
-	developerCertificateSecretName string
-	caFile                         string
+	description            string
+	defaultBranch          string
+	visibility             string
+	personal               bool
+	owner                  string
+	token                  string
+	repositoryName         string
+	targetPath             string
+	commitMessageAppendix  string
+	fromFile               string
+	registry               string
+	dockerConfigPath       string
+	transportType          string
+	kubeclient             client.Client
+	restClientGetter       genericclioptions.RESTClientGetter
+	components             []string
+	interval               time.Duration
+	timeout                time.Duration
+	printer                *printer.Printer
+	testURL                string
+	generateDevCertificate bool
+	caFile                 string
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -82,10 +77,10 @@ func WithRootFile(caFile string) Option {
 	}
 }
 
-// WithDevCertificate generate a developer certificate. Otherwise, the secret holding the certs is expected to exist.
-func WithDevCertificate(name string) Option {
+// WithGenerateDevCertificate if set, it will generate a self-signed certificate for all controllers.
+func WithGenerateDevCertificate(generate bool) Option {
 	return func(o *options) {
-		o.developerCertificateSecretName = name
+		o.generateDevCertificate = generate
 	}
 }
 
@@ -371,19 +366,19 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	delete(refs, env.FluxName)
 
 	// Create Certificate secret if needed
-	if b.developerCertificateSecretName != "" {
+	if b.generateDevCertificate {
 		ca, key, err := GenerateDeveloperSelfSignedCertificate()
 		if err != nil {
 			return fmt.Errorf("failed to generate developer certificate: %w", err)
 		}
 
-		for _, namespace := range []string{ocmSystemNamespace, mpasSystemNamespace} {
+		for _, namespace := range []string{env.DefaultOCMInstallPath, env.DefaultsNamespace} {
 			// Create the Secret in ocm-system and mpas-system namespaces.
 			// After that the secret will have to be duplicated to the project namespace,
 			// but that is out of the scope of the bootstrapper.
 			secret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      b.developerCertificateSecretName,
+					Name:      env.RegistryTLSSecretName,
 					Namespace: namespace,
 				},
 				// These keys are expected by flux to be in this format.

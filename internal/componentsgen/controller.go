@@ -5,7 +5,6 @@
 package componentsgen
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/open-component-model/mpas/internal/env"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/kyaml/filesys"
@@ -41,11 +41,6 @@ var patchMap = map[string][]byte{
 	"mpas-product-controller": mpasProductControllerPatch,
 }
 
-const (
-	defaultRegistry   = "ghcr.io/open-component-model"
-	secretPlaceholder = "<SECRET-NAME>"
-)
-
 // Controller is a component that generates manifests for a controller,
 // localization files from a template, and images for a given controller.
 type Controller struct {
@@ -63,8 +58,6 @@ type Controller struct {
 	ReleaseAPIURL string
 	// Content is the content of the install.yaml file.
 	Content *string
-	// CertificateSecretName defines the name of the secret that stores the registry certificates.
-	CertificateSecretName string
 }
 
 // GenerateManifests downloads the install.yaml file and writes it to a temporary directory.
@@ -78,7 +71,6 @@ func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error
 		return fmt.Errorf("failed to download install.yaml file: %w", err)
 	}
 
-	// TODO: Make the certificate secret name configurable.
 	if err := o.applyCertificatePatch(); err != nil {
 		return fmt.Errorf("failed to apply patch to install.yaml file: %w", err)
 	}
@@ -91,7 +83,7 @@ func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error
 		o.Path = path
 	}
 
-	o.Registry = defaultRegistry
+	o.Registry = env.DefaultOCMHost
 	return nil
 }
 
@@ -212,8 +204,6 @@ func (o *Controller) applyCertificatePatch() (err error) {
 		return fmt.Errorf("no patch exists for controller with name: %s", o.Name)
 	}
 
-	patch = o.setCertificateSecretName(patch)
-
 	fs := filesys.MakeFsInMemory()
 	if err := fs.WriteFile("kustomization.yaml", patch); err != nil {
 		return fmt.Errorf("failed to create kustomization file: %w", err)
@@ -237,8 +227,4 @@ func (o *Controller) applyCertificatePatch() (err error) {
 	o.Content = pointer.String(string(asYaml))
 
 	return nil
-}
-
-func (o *Controller) setCertificateSecretName(patch []byte) []byte {
-	return bytes.ReplaceAll(patch, []byte(secretPlaceholder), []byte(o.CertificateSecretName))
 }

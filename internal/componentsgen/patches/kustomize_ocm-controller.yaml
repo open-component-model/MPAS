@@ -27,7 +27,7 @@ patchesStrategicMerge:
           volumes:
             - name: "ocm-registry-tls-certs"
               secret:
-                secretName: <SECRET-NAME>
+                secretName: ocm-registry-tls-certs
                 items:
                   - key: "certFile"
                     path: "cert.pem"
@@ -53,7 +53,7 @@ patchesStrategicMerge:
           volumes:
             - name: "certificates"
               secret:
-                secretName: <SECRET-NAME>
+                secretName: ocm-registry-tls-certs
                 items:
                   - key: "caFile"
                     path: "registry-root.pem"
