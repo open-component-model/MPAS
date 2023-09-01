@@ -50,6 +50,8 @@ type BootstrapConfig struct {
 	Interval              string
 	CommitMessageAppendix string
 	Private               bool
+	GenerateSelfSigned    bool
+	CaFile                string
 }
 
 // AddFlags adds the bootstrap flags to the given flag set.
@@ -64,6 +66,8 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.Interval, "interval", "5m", "The interval to use to sync the bootstrap component")
 	flags.StringVar(&m.CommitMessageAppendix, "commit-message-appendix", "", "The appendix to add to the commit message, e.g. [ci skip]")
 	flags.BoolVar(&m.Private, "private", false, "Whether the management repository should be private")
+	flags.BoolVar(&m.GenerateSelfSigned, "dev", false, "Whether to run in development mode")
+	flags.StringVar(&m.CaFile, "ca-file", "", "Root certificate for the remote git server.")
 }
 
 // GithubConfig is the configuration for the Github bootstrap command.

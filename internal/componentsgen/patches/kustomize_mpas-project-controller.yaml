@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: # manifests generated during bootstrap
+  - install.yaml
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: mpas-project-controller
+      namespace: mpas-system
+    spec:
+      template:
+        spec:
+          containers:
+            - name: manager
+              volumeMounts:
+                - mountPath: "/etc/ssl/certs/registry-root.pem"
+                  subPath: "registry-root.pem"
+                  name: "certificates"
+          volumes:
+            - name: "certificates"
+              secret:
+                secretName: ocm-registry-tls-certs
+                items:
+                  - key: "caFile"
+                    path: "registry-root.pem"

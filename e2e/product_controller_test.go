@@ -47,7 +47,7 @@ func newProductFeature(projectRepoName string) *features.FeatureBuilder {
 		getYAMLField("product_description.yaml", "spec.pipelines[2].name")}
 
 	return features.New("Reconcile Product Deployment").
-		WithSetup("Create registry-certs for target namespace", replicateRegistryCerts(getYAMLField("target.yaml", "spec.access.targetNamespace"))).
+		WithSetup("Create ocm-registry-tls-certs for target namespace", replicateRegistryCerts(getYAMLField("target.yaml", "spec.access.targetNamespace"))).
 		WithSetup("Add Target to project git repository", setup.AddFilesToGitRepository(
 			setup.File{
 				RepoName:       projectRepoName,
@@ -430,7 +430,7 @@ func replicateRegistryCerts(namespace string) features.Func {
 	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Helper()
 
-		name := "registry-certs"
+		name := "ocm-registry-tls-certs"
 		client, err := cfg.NewClient()
 		if err != nil {
 			t.Fatal(err)

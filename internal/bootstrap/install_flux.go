@@ -57,6 +57,7 @@ type fluxOptions struct {
 	commitMessageAppendix string
 	interval              time.Duration
 	timeout               time.Duration
+	caFile                []byte
 }
 
 type fluxInstall struct {
@@ -161,6 +162,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		ManifestFile: sourcesecret.MakeDefaultOptions().ManifestFile,
 		Username:     "git",
 		Password:     f.token,
+		CAFile:       f.caFile,
 	}
 
 	if err := f.fluxBootstrapper.ReconcileSourceSecret(ctx, secretOpts); err != nil {

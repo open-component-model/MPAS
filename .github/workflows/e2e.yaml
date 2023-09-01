@@ -41,35 +41,30 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: open-component-model/ocm-controller
-          ref: main
           path: ocm-controller
 
       - name: Checkout mpas-project-controller
         uses: actions/checkout@v3
         with:
           repository: open-component-model/mpas-project-controller
-          ref: main
           path: mpas-project-controller
 
       - name: Checkout mpas-product-controller
         uses: actions/checkout@v3
         with:
           repository: open-component-model/mpas-product-controller
-          ref: main
           path: mpas-product-controller
 
       - name: Checkout replication-controller
         uses: actions/checkout@v3
         with:
           repository: open-component-model/replication-controller
-          ref: main
           path: replication-controller
 
       - name: Checkout git-controller
         uses: actions/checkout@v3
         with:
           repository: open-component-model/git-controller
-          ref: main
           path: git-controller
 
       - name: Setup Go

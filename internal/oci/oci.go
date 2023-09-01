@@ -32,14 +32,14 @@ type Repository struct {
 func (r *Repository) PushArtifact(ctx context.Context, src, version string) error {
 	fs, err := file.New("")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create new file: %w", err)
 	}
 	defer fs.Close()
 	mediaType := ocispec.MediaTypeImageLayerGzip
 	fileDescriptors := make([]ocispec.Descriptor, 0, 1)
 	fileDescriptor, err := fs.Add(ctx, src, mediaType, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add src to fs: %w", err)
 	}
 	fileDescriptors = append(fileDescriptors, fileDescriptor)
 
@@ -49,23 +49,23 @@ func (r *Repository) PushArtifact(ctx context.Context, src, version string) erro
 	})
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to pack artifacts: %w", err)
 	}
 
 	if err = fs.Tag(ctx, manifestDescriptor, version); err != nil {
-		return err
+		return fmt.Errorf("failed to Tag version: %w", err)
 	}
 
 	reg, repo, err := repoRef(r.RepositoryURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to fetch repo ref: %w", err)
 	}
 
 	repo.PlainHTTP = r.PlainHTTP
 
 	creds, err := resolveCredentials(r.Username, r.Password, reg)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to resolve credentials: %w", err)
 	}
 	repo.Client = &auth.Client{
 		Client:     retry.DefaultClient,

@@ -9,15 +9,16 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/open-component-model/ocm/pkg/common/accessio"
+	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
+	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
+	flag "github.com/spf13/pflag"
+
 	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/release"
 	"github.com/open-component-model/mpas/internal/env"
 	"github.com/open-component-model/mpas/internal/fs"
 	"github.com/open-component-model/mpas/internal/oci"
 	"github.com/open-component-model/mpas/internal/ocm"
-	"github.com/open-component-model/ocm/pkg/common/accessio"
-	"github.com/open-component-model/ocm/pkg/contexts/datacontext"
-	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
-	flag "github.com/spf13/pflag"
 )
 
 const (

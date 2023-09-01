@@ -30,10 +30,10 @@ func Test_Binary(t *testing.T) {
 		switch r.URL.Path {
 		case "/binary":
 			w.WriteHeader(http.StatusOK)
-			w.Write(text)
+			_, _ = w.Write(text)
 		case "/hash":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(checks))
+			_, _ = w.Write([]byte(checks))
 
 		default:
 			w.WriteHeader(http.StatusNotFound)
