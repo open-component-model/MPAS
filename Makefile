@@ -36,7 +36,8 @@ build-dev:
 .PHONY: build-release-bootstrap-component
 build-release-bootstrap-component:
 # omit debug info wih -s -w
-	go build -ldflags="-s -w -X main.Version=$(BOOTSTRAP_RELEASE_VERSION)" -o ./bin/mpas-rel ./cmd/release-bootstrap-component
+	go build -v -ldflags="-s -w -X github.com/open-component-model/mpas/cmd/release-bootstrap-component/version.Tag=$(BOOTSTRAP_RELEASE_VERSION)" \
+	-o ./bin/mpas-rel ./cmd/release-bootstrap-component
 
 
 .PHONY e2e:

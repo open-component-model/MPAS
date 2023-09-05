@@ -15,14 +15,11 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/release"
+	"github.com/open-component-model/mpas/cmd/release-bootstrap-component/version"
 	"github.com/open-component-model/mpas/internal/env"
 	"github.com/open-component-model/mpas/internal/fs"
 	"github.com/open-component-model/mpas/internal/oci"
 	"github.com/open-component-model/mpas/internal/ocm"
-)
-
-const (
-	Version = "v0.0.1"
 )
 
 var (
@@ -116,7 +113,7 @@ func main() {
 		Username:      username,
 		Password:      token,
 	}
-	if err := ociRepo.PushArtifact(ctx, src, Version); err != nil {
+	if err := ociRepo.PushArtifact(ctx, src, version.Tag); err != nil {
 		fmt.Println("Failed to push bundle: ", err)
 		os.Exit(1)
 	}
@@ -197,7 +194,7 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 		generatedComponents[comp] = component
 	}
 
-	if err := r.ReleaseBootstrapComponent(ctx, generatedComponents, Version); err != nil {
+	if err := r.ReleaseBootstrapComponent(ctx, generatedComponents, version.Tag); err != nil {
 		fmt.Println("Failed to release bootstrap component: ", err)
 		os.Exit(1)
 	}
