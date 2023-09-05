@@ -49,7 +49,10 @@ func Transfer(octx ocm.Context, repo, target ocm.Repository, writer io.Writer) (
 
 	printer := common.NewPrinter(writer)
 	closure := transfer.TransportClosure{}
-	transferHandler, err := standard.New(standard.Overwrite())
+	transferHandler, err := standard.New(
+		standard.Recursive(true),
+		standard.ResourcesByValue(true),
+		standard.Overwrite())
 	if err != nil {
 		return err
 	}
