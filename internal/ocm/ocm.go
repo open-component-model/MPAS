@@ -87,9 +87,7 @@ func RepositoryFromCTF(path string) (ocm.Repository, error) {
 
 // MakeRepositoryWithDockerConfig creates a repository, and use tge given dockerconfigPath
 // to configure the credentials.
-func MakeRepositoryWithDockerConfig(repositoryURL, dockerconfigPath string) (ocm.Repository, error) {
-	octx := ocm.DefaultContext()
-
+func MakeRepositoryWithDockerConfig(octx ocm.Context, repositoryURL, dockerconfigPath string) (ocm.Repository, error) {
 	if !strings.Contains(repositoryURL, "https://") && !strings.Contains(repositoryURL, "http://") {
 		repositoryURL = "https://" + repositoryURL
 	}

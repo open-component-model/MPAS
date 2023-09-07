@@ -41,7 +41,7 @@ const (
 	// DefautBootstrapBundleLocation is the default location of the bootstrap bundle.
 	DefautBootstrapBundleLocation = DefaultBootstrapComponentLocation + "-bundle"
 	// DefaultFluxHost is the default host for the flux components.
-	DefaultFluxHost = "ghrc.io/fluxcd"
+	DefaultFluxHost = "ghcr.io/fluxcd"
 	// DefaultOCMInstallPath is the default path to install the ocm components.
 	DefaultOCMInstallPath = "ocm-system"
 	// DefaultFluxNamespace is the default namespace to install the flux components.
