@@ -82,7 +82,7 @@ jobs:
           hashes=$(echo -E $ARTIFACTS | jq --raw-output '.[] | {name, "digest": (.extra.Digest // .extra.Checksum)} | select(.digest) | {digest} + {name} | join("  ") | sub("^sha256:";"")' | base64 -w0)
           echo "hashes=$hashes" >> $GITHUB_OUTPUT
           
-          image_url=open-component-model/mpas-cli:$GITHUB_REF_NAME
+          image_url=ghcr.io/open-component-model/mpas-cli:$GITHUB_REF_NAME
           echo "image_url=$image_url" >> $GITHUB_OUTPUT
           
           image_digest=$(docker buildx imagetools inspect ${image_url}  --format '{{json .}}' | jq -r .manifest.digest)
