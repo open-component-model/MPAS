@@ -11,7 +11,7 @@ replace github.com/google/go-containerregistry => github.com/google/go-container
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/containers/image/v5 v5.23.0
-	github.com/cyphar/filepath-securejoin v0.2.3
+	github.com/cyphar/filepath-securejoin v0.2.4
 	github.com/fatih/color v1.13.0
 	github.com/fluxcd/flux2/v2 v2.0.1
 	github.com/fluxcd/go-git-providers v0.18.1-0.20230706132206-211750e8915d
