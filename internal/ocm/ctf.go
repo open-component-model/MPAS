@@ -15,6 +15,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ctf"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 	"github.com/open-component-model/ocm/pkg/finalizer"
 )
@@ -43,13 +44,20 @@ func Transfer(octx ocm.Context, repo, target ocm.Repository, writer io.Writer) (
 		return fmt.Errorf("repo does not support lister")
 	}
 	comps, err := lister.GetComponents("", true)
-	if rerr != nil {
+	if err != nil {
 		return fmt.Errorf("failed to list components: %w", err)
 	}
 
 	printer := common.NewPrinter(writer)
 	closure := transfer.TransportClosure{}
-	transferHandler, err := standard.New(standard.Overwrite())
+	transferopts := &standard.Options{}
+	transferhandler.From(octx.ConfigContext(), transferopts)
+	transferhandler.ApplyOptions(transferopts,
+		standard.Recursive(true),
+		standard.ResourcesByValue(true),
+		standard.Overwrite(),
+		standard.Resolver(target))
+	transferHandler, err := standard.New(transferopts)
 	if err != nil {
 		return err
 	}

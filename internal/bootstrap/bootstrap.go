@@ -22,6 +22,7 @@ import (
 	"github.com/open-component-model/mpas/internal/printer"
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -246,6 +247,11 @@ func New(providerClient gitprovider.Client, opts ...Option) (*Bootstrap, error) 
 
 // Run runs the bootstrap of mpas and returns an error if it fails.
 func (b *Bootstrap) Run(ctx context.Context) error {
+	octx := om.DefaultContext()
+	utils.Configure(octx, "")
+	// set default log level to 1 which is ERROR level to avoid printing INFO messages
+	octx.LoggingContext().SetDefaultLevel(1)
+
 	b.printer.Printf("Running %s ...\n",
 		printer.BoldBlue("mpas bootstrap"))
 
@@ -282,7 +288,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 		defer ctf.Close()
 
-		target, err := ocm.MakeRepositoryWithDockerConfig(b.registry, b.dockerConfigPath)
+		target, err := ocm.MakeRepositoryWithDockerConfig(octx, b.registry, b.dockerConfigPath)
 		if err != nil {
 			if er := b.printer.StopFailSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
 				printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); er != nil {
@@ -292,10 +298,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 		defer target.Close()
 
-		octx := om.DefaultContext()
-		// set default log level to 1 which is ERROR level to avoid printing INFO messages
-		octx.LoggingContext().SetDefaultLevel(1)
-		if err := ocm.Transfer(om.DefaultContext(), ctf, target, io.Discard); err != nil {
+		if err := ocm.Transfer(octx, ctf, target, io.Discard); err != nil {
 			if er := b.printer.StopFailSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
 				printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); er != nil {
 				err = errors.Join(err, er)
@@ -313,7 +316,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		printer.BoldBlue(b.registry))); err != nil {
 		return err
 	}
-	ociRepo, err := ocm.MakeRepositoryWithDockerConfig(b.registry, b.dockerConfigPath)
+	ociRepo, err := ocm.MakeRepositoryWithDockerConfig(octx, b.registry, b.dockerConfigPath)
 	if err != nil {
 		if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
 			printer.BoldBlue(b.registry))); er != nil {

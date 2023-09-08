@@ -13,8 +13,6 @@ import (
 	"strings"
 
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 
 	cgen "github.com/open-component-model/mpas/internal/componentsgen"
 	"github.com/open-component-model/mpas/internal/env"
@@ -360,13 +358,9 @@ func (r *Releaser) ReleaseOCMCliComponent(
 		return nil, fmt.Errorf("ocm version is empty")
 	}
 	ver := strings.TrimPrefix(ocmCliVersion, "v")
-	caseEng := cases.Title(language.Dutch)
-	targetOS = caseEng.String(targetOS)
-	if targetArch == "amd64" {
-		targetArch = "x86_64"
-	}
-	binURL := fmt.Sprintf("%s/v%s/ocm_%s_%s.tar.gz", env.OcmBinURL, ver, targetOS, targetArch)
-	hashURL := fmt.Sprintf("%s/v%s/checksums.txt", env.OcmBinURL, ver)
+
+	binURL := fmt.Sprintf("%s/v%s/ocm-%s-%s-%s.tar.gz", env.OcmBinURL, ver, ver, targetOS, targetArch)
+	hashURL := fmt.Sprintf("%s/v%s/ocm_%s_checksums.txt", env.OcmBinURL, ver, ver)
 	b, err := getBinary(ctx, ocmCliVersion, r.tmpDir, binURL, hashURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ocm-cli binary: %v", err)
