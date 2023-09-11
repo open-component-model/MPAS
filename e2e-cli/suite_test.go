@@ -66,6 +66,8 @@ func TestMain(m *testing.M) {
 
 	testEnv.Setup(
 		envfuncs.CreateKindCluster(kindClusterName),
+		envfuncs.CreateNamespace("ocm-system"),
+		envfuncs.CreateNamespace("mpas-system"),
 		envfuncs.CreateNamespace(namespace),
 		shared.StartGitServer(namespace),
 		shared.ForwardPortForAppName("gitea", 3000, stopChannelGitea),
