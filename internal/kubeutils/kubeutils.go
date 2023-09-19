@@ -97,7 +97,7 @@ func KubeClient(rcg genericclioptions.RESTClientGetter) (client.WithWatch, error
 
 	kubeClient, err := client.NewWithWatch(cfg, client.Options{
 		Scheme: scheme,
-		WarningHandler: client.WarningHandlerOptions{
+		Opts: client.WarningHandlerOptions{
 			SuppressWarnings: true,
 		},
 	})
@@ -189,7 +189,7 @@ func reconcileObject(ctx context.Context, namespacedName types.NamespacedName, k
 func ReportGitrepositoryHealth(ctx context.Context, kubeClient client.Client, name, namespace, expectedRevision string, pollInterval, timeout time.Duration) error {
 	objKey := client.ObjectKey{Name: name, Namespace: namespace}
 	var o sourcev1.GitRepository
-	if err := wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, reconciledGitrepositoryHealth(
+	if err := wait.PollImmediateWithContext(ctx, pollInterval, timeout, reconciledGitrepositoryHealth(
 		ctx, kubeClient, objKey, &o, expectedRevision),
 	); err != nil {
 		return err
@@ -201,7 +201,7 @@ func ReportGitrepositoryHealth(ctx context.Context, kubeClient client.Client, na
 func ReportKustomizationHealth(ctx context.Context, kubeClient client.Client, name, namespace, expectedRevision string, pollInterval, timeout time.Duration) error {
 	objKey := client.ObjectKey{Name: name, Namespace: namespace}
 	var k kustomizev1.Kustomization
-	if err := wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, reconciledKustomizationHealth(
+	if err := wait.PollImmediateWithContext(ctx, pollInterval, timeout, reconciledKustomizationHealth(
 		ctx, kubeClient, objKey, &k, expectedRevision),
 	); err != nil {
 		return err
