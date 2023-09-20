@@ -2,7 +2,11 @@ module github.com/open-component-model/mpas
 
 go 1.21
 
-replace github.com/opencontainers/go-digest => github.com/opencontainers/go-digest v1.0.1-0.20220411205349-bde1400a84be
+replace oras.land/oras-go => oras.land/oras-go v1.2.3
+
+replace github.com/docker/docker => github.com/docker/docker v23.0.5+incompatible
+
+replace github.com/docker/cli => github.com/docker/cli v23.0.5+incompatible
 
 // Flux dependent re-writes. These are needed to be compatible with the flux version at all times.
 replace (
@@ -23,15 +27,15 @@ require (
 	github.com/containers/image/v5 v5.23.0
 	github.com/cyphar/filepath-securejoin v0.2.4
 	github.com/fatih/color v1.13.0
-	github.com/fluxcd/flux2/v2 v2.0.1
+	github.com/fluxcd/flux2/v2 v2.0.0-rc.3
 	github.com/fluxcd/go-git-providers v0.18.1-0.20230706132206-211750e8915d
 	github.com/fluxcd/kustomize-controller/api v1.1.0
 	github.com/fluxcd/pkg/apis/meta v1.1.2
-	github.com/fluxcd/pkg/git v0.13.0
-	github.com/fluxcd/pkg/git/gogit v0.13.0
+	github.com/fluxcd/pkg/git v0.11.0
+	github.com/fluxcd/pkg/git/gogit v0.8.1
 	github.com/fluxcd/pkg/kustomize v1.3.4
-	github.com/fluxcd/pkg/runtime v0.42.0
-	github.com/fluxcd/pkg/ssa v0.32.0
+	github.com/fluxcd/pkg/runtime v0.35.0
+	github.com/fluxcd/pkg/ssa v0.28.2
 	github.com/fluxcd/source-controller/api v1.1.0
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-logr/logr v1.2.4
@@ -148,7 +152,7 @@ require (
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v24.0.0+incompatible // indirect
+	github.com/docker/docker v24.0.6+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go v1.5.1-1.0.20160303222718-d30aec9fd63c // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -161,6 +165,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
+	github.com/fluxcd/go-git/v5 v5.0.0-20221219190809-2e5c9d01cfc4 // indirect
 	github.com/fluxcd/helm-controller/api v0.36.0 // indirect
 	github.com/fluxcd/image-automation-controller/api v0.36.0 // indirect
 	github.com/fluxcd/image-reflector-controller/api v0.30.0 // indirect
@@ -169,7 +174,7 @@ require (
 	github.com/fluxcd/pkg/apis/kustomize v1.1.1 // indirect
 	github.com/fluxcd/pkg/sourceignore v0.3.5 // indirect
 	github.com/fluxcd/pkg/ssh v0.8.2 // indirect
-	github.com/fluxcd/pkg/tar v0.2.0 // indirect
+	github.com/fluxcd/pkg/untar v0.2.0 // indirect
 	github.com/fluxcd/pkg/version v0.2.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fvbommel/sortorder v1.1.0 // indirect

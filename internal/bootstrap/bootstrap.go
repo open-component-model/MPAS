@@ -248,7 +248,9 @@ func New(providerClient gitprovider.Client, opts ...Option) (*Bootstrap, error) 
 // Run runs the bootstrap of mpas and returns an error if it fails.
 func (b *Bootstrap) Run(ctx context.Context) error {
 	octx := om.DefaultContext()
-	utils.Configure(octx, "")
+	if _, err := utils.Configure(octx, ""); err != nil {
+		return fmt.Errorf("failed to configure ocm context: %w", err)
+	}
 	// set default log level to 1 which is ERROR level to avoid printing INFO messages
 	octx.LoggingContext().SetDefaultLevel(1)
 
