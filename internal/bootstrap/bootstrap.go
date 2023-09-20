@@ -388,9 +388,9 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 				},
 				// These keys are expected by flux to be in this format.
 				Data: map[string][]byte{
-					"caFile":   ca,
-					"certFile": ca,
-					"keyFile":  key,
+					"ca.crt":  ca,
+					"tls.crt": ca,
+					"tls.key": key,
 				},
 				Type: corev1.SecretTypeOpaque,
 			}

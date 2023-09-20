@@ -455,9 +455,9 @@ func replicateRegistryCerts(namespace string) features.Func {
 					Namespace: namespace,
 				},
 				Data: map[string][]byte{
-					"caFile":   obj.Data["caFile"],
-					"certFile": obj.Data["certFile"],
-					"keyFile":  obj.Data["keyFile"]},
+					"ca.crt":  obj.Data["ca.crt"],
+					"tls.crt": obj.Data["tls.crt"],
+					"tls.key": obj.Data["tls.key"]},
 			}
 
 			_, err = clientset.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
