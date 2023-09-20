@@ -45,7 +45,7 @@ require (
 	github.com/open-component-model/mpas-project-controller v0.1.2-0.20230811114712-fb37343e8892
 	github.com/open-component-model/ocm v0.4.0
 	github.com/open-component-model/ocm-controller v0.13.0
-	github.com/open-component-model/ocm-e2e-framework v0.6.1-0.20230913082321-d7050cc55939
+	github.com/open-component-model/ocm-e2e-framework v0.6.1-0.20230919161932-8cc37dbfcc5f
 	github.com/open-component-model/replication-controller v0.4.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc4

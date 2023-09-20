@@ -1274,6 +1274,8 @@ github.com/open-component-model/ocm-controller v0.13.0 h1:QgnpLBnvVYHqbnkfDFTTJ6
 github.com/open-component-model/ocm-controller v0.13.0/go.mod h1:lQCNna5k7DwC6j1AO72sgzWy/ijZ1J20cuhPEBep2tU=
 github.com/open-component-model/ocm-e2e-framework v0.6.1-0.20230913082321-d7050cc55939 h1:OnT3xCv7bqu5oFt701occb9dYYa1ow3YhI7A5zu055A=
 github.com/open-component-model/ocm-e2e-framework v0.6.1-0.20230913082321-d7050cc55939/go.mod h1:+JNqNksMIH03PxJ1LyEFbr+tYD2JZtpNMgumE3Gq1hg=
+github.com/open-component-model/ocm-e2e-framework v0.6.1-0.20230919161932-8cc37dbfcc5f h1:MwQJjvYZLgTu++b10r1Egj0F48EBEfgOKnruxk5GYbg=
+github.com/open-component-model/ocm-e2e-framework v0.6.1-0.20230919161932-8cc37dbfcc5f/go.mod h1:jKlM07Gb5aKudh7EDPo8tE82WH1SkmiDzFHTgYsG8Xg=
 github.com/open-component-model/replication-controller v0.4.0 h1:MsBvrUSrjoc6BJdgVU+Fsq6BLoP+MJ+Mnzara29FC28=
 github.com/open-component-model/replication-controller v0.4.0/go.mod h1:FiQgLd+y8UuZUu4D6pewbJJLrjBVzfcqkrZUuunHq5E=
 github.com/opencontainers/go-digest v0.0.0-20170106003457-a6d0ee40d420/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
