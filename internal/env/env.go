@@ -14,13 +14,13 @@ const (
 	// DefaultFluxVer is the default version of the flux component.
 	DefaultFluxVer = "v2.1.0"
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
-	DefaultOcmControllerVer = "v0.12.2"
+	DefaultOcmControllerVer = "v0.13.0"
 	// DefaultGitControllerVer is the default version of the git-controller component.
-	DefaultGitControllerVer = "v0.7.1"
+	DefaultGitControllerVer = "v0.8.0"
 	// DefaultReplicationVer is the default version of the replication-controller component.
-	DefaultReplicationVer = "v0.6.2"
+	DefaultReplicationVer = "v0.7.0"
 	// DefaultMpasProductControllerVer is the default version of the mpas-product-controller component.
-	DefaultMpasProductControllerVer = "v0.3.3"
+	DefaultMpasProductControllerVer = "v0.4.0"
 	// DefaultMpasProjectControllerVer is the default version of the mpas-project-controller component.
 	DefaultMpasProjectControllerVer = "v0.1.2"
 	// DefaultOcmCliVer is the default version of the ocm-cli component.
