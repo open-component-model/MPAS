@@ -40,13 +40,13 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-logr/logr v1.2.4
 	github.com/mandelsoft/vfs v0.0.0-20230713123140-269aa4fb1338
-	github.com/open-component-model/git-controller v0.5.1-0.20230812073433-00ae32768395
+	github.com/open-component-model/git-controller v0.8.0
 	github.com/open-component-model/mpas-product-controller v0.2.1-0.20230811120239-3d757c349b8a
 	github.com/open-component-model/mpas-project-controller v0.1.2-0.20230811114712-fb37343e8892
 	github.com/open-component-model/ocm v0.4.0
 	github.com/open-component-model/ocm-controller v0.13.0
-	github.com/open-component-model/ocm-e2e-framework v0.6.1-0.20230919161932-8cc37dbfcc5f
-	github.com/open-component-model/replication-controller v0.4.0
+	github.com/open-component-model/ocm-e2e-framework v0.7.0
+	github.com/open-component-model/replication-controller v0.7.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc4
 	github.com/oras-project/oras-credentials-go v0.2.0
