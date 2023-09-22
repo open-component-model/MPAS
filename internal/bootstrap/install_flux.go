@@ -307,12 +307,12 @@ func (f *fluxInstall) commitAndPushComponents(ctx context.Context, path string, 
 	}, repository.WithFiles(map[string]io.Reader{
 		path: strings.NewReader(content),
 	}))
-	if err != nil && err != git.ErrNoStagedFiles {
+	if err != nil && !errors.Is(err, git.ErrNoStagedFiles) {
 		return fmt.Errorf("failed to commit sync manifests: %w", err)
 	}
 
 	if err == nil {
-		if err = f.gitClient.Push(ctx, repository.PushConfig{}); err != nil {
+		if err = f.gitClient.Push(ctx); err != nil {
 			return fmt.Errorf("failed to push manifests: %w", err)
 		}
 	}
@@ -321,14 +321,14 @@ func (f *fluxInstall) commitAndPushComponents(ctx context.Context, path string, 
 
 func (f *fluxInstall) cloneRepository(ctx context.Context) error {
 	if _, err := f.gitClient.Head(); err != nil {
-		if err != git.ErrNoGitRepository {
+		if !errors.Is(err, git.ErrNoGitRepository) {
 			return err
 		}
 		if err = retry(1, 2*time.Second, func() error {
 			if err := f.cleanGitRepoDir(); err != nil {
 				return fmt.Errorf("failed to clean git repository directory: %w", err)
 			}
-			_, err = f.gitClient.Clone(ctx, f.url, repository.CloneConfig{
+			_, err = f.gitClient.Clone(ctx, f.url, repository.CloneOptions{
 				CheckoutStrategy: repository.CheckoutStrategy{
 					Branch: f.branch,
 				},

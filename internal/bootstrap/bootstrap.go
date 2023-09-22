@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
@@ -248,7 +249,9 @@ func New(providerClient gitprovider.Client, opts ...Option) (*Bootstrap, error) 
 // Run runs the bootstrap of mpas and returns an error if it fails.
 func (b *Bootstrap) Run(ctx context.Context) error {
 	octx := om.DefaultContext()
-	utils.Configure(octx, "")
+	if _, err := utils.Configure(octx, ""); err != nil {
+		return fmt.Errorf("failed to configure ocm context: %w", err)
+	}
 	// set default log level to 1 which is ERROR level to avoid printing INFO messages
 	octx.LoggingContext().SetDefaultLevel(1)
 
@@ -368,37 +371,6 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	}
 	delete(refs, env.FluxName)
 
-	// Create Certificate secret if needed
-	if b.generateDevCertificate {
-		ca, key, err := GenerateDeveloperSelfSignedCertificate()
-		if err != nil {
-			return fmt.Errorf("failed to generate developer certificate: %w", err)
-		}
-
-		for _, namespace := range []string{env.DefaultOCMInstallPath, env.DefaultsNamespace} {
-			// Create the Secret in ocm-system and mpas-system namespaces.
-			// After that the secret will have to be duplicated to the project namespace,
-			// but that is out of the scope of the bootstrapper.
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      env.RegistryTLSSecretName,
-					Namespace: namespace,
-				},
-				// These keys are expected by flux to be in this format.
-				Data: map[string][]byte{
-					"caFile":   ca,
-					"certFile": ca,
-					"keyFile":  key,
-				},
-				Type: corev1.SecretTypeOpaque,
-			}
-
-			if err := b.kubeclient.Create(ctx, secret); err != nil {
-				return fmt.Errorf("failed to create certificate secret in namespace %s: %w", namespace, err)
-			}
-		}
-
-	}
 	compNs := make(map[string][]string)
 	// install components in order by using the ordered keys
 	comps := getOrderedKeys(refs)
@@ -477,6 +449,46 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 		return fmt.Errorf("failed to report kustomization health: %w", err)
 	}
+
+	// Create Certificate secret if needed
+	if b.generateDevCertificate {
+		ca, key, err := GenerateDeveloperSelfSignedCertificate()
+		if err != nil {
+			return fmt.Errorf("failed to generate developer certificate: %w", err)
+		}
+
+		for _, namespace := range []string{env.DefaultOCMInstallPath, env.DefaultsNamespace} {
+			// Create the Secret in ocm-system and mpas-system namespaces.
+			// After that the secret will have to be duplicated to the project namespace,
+			// but that is out of the scope of the bootstrapper.
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      env.RegistryTLSSecretName,
+					Namespace: namespace,
+				},
+				// These keys are expected by flux to be in this format.
+				Data: map[string][]byte{
+					"ca.crt":  ca,
+					"tls.crt": ca,
+					"tls.key": key,
+				},
+				Type: corev1.SecretTypeOpaque,
+			}
+
+			if _, err := controllerutil.CreateOrUpdate(ctx, b.kubeclient, secret, func() error {
+				err = b.printer.PrintSpinner(fmt.Sprintf("Registry secret in namespace %s already exist; skip creating",
+					printer.BoldBlue(namespace)))
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("failed to create certificate secret in namespace %s: %w", namespace, err)
+			}
+		}
+	}
+
 	for ns, comps := range compNs {
 		if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, comps, ns); err != nil {
 			if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {

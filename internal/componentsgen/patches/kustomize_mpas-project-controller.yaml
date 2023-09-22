@@ -23,5 +23,5 @@ patchesStrategicMerge:
               secret:
                 secretName: ocm-registry-tls-certs
                 items:
-                  - key: "caFile"
+                  - key: "ca.crt"
                     path: "registry-root.pem"
