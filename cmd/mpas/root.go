@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
@@ -52,7 +53,10 @@ func New(ctx context.Context, args []string) (*cobra.Command, error) {
 	}
 	cfg.KubeConfigArgs.AddFlags(cmd.PersistentFlags())
 
+	cfg.PollInterval = 2 * time.Second
+
 	cmd.AddCommand(NewBootstrap(cfg))
+	cmd.AddCommand(NewCreate(cfg))
 
 	cmd.InitDefaultHelpCmd()
 

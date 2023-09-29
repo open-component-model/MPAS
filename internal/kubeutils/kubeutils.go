@@ -20,6 +20,7 @@ import (
 	projectv1alpha1 "github.com/open-component-model/mpas-project-controller/api/v1alpha1"
 	"github.com/open-component-model/mpas/internal/env"
 	ocmv1alpha1 "github.com/open-component-model/ocm-controller/api/v1alpha1"
+	rep1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -53,6 +54,7 @@ func init() {
 	apiList = append(apiList, ocmv1alpha1.AddToScheme)
 	apiList = append(apiList, productv1alpha1.AddToScheme)
 	apiList = append(apiList, projectv1alpha1.AddToScheme)
+	apiList = append(apiList, rep1alpha1.AddToScheme)
 }
 
 // NewScheme creates the Scheme methods for serializing and deserializing API objects
