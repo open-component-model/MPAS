@@ -65,6 +65,10 @@ func (p *Printer) out() io.Writer {
 	return io.Discard
 }
 
+func (p *Printer) SetOutput(output io.Writer) {
+	p.output = output
+}
+
 func (p *Printer) startSpinner() error {
 	if p.spinner.Status() == yacspin.SpinnerStopped {
 		err := p.spinner.Start()

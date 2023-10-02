@@ -1,6 +1,3 @@
-//go:build e2e
-// +build e2e
-
 // SPDX-FileCopyrightText: 2022 SAP SE or an SAP affiliate company and Gardener contributors.
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -11,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
@@ -38,6 +36,7 @@ var (
 	targetPath            = "clusters/my-cluster"
 	cfg                   = config.MpasConfig{
 		Timeout:          "5m",
+		PollInterval:     5 * time.Millisecond,
 		DockerconfigPath: "~/.docker/config.json",
 		KubeConfigArgs:   genericclioptions.NewConfigFlags(false),
 		PlainHTTP:        true,
@@ -72,6 +71,9 @@ func TestMain(m *testing.M) {
 		shared.StartGitServer(namespace),
 		shared.ForwardPortForAppName("gitea", 3000, stopChannelGitea),
 	)
+
+	// set the kubeconfig namespace
+	cfg.KubeConfigArgs.Namespace = &namespace
 
 	testEnv.Finish(
 		shared.RemoveGitServer(namespace),

@@ -58,15 +58,15 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	golang.org/x/term v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.28.1
-	k8s.io/apiextensions-apiserver v0.28.0
-	k8s.io/apimachinery v0.28.1
-	k8s.io/cli-runtime v0.28.1
-	k8s.io/client-go v0.28.1
+	k8s.io/api v0.28.2
+	k8s.io/apiextensions-apiserver v0.28.2
+	k8s.io/apimachinery v0.28.2
+	k8s.io/cli-runtime v0.28.2
+	k8s.io/client-go v0.28.2
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	oras.land/oras-go/v2 v2.2.1
 	sigs.k8s.io/cli-utils v0.35.0
-	sigs.k8s.io/controller-runtime v0.16.1
+	sigs.k8s.io/controller-runtime v0.16.2
 	sigs.k8s.io/e2e-framework v0.2.0
 	sigs.k8s.io/kustomize/api v0.13.5-0.20230601165947-6ce0bf390ce3
 	sigs.k8s.io/kustomize/kyaml v0.14.3-0.20230601165947-6ce0bf390ce3
