@@ -369,7 +369,7 @@ func (r *Releaser) ReleaseCertManagerComponent(
 	component, err := ocm.NewComponent(r.octx,
 		fmt.Sprintf("%s/%s", env.ComponentNamePrefix, env.CertManagerName),
 		version,
-		ocm.WithProvider("cert-manager"),
+		ocm.WithProvider("jetstack"),
 		ocm.WithUsername(r.username),
 		ocm.WithToken(r.token),
 		ocm.WithRepositoryURL(r.repositoryURL))

@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/open-component-model/mpas/internal/env"
 )
 
 const (
@@ -46,7 +48,7 @@ func (c *CertManager) GenerateManifests(ctx context.Context, tmpDir string) erro
 		return fmt.Errorf("install failed: %w", err)
 	}
 
-	c.Registry = "quay.io/jetstack"
+	c.Registry = env.DefaultCertManagerHost
 	c.Components = []string{"cert-manager-controller", "cert-manager-webhook", "cert-manager-cainjector"}
 	c.Path = "cert-manager.yaml"
 	c.Content = string(content)

@@ -44,6 +44,8 @@ const (
 	DefautBootstrapBundleLocation = DefaultBootstrapComponentLocation + "-bundle"
 	// DefaultFluxHost is the default host for the flux components.
 	DefaultFluxHost = "ghcr.io/fluxcd"
+	// DefaultCertManagerHost is the default host for the cert-manager components.
+	DefaultCertManagerHost = "quay.io/jetstack"
 	// DefaultOCMInstallPath is the default path to install the ocm components.
 	DefaultOCMInstallPath = "ocm-system"
 	// DefaultFluxNamespace is the default namespace to install the flux components.
