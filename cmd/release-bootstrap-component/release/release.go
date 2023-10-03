@@ -26,6 +26,12 @@ var (
   resource:
     name: %s
 `
+	certManagerLocalizationTemplate = `- name: %s
+  file: cert-manager.yaml
+  image: spec.template.spec.containers[0].image
+  resource:
+    name: %s
+`
 	ocmLocalizationTemplate = `- name: %s
   file: install.yaml
   image: spec.template.spec.containers[0].image
@@ -276,6 +282,7 @@ func (r *Releaser) ReleaseFluxComponent(
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate flux manifests: %v", err)
 	}
+
 	component, err := ocm.NewComponent(r.octx,
 		fmt.Sprintf("%s/%s", env.ComponentNamePrefix, env.FluxName),
 		fluxVersion,
@@ -344,6 +351,34 @@ func (r *Releaser) ReleaseFluxCliComponent(
 		ocm.WithResourceType("file"),
 		ocm.WithResourceVersion(component.Version)); err != nil {
 		return nil, fmt.Errorf("failed to add resource flux: %w", err)
+	}
+
+	return component, nil
+}
+
+// ReleaseCertManagerComponent releases cert-manager with all its components
+func (r *Releaser) ReleaseCertManagerComponent(
+	ctx context.Context,
+	version, comp string,
+) (*ocm.Component, error) {
+	f, err := generateCertManager(ctx, version, r.tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate cert-manager manifests: %v", err)
+	}
+
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix, env.CertManagerName),
+		version,
+		ocm.WithProvider("cert-manager"),
+		ocm.WithUsername(r.username),
+		ocm.WithToken(r.token),
+		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
+
+	if err := r.release(ctx, r.octx, component, r.ctf, &f, env.CertManagerName, certManagerLocalizationTemplate); err != nil {
+		return nil, fmt.Errorf("failed to release cert-manager component: %w", err)
 	}
 
 	return component, nil
@@ -418,10 +453,12 @@ func (r *Releaser) release(
 	if err != nil {
 		return fmt.Errorf("failed to generate localization from template: %w", err)
 	}
+
 	images, err := gen.GenerateImages()
 	if err != nil {
 		return fmt.Errorf("failed to generate images: %w", err)
 	}
+
 	err = os.WriteFile(path.Join(r.tmpDir, "config.yaml"), []byte(tmpl), 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write config.yaml: %w", err)
@@ -431,7 +468,7 @@ func (r *Releaser) release(
 		ocm.WithResourcePath(path.Join(r.tmpDir, gen.GetPath())),
 		ocm.WithResourceType("file"),
 		ocm.WithResourceVersion(component.Version)); err != nil {
-		return fmt.Errorf("failed to add resource %s: %w", name, err)
+		return fmt.Errorf("failed to add file resource %s: %w", name, err)
 	}
 
 	if err := component.AddResource(ocm.WithResourceName("ocm-config"),
@@ -446,7 +483,7 @@ func (r *Releaser) release(
 			ocm.WithResourceType("ociImage"),
 			ocm.WithResourceImage(image),
 			ocm.WithResourceVersion(nameVersion[1])); err != nil {
-			return fmt.Errorf("failed to add resource %s: %w", image, err)
+			return fmt.Errorf("failed to add ociImage resource %s: %w", image, err)
 		}
 	}
 
@@ -469,6 +506,16 @@ func generateFlux(ctx context.Context, version, tmpDir string) (cgen.Flux, error
 	}
 
 	f := cgen.Flux{Version: version}
+	err := f.GenerateManifests(ctx, tmpDir)
+	return f, err
+}
+
+func generateCertManager(ctx context.Context, version, tmpDir string) (cgen.CertManager, error) {
+	if version == "" {
+		return cgen.CertManager{}, fmt.Errorf("cert manager version is empty")
+	}
+
+	f := cgen.CertManager{Version: version}
 	err := f.GenerateManifests(ctx, tmpDir)
 	return f, err
 }

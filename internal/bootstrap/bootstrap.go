@@ -371,6 +371,33 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	}
 	delete(refs, env.FluxName)
 
+	certManagerRef, ok := refs[env.CertManagerName]
+	if !ok {
+		return fmt.Errorf("flux component not found")
+	}
+
+	err = b.printer.PrintSpinner(fmt.Sprintf("Installing %s with version %s",
+		printer.BoldBlue(env.CertManagerName),
+		printer.BoldBlue(certManagerRef.GetVersion())))
+	if err != nil {
+		return err
+	}
+	if err = b.installCertManager(ctx, ociRepo, certManagerRef); err != nil {
+		if er := b.printer.StopFailSpinner(fmt.Sprintf("Installing %s with version %s",
+			printer.BoldBlue(env.CertManagerName),
+			printer.BoldBlue(certManagerRef.GetVersion()))); er != nil {
+			err = errors.Join(err, er)
+		}
+		return fmt.Errorf("failed to install flux: %w", err)
+	}
+
+	if err := b.printer.StopSpinner(fmt.Sprintf("Installing %s with version %s",
+		printer.BoldBlue(env.CertManagerName),
+		printer.BoldBlue(certManagerRef.GetVersion()))); err != nil {
+		return err
+	}
+	delete(refs, env.CertManagerName)
+
 	compNs := make(map[string][]string)
 	// install components in order by using the ordered keys
 	comps := getOrderedKeys(refs)
@@ -579,6 +606,30 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 	}
 	if err := inst.Install(ctx, "flux"); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (b *Bootstrap) installCertManager(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference) error {
+	dir, err := mkdirTempDir("cert-manager-install")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+
+	opts := &certManagerOptions{
+		kubeClient:       b.kubeclient,
+		restClientGetter: b.restClientGetter,
+		dir:              dir,
+		timeout:          b.timeout,
+	}
+
+	inst, err := newCertManagerInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
+	if err != nil {
+		return fmt.Errorf("failed to create new cert manager installer: %w", err)
+	}
+	if err := inst.Install(ctx, "cert-manager"); err != nil {
+		return fmt.Errorf("failed to install cert manager: %w", err)
 	}
 	return nil
 }

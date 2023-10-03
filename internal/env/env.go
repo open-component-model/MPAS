@@ -13,6 +13,8 @@ import (
 const (
 	// DefaultFluxVer is the default version of the flux component.
 	DefaultFluxVer = "v2.1.0"
+	// DefaultCertManagerVer is the default version of the flux component.
+	DefaultCertManagerVer = "v1.13.1"
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
 	DefaultOcmControllerVer = "v0.13.0"
 	// DefaultGitControllerVer is the default version of the git-controller component.
@@ -73,6 +75,7 @@ const (
 	MpasProductControllerName = "mpas-product-controller"
 	MpasProjectControllerName = "mpas-project-controller"
 	FluxName                  = "flux"
+	CertManagerName           = "cert-manager"
 )
 
 var (
@@ -80,6 +83,7 @@ var (
 	Components = []string{
 		OcmControllerName,
 		FluxName,
+		CertManagerName,
 		GitControllerName,
 		ReplicationControllerName,
 		MpasProductControllerName,

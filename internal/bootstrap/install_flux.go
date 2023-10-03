@@ -81,7 +81,7 @@ type resources struct {
 	componentResource []byte
 	ocmConfig         []byte
 	imagesResources   map[string]nameTag
-	compomentsList    []string
+	componentList     []string
 }
 
 func newFluxInstall(name, version, owner string, repository ocm.Repository, opts *fluxOptions) (*fluxInstall, error) {
@@ -129,7 +129,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		return fmt.Errorf("failed to get resources: %w", err)
 	}
 
-	f.components = resources.compomentsList
+	f.components = resources.componentList
 
 	if resources.componentResource == nil || resources.ocmConfig == nil {
 		return fmt.Errorf("flux or ocm-config resource not found")
