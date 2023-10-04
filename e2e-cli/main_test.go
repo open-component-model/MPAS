@@ -143,15 +143,14 @@ func retrieveBootStrapConfigVars() (string, string, error) {
 func bootstrapGithub(owner, token string) (*bootstrap.GithubCmd, error) {
 	ctx := context.Background()
 	bootstrapGithubCmd := bootstrap.GithubCmd{
-		Owner:                         owner,
-		Repository:                    repository,
-		Token:                         token,
-		Path:                          targetPath,
-		Registry:                      registry,
-		Components:                    env.Components,
-		DockerconfigPath:              cfg.DockerconfigPath,
-		DestructiveActions:            true,
-		GenerateSelfSignedCertificate: true,
+		Owner:              owner,
+		Repository:         repository,
+		Token:              token,
+		Path:               targetPath,
+		Registry:           registry,
+		Components:         env.Components,
+		DockerconfigPath:   cfg.DockerconfigPath,
+		DestructiveActions: true,
 	}
 
 	// set kubeconfig
@@ -182,18 +181,17 @@ func bootstrapGithub(owner, token string) (*bootstrap.GithubCmd, error) {
 func bootstrapGitea(owner, token, hostname string) (*bootstrap.GiteaCmd, error) {
 	ctx := context.Background()
 	bootstrapGiteaCmd := bootstrap.GiteaCmd{
-		Owner:                         owner,
-		Repository:                    repository,
-		Token:                         token,
-		Hostname:                      hostname,
-		Personal:                      true,
-		Path:                          targetPath,
-		Registry:                      registry,
-		TestURL:                       fmt.Sprintf("http://%s/%s/%s", defautHostname, owner, repository),
-		Components:                    env.Components,
-		DockerconfigPath:              cfg.DockerconfigPath,
-		DestructiveActions:            true,
-		GenerateSelfSignedCertificate: true,
+		Owner:              owner,
+		Repository:         repository,
+		Token:              token,
+		Hostname:           hostname,
+		Personal:           true,
+		Path:               targetPath,
+		Registry:           registry,
+		TestURL:            fmt.Sprintf("http://%s/%s/%s", defautHostname, owner, repository),
+		Components:         env.Components,
+		DockerconfigPath:   cfg.DockerconfigPath,
+		DestructiveActions: true,
 	}
 
 	// set kubeconfig

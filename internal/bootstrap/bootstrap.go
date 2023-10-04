@@ -6,6 +6,7 @@ package bootstrap
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -23,41 +24,42 @@ import (
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/utils"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
 	errReconciledWithWarning = errors.New("reconciled with warning")
 )
 
+var (
+	//go:embed certmanager/bootstrap.yaml
+	certManagerBootstrapManifest []byte
+)
+
 // options contains the options to be used during bootstrap
 type options struct {
-	description            string
-	defaultBranch          string
-	visibility             string
-	personal               bool
-	owner                  string
-	token                  string
-	repositoryName         string
-	targetPath             string
-	commitMessageAppendix  string
-	fromFile               string
-	registry               string
-	dockerConfigPath       string
-	transportType          string
-	kubeclient             client.Client
-	restClientGetter       genericclioptions.RESTClientGetter
-	components             []string
-	interval               time.Duration
-	timeout                time.Duration
-	printer                *printer.Printer
-	testURL                string
-	generateDevCertificate bool
-	caFile                 string
+	description           string
+	defaultBranch         string
+	visibility            string
+	personal              bool
+	owner                 string
+	token                 string
+	repositoryName        string
+	targetPath            string
+	commitMessageAppendix string
+	fromFile              string
+	registry              string
+	dockerConfigPath      string
+	transportType         string
+	kubeclient            client.Client
+	restClientGetter      genericclioptions.RESTClientGetter
+	components            []string
+	interval              time.Duration
+	timeout               time.Duration
+	printer               *printer.Printer
+	testURL               string
+	caFile                string
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -76,13 +78,6 @@ type Bootstrap struct {
 func WithRootFile(caFile string) Option {
 	return func(o *options) {
 		o.caFile = caFile
-	}
-}
-
-// WithGenerateDevCertificate if set, it will generate a self-signed certificate for all controllers.
-func WithGenerateDevCertificate(generate bool) Option {
-	return func(o *options) {
-		o.generateDevCertificate = generate
 	}
 }
 
@@ -443,6 +438,23 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 	}
 
+	err = b.printer.PrintSpinner("Generating certificates for internal registry")
+	if err != nil {
+		return err
+	}
+
+	if err := b.applyCertificateBootstrapManifest(ctx); err != nil {
+		if er := b.printer.StopFailSpinner("Generating certificates for internal registry"); er != nil {
+			err = errors.Join(err, er)
+		}
+
+		return err
+	}
+
+	if err := b.printer.StopSpinner("Generating certificates for internal registry"); err != nil {
+		return err
+	}
+
 	err = b.printer.PrintSpinner("Waiting for components to be ready")
 	if err != nil {
 		return err
@@ -475,45 +487,6 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 			err = errors.Join(err, er)
 		}
 		return fmt.Errorf("failed to report kustomization health: %w", err)
-	}
-
-	// Create Certificate secret if needed
-	if b.generateDevCertificate {
-		ca, key, err := GenerateDeveloperSelfSignedCertificate()
-		if err != nil {
-			return fmt.Errorf("failed to generate developer certificate: %w", err)
-		}
-
-		for _, namespace := range []string{env.DefaultOCMInstallPath, env.DefaultsNamespace} {
-			// Create the Secret in ocm-system and mpas-system namespaces.
-			// After that the secret will have to be duplicated to the project namespace,
-			// but that is out of the scope of the bootstrapper.
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      env.RegistryTLSSecretName,
-					Namespace: namespace,
-				},
-				// These keys are expected by flux to be in this format.
-				Data: map[string][]byte{
-					"ca.crt":  ca,
-					"tls.crt": ca,
-					"tls.key": key,
-				},
-				Type: corev1.SecretTypeOpaque,
-			}
-
-			if _, err := controllerutil.CreateOrUpdate(ctx, b.kubeclient, secret, func() error {
-				err = b.printer.PrintSpinner(fmt.Sprintf("Registry secret in namespace %s already exist; skip creating",
-					printer.BoldBlue(namespace)))
-				if err != nil {
-					return err
-				}
-
-				return nil
-			}); err != nil {
-				return fmt.Errorf("failed to create certificate secret in namespace %s: %w", namespace, err)
-			}
-		}
 	}
 
 	for ns, comps := range compNs {
@@ -738,6 +711,25 @@ func (b *Bootstrap) getCloneURL(repository gitprovider.UserRepository, transport
 	}
 
 	return url, nil
+}
+
+func (b *Bootstrap) applyCertificateBootstrapManifest(ctx context.Context) error {
+	tmp, err := os.MkdirTemp("", "cert-manager-apply")
+	if err != nil {
+		return fmt.Errorf("failed to create temp folder: %w", err)
+	}
+
+	defer os.RemoveAll(tmp)
+
+	if err := os.WriteFile(filepath.Join(tmp, "bootstrap.yaml"), certManagerBootstrapManifest, 0o600); err != nil {
+		return fmt.Errorf("failed to write out bootstrapping manifest: %w", err)
+	}
+
+	if _, err := kubeutils.Apply(ctx, b.restClientGetter, tmp, filepath.Join(tmp, "bootstrap.yaml")); err != nil {
+		return fmt.Errorf("failed to apply bootstrap yaml: %w", err)
+	}
+
+	return nil
 }
 
 func splitSubOrganizationsFromRepositoryName(name string) ([]string, string) {

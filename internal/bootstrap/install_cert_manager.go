@@ -18,6 +18,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	certManager           = "cert-manager"
+	certManagerCAInjector = "cert-manager-cainjector"
+	certManagerWebhook    = "cert-manager-webhook"
+)
+
 type certManagerOptions struct {
 	kubeClient       client.Client
 	restClientGetter genericclioptions.RESTClientGetter
@@ -76,6 +82,10 @@ func (c *certManagerInstall) Install(ctx context.Context, component string) erro
 
 	if _, err := kubeutils.Apply(ctx, c.restClientGetter, tmp, filepath.Join(tmp, "cert-manager.yaml")); err != nil {
 		return fmt.Errorf("failed to apply manifest to cluster: %w", err)
+	}
+
+	if err := kubeutils.ReportComponentsHealth(ctx, c.restClientGetter, c.timeout, []string{certManager, certManagerCAInjector, certManagerWebhook}, "cert-manager"); err != nil {
+		return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
 	}
 
 	return nil

@@ -65,8 +65,10 @@ func Apply(ctx context.Context, rcg genericclioptions.RESTClientGetter, root, ma
 		changeSet.Append(cs.Entries)
 	}
 
-	if err := waitForSet(rcg, changeSet); err != nil {
-		return "", err
+	if len(changeSet.Entries) > 0 {
+		if err := waitForSet(rcg, changeSet); err != nil {
+			return "", fmt.Errorf("failed to wait for changeset: %w", err)
+		}
 	}
 
 	if len(stageTwo) > 0 {
