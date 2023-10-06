@@ -12,7 +12,6 @@ metadata:
   namespace: cert-manager
 spec:
   isCA: true
-  commonName: mpas-bootstrap-certificate
   secretName: ocm-registry-tls-certs
   dnsNames:
     - registry.ocm-system.svc.cluster.local
@@ -35,10 +34,9 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: my-selfsigned-cert-with-root
+  name: ocm-registry-tls-certs
   namespace: ocm-system
 spec:
-  commonName: my-selfsigned-ca
   secretName: ocm-registry-tls-certs
   dnsNames:
     - registry.ocm-system.svc.cluster.local
@@ -53,10 +51,9 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: my-selfsigned-cert-with-root
+  name: ocm-registry-tls-certs
   namespace: mpas-system
 spec:
-  commonName: my-selfsigned-ca
   secretName: ocm-registry-tls-certs
   dnsNames:
     - registry.ocm-system.svc.cluster.local
