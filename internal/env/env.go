@@ -20,13 +20,13 @@ const (
 	// DefaultGitControllerVer is the default version of the git-controller component.
 	DefaultGitControllerVer = "v0.8.0"
 	// DefaultReplicationVer is the default version of the replication-controller component.
-	DefaultReplicationVer = "v0.7.0"
+	DefaultReplicationVer = "v0.8.0"
 	// DefaultMpasProductControllerVer is the default version of the mpas-product-controller component.
-	DefaultMpasProductControllerVer = "v0.4.0"
+	DefaultMpasProductControllerVer = "v0.5.0"
 	// DefaultMpasProjectControllerVer is the default version of the mpas-project-controller component.
-	DefaultMpasProjectControllerVer = "v0.1.2"
+	DefaultMpasProjectControllerVer = "v0.3.0"
 	// DefaultOcmCliVer is the default version of the ocm-cli component.
-	DefaultOcmCliVer = "v0.3.0"
+	DefaultOcmCliVer = "v0.4.1"
 )
 
 const (
