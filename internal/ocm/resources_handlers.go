@@ -17,6 +17,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	metav1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 // from https://github.com/phoban01/gitops-component-cli/blob/main/pkg/component/handlers.go
@@ -78,7 +79,9 @@ func imageHandler(cv ocm.ComponentVersionAccess, opts *addImageOpts) error {
 
 	spec := ociartifact.New(opts.image)
 
-	if err := cv.SetResource(r, spec); err != nil {
+	if err := cv.SetResource(r, spec, ocm.ModificationOptions{
+		ModifyResource: pointer.Bool(true),
+	}); err != nil {
 		return fmt.Errorf("failed to add image: %w", err)
 	}
 
