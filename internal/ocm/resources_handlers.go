@@ -62,9 +62,10 @@ func fileHandler(cv ocm.ComponentVersionAccess, octx ocm.Context, opts *addFileO
 }
 
 type addImageOpts struct {
-	name    string
-	image   string
-	version string
+	name       string
+	image      string
+	version    string
+	skipDigest bool
 }
 
 func imageHandler(cv ocm.ComponentVersionAccess, opts *addImageOpts) error {
@@ -79,9 +80,14 @@ func imageHandler(cv ocm.ComponentVersionAccess, opts *addImageOpts) error {
 
 	spec := ociartifact.New(opts.image)
 
-	if err := cv.SetResource(r, spec, ocm.ModificationOptions{
+	modificationOptions := ocm.ModificationOptions{
 		ModifyResource: pointer.Bool(true),
-	}); err != nil {
+	}
+	if opts.skipDigest {
+		modificationOptions.SkipDigest = pointer.Bool(opts.skipDigest)
+	}
+
+	if err := cv.SetResource(r, spec, modificationOptions); err != nil {
 		return fmt.Errorf("failed to add image: %w", err)
 	}
 
