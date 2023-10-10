@@ -9,7 +9,7 @@ namespace_create('mpas-system') # make sure it exists at this point
 #deploy_cert_manager(version = 'v1.13.1')
 
 print('install certificate bootstrap')
-k8s_yaml(read_file('e2e/certmanager/bootstrap.yaml'))
+k8s_yaml(read_file('e2e/certmanager/bootstrap.yaml'), allow_duplicates = True)
 
 include('../replication-controller/Tiltfile')
 include('../git-controller/Tiltfile')
