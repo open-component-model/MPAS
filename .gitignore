@@ -30,3 +30,6 @@ site/
 e2e/testdata/podinfo/backend/manifests/*
 e2e/testdata/podinfo/frontend/manifests/*
 e2e/testdata/podinfo/redis/manifests/*
+
+# ignore generated root certificate
+hack/rootCA.pem
