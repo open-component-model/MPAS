@@ -64,5 +64,11 @@ test:
 	go test -v ./internal/... $(GO_TEST_ARGS) -coverprofile cover.out
 
 .PHONY: prime-test-cluster
-prime-test-cluster: ## Runs prime-test-cluster in the ocm-controller project. It expects the project to exist.
+prime-test-cluster: mkcert ## Runs prime-test-cluster in the ocm-controller project. It expects the project to exist.
 	./hack/prime_test_cluster.sh
+
+.PHONY: mkcert
+mkcert: $(MKCERT)
+$(MKCERT): $(LOCALBIN)
+	curl -L "https://github.com/FiloSottile/mkcert/releases/download/$(MKCERT_VERSION)/mkcert-$(MKCERT_VERSION)-$(UNAME)-amd64" -o $(LOCALBIN)/mkcert
+	chmod +x $(LOCALBIN)/mkcert
