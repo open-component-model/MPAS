@@ -247,16 +247,10 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	b.printer.Printf("Running %s ...\n",
 		printer.BoldBlue("mpas bootstrap"))
 
-	preparing := func() error {
-		if err := b.reconcileManagementRepository(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
 	if err := b.inSpinner(fmt.Sprintf("Preparing Management repository %s",
-		printer.BoldBlue(b.repositoryName)), preparing); err != nil {
+		printer.BoldBlue(b.repositoryName)), func() error {
+		return b.reconcileManagementRepository(ctx)
+	}); err != nil {
 		return fmt.Errorf("failed to prepare management repository: %w", err)
 	}
 
@@ -292,7 +286,9 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		ociRepo om.Repository
 		err     error
 	)
-	fetching := func() error {
+
+	if err := b.inSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
+		printer.BoldBlue(b.registry)), func() error {
 		ociRepo, err = ocm.MakeRepositoryWithDockerConfig(octx, b.registry, b.dockerConfigPath)
 		if err != nil {
 			return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
@@ -304,28 +300,19 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 
 		return nil
-	}
-
-	if err := b.inSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
-		printer.BoldBlue(b.registry)), fetching); err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to fetch bootstrap components: %w", err)
 	}
 
-	installInfra := func() error {
-		sha, err := b.installInfrastructure(ctx, ociRepo, refs)
-		if err != nil {
-			return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
-		}
-
-		if err := b.syncManagementRepository(ctx, sha); err != nil {
-			return err
-		}
-
-		return nil
+	sha, err := b.installInfrastructure(ctx, ociRepo, refs)
+	if err != nil {
+		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
 	}
 
-	if err := b.inSpinner("Installing infrastructure components", installInfra); err != nil {
-		return fmt.Errorf("failed to install infrastructure components: %w", err)
+	if err := b.inSpinner("Syncing management repository", func() error {
+		return b.syncManagementRepository(ctx, sha)
+	}); err != nil {
+		return err
 	}
 
 	if err := b.inSpinner("Waiting for cert-manager to be available", func() error {
@@ -334,9 +321,6 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 			certManagerCAInjector,
 			certManagerWebhook,
 		}, "cert-manager"); err != nil {
-			if er := b.printer.StopFailSpinner("Waiting for cert-manager to be available"); er != nil {
-				err = errors.Join(err, er)
-			}
 			return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
 		}
 
@@ -344,6 +328,8 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	}); err != nil {
 		return fmt.Errorf("failed to wait for cert-manager to be available: %w", err)
 	}
+
+	// TODO: Install ClusterIssuer and Root Certificate provider.
 
 	compNs := make(map[string][]string)
 	var latestSHA string
@@ -355,7 +341,6 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		if err := b.inSpinner(fmt.Sprintf("Generating %s manifest with version %s",
 			printer.BoldBlue(comp),
 			printer.BoldBlue(ref.GetVersion())), func() error {
-
 			latestSHA, err = b.generateControllerManifest(ctx, ociRepo, comp, ref, compNs)
 			if err != nil {
 				return err
@@ -367,6 +352,18 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 	}
 
+	if err := b.inSpinner("Generate certificate manifests", func() error {
+		latestSHA, err = b.generateCertificateManifests(ctx)
+
+		if err != nil {
+			return fmt.Errorf("failed to generate manifests: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to generate certificate manifests: %w", err)
+	}
+
 	if err := b.inSpinner("Syncing management repository", func() error {
 		return b.syncManagementRepository(ctx, latestSHA)
 	}); err != nil {
@@ -376,9 +373,6 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	if err := b.inSpinner("Waiting for components to be ready", func() error {
 		for ns, comps := range compNs {
 			if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, comps, ns); err != nil {
-				if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-					err = errors.Join(err, er)
-				}
 				return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
 			}
 		}
@@ -399,42 +393,32 @@ func (b *Bootstrap) inSpinner(msg string, f func() error) (err error) {
 		return err
 	}
 
-	defer func() {
-		if serr := b.printer.StopSpinner(msg); serr != nil {
+	if err := f(); err != nil {
+		if serr := b.printer.StopFailSpinner(msg); serr != nil {
 			err = errors.Join(err, serr)
 		}
-	}()
 
-	return f()
+		return err
+	}
+
+	return b.printer.StopSpinner(msg)
 }
 
 func (b *Bootstrap) syncManagementRepository(ctx context.Context, latestSHA string) error {
 	expectedRevision := fmt.Sprintf("%s@sha1:%s", b.defaultBranch, latestSHA)
 	if err := kubeutils.ReconcileGitrepository(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace); err != nil {
-		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-			err = errors.Join(err, er)
-		}
 		return err
 	}
 
 	if err := kubeutils.ReportGitrepositoryHealth(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace, expectedRevision, env.DefaultPollInterval, b.timeout); err != nil {
-		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-			err = errors.Join(err, er)
-		}
 		return fmt.Errorf("failed to report gitrepository health: %w", err)
 	}
 
 	if err := kubeutils.ReconcileKustomization(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace); err != nil {
-		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-			err = errors.Join(err, er)
-		}
 		return err
 	}
 
 	if err := kubeutils.ReportKustomizationHealth(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace, expectedRevision, env.DefaultPollInterval, b.timeout); err != nil {
-		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-			err = errors.Join(err, er)
-		}
 		return fmt.Errorf("failed to report kustomization health: %w", err)
 	}
 
@@ -467,11 +451,6 @@ func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository,
 	}
 	sha, err := inst.install(ctx, fmt.Sprintf("%s-file", comp))
 	if err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Generating %s manifest with version %s",
-			printer.BoldBlue(comp),
-			printer.BoldBlue(ref.GetVersion()))); er != nil {
-			err = errors.Join(err, er)
-		}
 		return "", err
 	}
 	return sha, nil
@@ -661,27 +640,15 @@ func (b *Bootstrap) installInfrastructure(ctx context.Context, ociRepo om.Reposi
 		return "", fmt.Errorf("flux component not found")
 	}
 
-	err := b.printer.PrintSpinner(fmt.Sprintf("Installing %s with version %s",
+	if err := b.inSpinner(fmt.Sprintf("Installing %s with version %s",
 		printer.BoldBlue(env.FluxName),
-		printer.BoldBlue(fluxRef.GetVersion())))
-	if err != nil {
-		return "", err
-	}
+		printer.BoldBlue(fluxRef.GetVersion())), func() error {
 
-	if err = b.installFlux(ctx, ociRepo, fluxRef); err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Installing %s with version %s",
-			printer.BoldBlue(env.FluxName),
-			printer.BoldBlue(fluxRef.GetVersion()))); er != nil {
-			err = errors.Join(err, er)
-		}
+		return b.installFlux(ctx, ociRepo, fluxRef)
+	}); err != nil {
 		return "", fmt.Errorf("failed to install flux: %w", err)
 	}
 
-	if err := b.printer.StopSpinner(fmt.Sprintf("Installing %s with version %s",
-		printer.BoldBlue(env.FluxName),
-		printer.BoldBlue(fluxRef.GetVersion()))); err != nil {
-		return "", err
-	}
 	delete(refs, env.FluxName)
 
 	certManagerRef, ok := refs[env.CertManagerName]
@@ -689,28 +656,23 @@ func (b *Bootstrap) installInfrastructure(ctx context.Context, ociRepo om.Reposi
 		return "", fmt.Errorf("cert-manager component not found")
 	}
 
-	err = b.printer.PrintSpinner(fmt.Sprintf("Installing %s with version %s",
+	var (
+		sha string
+		err error
+	)
+	if err := b.inSpinner(fmt.Sprintf("Installing %s with version %s",
 		printer.BoldBlue(env.CertManagerName),
-		printer.BoldBlue(certManagerRef.GetVersion())))
-	if err != nil {
-		return "", err
-	}
-
-	sha, err := b.installCertManager(ctx, ociRepo, certManagerRef)
-	if err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Installing %s with version %s",
-			printer.BoldBlue(env.CertManagerName),
-			printer.BoldBlue(certManagerRef.GetVersion()))); er != nil {
-			err = errors.Join(err, er)
+		printer.BoldBlue(certManagerRef.GetVersion())), func() error {
+		sha, err = b.installCertManager(ctx, ociRepo, certManagerRef)
+		if err != nil {
+			return err
 		}
-		return "", fmt.Errorf("failed to install flux: %w", err)
+
+		return nil
+	}); err != nil {
+		return "", fmt.Errorf("failed to install cert-manager: %w", err)
 	}
 
-	if err := b.printer.StopSpinner(fmt.Sprintf("Installing %s with version %s",
-		printer.BoldBlue(env.CertManagerName),
-		printer.BoldBlue(certManagerRef.GetVersion()))); err != nil {
-		return "", err
-	}
 	delete(refs, env.CertManagerName)
 
 	return sha, nil
@@ -738,6 +700,19 @@ func (b *Bootstrap) generateControllerManifest(ctx context.Context, ociRepo om.R
 	}
 
 	return latestSHA, nil
+}
+
+func (b *Bootstrap) generateCertificateManifests(ctx context.Context) (string, error) {
+	installer := newCertManifestInstaller(&certManifestOptions{
+		gitRepository:         b.repository,
+		branch:                b.defaultBranch,
+		targetPath:            b.targetPath,
+		provider:              string(b.providerClient.ProviderID()),
+		timeout:               b.timeout,
+		commitMessageAppendix: b.commitMessageAppendix,
+	})
+
+	return installer.Install(ctx)
 }
 
 func splitSubOrganizationsFromRepositoryName(name string) ([]string, string) {

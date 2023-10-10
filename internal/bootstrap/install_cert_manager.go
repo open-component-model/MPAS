@@ -17,7 +17,6 @@ import (
 	"github.com/open-component-model/mpas/internal/env"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -25,11 +24,6 @@ const (
 	certManager           = "cert-manager"
 	certManagerCAInjector = "cert-manager-cainjector"
 	certManagerWebhook    = "cert-manager-webhook"
-)
-
-var (
-	//go:embed certmanager/bootstrap.yaml
-	certManagerBootstrapManifest []byte
 )
 
 type certManagerOptions struct {
@@ -95,12 +89,13 @@ func (c *certManagerInstall) createCommit(ctx context.Context, content []byte) (
 	if c.provider == env.ProviderGitea {
 		data = base64.StdEncoding.EncodeToString(content)
 	}
+
 	path := filepath.Join(c.targetPath, c.namespace, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2]))
 	commitMsg := fmt.Sprintf("Add %s %s manifests", c.componentName, c.version)
 	if c.commitMessageAppendix != "" {
 		commitMsg = commitMsg + "\n\n" + c.commitMessageAppendix
 	}
-	bootstrapYaml := filepath.Join(c.targetPath, c.namespace, "bootstrap.yaml")
+
 	commit, err := c.gitRepository.Commits().Create(ctx,
 		c.branch,
 		commitMsg,
@@ -108,10 +103,6 @@ func (c *certManagerInstall) createCommit(ctx context.Context, content []byte) (
 			{
 				Path:    &path,
 				Content: &data,
-			},
-			{
-				Path:    &bootstrapYaml,
-				Content: pointer.String(string(certManagerBootstrapManifest)),
 			},
 		})
 	if err != nil {
