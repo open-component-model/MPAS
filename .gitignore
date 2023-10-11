@@ -33,3 +33,4 @@ e2e/testdata/podinfo/redis/manifests/*
 
 # ignore generated root certificate
 hack/rootCA.pem
+hack/cert-manager.yaml
