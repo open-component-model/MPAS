@@ -152,7 +152,7 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 				os.Exit(1)
 			}
 		case env.CertManagerName:
-			component, err = r.ReleaseCertManagerComponent(ctx, certManagerVersion, comp)
+			component, err = r.ReleaseCertManagerComponent(ctx, certManagerVersion)
 			if err != nil {
 				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)

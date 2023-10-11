@@ -7,13 +7,11 @@ package bootstrap
 import (
 	"context"
 	_ "embed"
-	"encoding/base64"
 	"fmt"
 	"path/filepath"
 	"time"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
-	"github.com/open-component-model/mpas/internal/env"
 )
 
 var (
@@ -25,7 +23,7 @@ var (
 	mpasCertificate []byte
 )
 
-type certManifestOptions struct {
+type certificateManifestOptions struct {
 	gitRepository         gitprovider.UserRepository
 	branch                string
 	targetPath            string
@@ -34,19 +32,19 @@ type certManifestOptions struct {
 	commitMessageAppendix string
 }
 
-// certManifestInstall is used to install to install cert-manager custom-resources objects
+// certManifestInstall is used to install cert-manager objects
 type certificateManifestsInstall struct {
-	*certManifestOptions
+	*certificateManifestOptions
 }
 
-// newCertManifestInstall returns a new component install
-func newCertManifestInstaller(opts *certManifestOptions) *certManifestInstall {
-	return &certManifestInstall{
-		certManifestOptions: opts,
+// newCertificateManifestInstaller returns a new certificate installer
+func newCertificateManifestInstaller(opts *certificateManifestOptions) *certificateManifestsInstall {
+	return &certificateManifestsInstall{
+		certificateManifestOptions: opts,
 	}
 }
 
-func (c *certManifestInstall) Install(ctx context.Context) (string, error) {
+func (c *certificateManifestsInstall) Install(ctx context.Context) (string, error) {
 	clusterIssuerPath := filepath.Join(c.targetPath, "cert-manager", "cluster_issuer.yaml")
 	mpasCertificatePath := filepath.Join(c.targetPath, "mpas-system", "mpas_certificate.yaml")
 	ocmCertificatePath := filepath.Join(c.targetPath, "ocm-system", "ocm_certificate.yaml")
@@ -55,21 +53,9 @@ func (c *certManifestInstall) Install(ctx context.Context) (string, error) {
 		commitMsg = commitMsg + "\n\n" + c.commitMessageAppendix
 	}
 
-	clusterIssuerData := string(clusterIssuer)
-	if c.provider == env.ProviderGitea {
-		clusterIssuerData = base64.StdEncoding.EncodeToString(clusterIssuer)
-	}
-
-	mpasCertificateData := string(mpasCertificate)
-	if c.provider == env.ProviderGitea {
-		mpasCertificateData = base64.StdEncoding.EncodeToString(mpasCertificate)
-	}
-
-	ocmCertificateData := string(ocmCertificate)
-	if c.provider == env.ProviderGitea {
-		ocmCertificateData = base64.StdEncoding.EncodeToString(ocmCertificate)
-	}
-
+	clusterIssuerData := SetProviderDataFormat(c.provider, clusterIssuer)
+	mpasCertificateData := SetProviderDataFormat(c.provider, mpasCertificate)
+	ocmCertificateData := SetProviderDataFormat(c.provider, ocmCertificate)
 	commit, err := c.gitRepository.Commits().Create(ctx,
 		c.branch,
 		commitMsg,

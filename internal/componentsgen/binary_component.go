@@ -29,8 +29,8 @@ type Binary struct {
 
 // Get downloads the binary file and the checksum file and validates the checksum.
 func (b *Binary) Get(ctx context.Context, tmpDir string) error {
-	if err := validateVersion(b.Version); err != nil {
-		return fmt.Errorf("invalid version: %w", err)
+	if err := b.validateVersion(); err != nil {
+		return err
 	}
 
 	var (
@@ -131,4 +131,15 @@ func (b *Binary) writeFile(rootDir string) (string, error) {
 		return "", err
 	}
 	return path, nil
+}
+
+func (b *Binary) validateVersion() error {
+	if b.Version == "" || b.Version == "latest" {
+		return fmt.Errorf("version must not be empty or latest")
+	}
+
+	if !strings.HasPrefix(b.Version, "v") {
+		return fmt.Errorf("version must start with v")
+	}
+	return nil
 }

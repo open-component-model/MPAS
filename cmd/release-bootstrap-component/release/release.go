@@ -79,7 +79,7 @@ func (r *Releaser) ReleaseBootstrapComponent(
 	ctx context.Context,
 	components map[string]*ocm.Component,
 	bootstrapVersion string,
-) error {
+) (err error) {
 	component, err := ocm.NewComponent(r.octx,
 		fmt.Sprintf("%s/bootstrap", env.ComponentNamePrefix),
 		bootstrapVersion,
@@ -95,9 +95,8 @@ func (r *Releaser) ReleaseBootstrapComponent(
 		return fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
-		er := component.Close()
-		if err == nil {
-			err = errors.Join(err, er)
+		if cerr := component.Close(); cerr != nil {
+			err = errors.Join(err, cerr)
 		}
 	}()
 
@@ -340,9 +339,8 @@ func (r *Releaser) ReleaseFluxCliComponent(
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
-		er := component.Close()
-		if err == nil {
-			err = errors.Join(err, er)
+		if cerr := component.Close(); cerr != nil {
+			err = errors.Join(err, cerr)
 		}
 	}()
 
@@ -359,7 +357,7 @@ func (r *Releaser) ReleaseFluxCliComponent(
 // ReleaseCertManagerComponent releases cert-manager with all its components
 func (r *Releaser) ReleaseCertManagerComponent(
 	ctx context.Context,
-	version, comp string,
+	version string,
 ) (*ocm.Component, error) {
 	f, err := generateCertManager(ctx, version, r.tmpDir)
 	if err != nil {
@@ -416,8 +414,8 @@ func (r *Releaser) ReleaseOCMCliComponent(
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
-		if er := component.Close(); err == nil {
-			err = errors.Join(err, er)
+		if cerr := component.Close(); cerr != nil {
+			err = errors.Join(err, cerr)
 		}
 	}()
 
@@ -443,9 +441,8 @@ func (r *Releaser) release(
 		return fmt.Errorf("failed to create ctf: %w", err)
 	}
 	defer func() {
-		er := component.Close()
-		if err == nil {
-			err = errors.Join(err, er)
+		if cerr := component.Close(); cerr != nil {
+			err = errors.Join(err, cerr)
 		}
 	}()
 

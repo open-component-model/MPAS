@@ -276,7 +276,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 
 		if err := b.inSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
-			printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry)), fromFilePrepare); err != nil {
+			printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry)), fromFileToOciRepo); err != nil {
 			return fmt.Errorf("failed to prepare from file: %w", err)
 		}
 	}
@@ -309,7 +309,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to install infrastructure: %w", err)
 	}
 
-	if err := b.inSpinner("Syncing management repository", func() error {
+	if err := b.inSpinner("Reconciling infrastructure components", func() error {
 		return b.syncManagementRepository(ctx, sha)
 	}); err != nil {
 		return err
@@ -328,8 +328,6 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	}); err != nil {
 		return fmt.Errorf("failed to wait for cert-manager to be available: %w", err)
 	}
-
-	// TODO: Install ClusterIssuer and Root Certificate provider.
 
 	compNs := make(map[string][]string)
 	var latestSHA string
@@ -364,7 +362,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to generate certificate manifests: %w", err)
 	}
 
-	if err := b.inSpinner("Syncing management repository", func() error {
+	if err := b.inSpinner("Reconciling infrastructure components", func() error {
 		return b.syncManagementRepository(ctx, latestSHA)
 	}); err != nil {
 		return err
@@ -703,7 +701,7 @@ func (b *Bootstrap) generateControllerManifest(ctx context.Context, ociRepo om.R
 }
 
 func (b *Bootstrap) generateCertificateManifests(ctx context.Context) (string, error) {
-	installer := newCertManifestInstaller(&certManifestOptions{
+	installer := newCertificateManifestInstaller(&certificateManifestOptions{
 		gitRepository:         b.repository,
 		branch:                b.defaultBranch,
 		targetPath:            b.targetPath,
