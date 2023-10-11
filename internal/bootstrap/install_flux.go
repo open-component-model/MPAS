@@ -135,7 +135,7 @@ func (f *fluxInstall) Install(ctx context.Context, component string) error {
 		return fmt.Errorf("flux or ocm-config resource not found")
 	}
 
-	kfile, kus, err := f.generateKustomization(resources.componentResource, resources.ocmConfig)
+	kfile, kus, err := f.generateKustomization(resources.componentResource)
 	if err != nil {
 		return err
 	}
@@ -249,12 +249,12 @@ func buildKustomization(kus kustypes.Kustomization, kfile, dir string, mu sync.L
 	return res, nil
 }
 
-func (f *fluxInstall) generateKustomization(fluxResource []byte, ocmConfig []byte) (string, kustypes.Kustomization, error) {
+func (f *fluxInstall) generateKustomization(fluxResource []byte) (string, kustypes.Kustomization, error) {
 	if err := os.WriteFile(filepath.Join(f.dir, "gotk-components.yaml"), fluxResource, os.ModePerm); err != nil {
 		return "", kustypes.Kustomization{}, err
 	}
 
-	return genKus(f.dir, ocmConfig, "./gotk-components.yaml")
+	return genKus(f.dir, "./gotk-components.yaml")
 }
 
 func (f *fluxInstall) Cleanup(ctx context.Context) error {
@@ -359,7 +359,7 @@ func (f *fluxInstall) cleanGitRepoDir() (err error) {
 	return
 }
 
-func genKus(dir string, ocmConfig []byte, resourceName string) (string, kustypes.Kustomization, error) {
+func genKus(dir string, resourceName string) (string, kustypes.Kustomization, error) {
 	kfile, err := generateKustomizationFile(dir, resourceName)
 	if err != nil {
 		return "", kustypes.Kustomization{}, err

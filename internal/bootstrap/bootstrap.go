@@ -430,8 +430,6 @@ func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository,
 	}
 	defer os.RemoveAll(dir)
 	opts := &componentOptions{
-		kubeClient:            b.kubeclient,
-		restClientGetter:      b.restClientGetter,
 		gitRepository:         b.repository,
 		branch:                b.defaultBranch,
 		targetPath:            b.targetPath,
@@ -503,8 +501,6 @@ func (b *Bootstrap) installCertManager(ctx context.Context, ociRepo om.Repositor
 	defer os.RemoveAll(dir)
 
 	opts := &certManagerOptions{
-		kubeClient:            b.kubeclient,
-		restClientGetter:      b.restClientGetter,
 		gitRepository:         b.repository,
 		dir:                   dir,
 		branch:                b.defaultBranch,

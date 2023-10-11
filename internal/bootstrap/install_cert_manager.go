@@ -14,8 +14,6 @@ import (
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -25,8 +23,6 @@ const (
 )
 
 type certManagerOptions struct {
-	kubeClient            client.Client
-	restClientGetter      genericclioptions.RESTClientGetter
 	gitRepository         gitprovider.UserRepository
 	dir                   string
 	branch                string
@@ -42,6 +38,8 @@ type certManagerInstall struct {
 	componentName string
 	version       string
 	repository    ocm.Repository
+	kustomizer    *Kustomizer
+
 	*certManagerOptions
 }
 
@@ -52,29 +50,24 @@ func newCertManagerInstall(name, version string, repository ocm.Repository, opts
 		version:            version,
 		repository:         repository,
 		certManagerOptions: opts,
+		kustomizer: NewKustomizer(&kustomizerOptions{
+			componentName: name,
+			version:       version,
+			repository:    repository,
+			dir:           opts.dir,
+		}),
 	}
 
 	return c, nil
 }
 
 func (c *certManagerInstall) Install(ctx context.Context, component string) (string, error) {
-	cv, err := getComponentVersion(c.repository, c.componentName, c.version)
+	res, err := c.kustomizer.generateKustomizedResourceData(component)
 	if err != nil {
-		return "", fmt.Errorf("failed to get component version: %w", err)
+		return "", fmt.Errorf("failed to generate component yaml: %w", err)
 	}
 
-	resources, err := getResources(cv, component)
-	if err != nil {
-		return "", fmt.Errorf("failed to get resources: %w", err)
-	}
-
-	if resources.componentResource == nil || resources.ocmConfig == nil {
-		return "", fmt.Errorf("failed to get component resource or ocm config")
-	}
-
-	content := resources.componentResource
-
-	sha, err := c.createCommit(ctx, content)
+	sha, err := c.createCommit(ctx, res)
 	if err != nil {
 		return "", fmt.Errorf("failed to reconcile components: %w", err)
 	}
