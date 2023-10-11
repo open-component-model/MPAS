@@ -35,7 +35,7 @@ type certManifestOptions struct {
 }
 
 // certManifestInstall is used to install to install cert-manager custom-resources objects
-type certManifestInstall struct {
+type certificateManifestsInstall struct {
 	*certManifestOptions
 }
 

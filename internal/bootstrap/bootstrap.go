@@ -306,7 +306,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 
 	sha, err := b.installInfrastructure(ctx, ociRepo, refs)
 	if err != nil {
-		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
+		return fmt.Errorf("failed to install infrastructure: %w", err)
 	}
 
 	if err := b.inSpinner("Syncing management repository", func() error {
