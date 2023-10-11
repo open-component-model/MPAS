@@ -255,7 +255,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	}
 
 	if b.fromFile != "" {
-		fromFilePrepare := func() error {
+		fromFileToOciRepo := func() error {
 			ctf, err := ocm.RepositoryFromCTF(b.fromFile)
 			if err != nil {
 				return fmt.Errorf("failed to create CTF from file %q: %w", b.fromFile, err)
