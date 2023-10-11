@@ -34,7 +34,7 @@ type certManifestOptions struct {
 	commitMessageAppendix string
 }
 
-// certManifestInstall is used to install cert-manager
+// certManifestInstall is used to install to install cert-manager custom-resources objects
 type certManifestInstall struct {
 	*certManifestOptions
 }
