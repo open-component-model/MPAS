@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
+	"github.com/open-component-model/mpas/internal/env"
 	"github.com/open-component-model/mpas/internal/kubeutils"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 )
@@ -49,6 +50,7 @@ func newComponentInstall(name, version string, repository ocm.Repository, opts *
 			version:       version,
 			repository:    repository,
 			dir:           opts.dir,
+			host:          env.DefaultOCMHost,
 		}),
 	}
 

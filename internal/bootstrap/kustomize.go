@@ -11,10 +11,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/open-component-model/mpas/internal/env"
+	"github.com/fluxcd/pkg/kustomize"
 	cfd "github.com/open-component-model/ocm-controller/pkg/configdata"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	kustypes "sigs.k8s.io/kustomize/api/types"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
+	"sigs.k8s.io/yaml"
 )
 
 type kustomizerOptions struct {
@@ -22,6 +24,7 @@ type kustomizerOptions struct {
 	repository    ocm.Repository
 	componentName string
 	version       string
+	host          string
 }
 
 type Kustomizer struct {
@@ -78,11 +81,39 @@ func (k *Kustomizer) generateComponentYaml(kconfig *cfd.ConfigData, imagesResour
 	for _, loc := range kconfig.Localization {
 		image := imagesResources[loc.Resource.Name]
 		kus.Images = append(kus.Images, kustypes.Image{
-			Name:    fmt.Sprintf("%s/%s", env.DefaultOCMHost, loc.Resource.Name),
+			Name:    fmt.Sprintf("%s/%s", k.host, loc.Resource.Name),
 			NewName: image.Name,
 			NewTag:  image.Tag,
 		})
 	}
 
 	return buildKustomization(kus, kfile, k.dir, &k.mu)
+}
+
+func buildKustomization(kus kustypes.Kustomization, kfile, dir string, mu sync.Locker) ([]byte, error) {
+	manifest, err := yaml.Marshal(kus)
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.WriteFile(kfile, manifest, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+
+	fs := filesys.MakeFsOnDisk()
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	m, err := kustomize.Build(fs, dir)
+	if err != nil {
+		return nil, fmt.Errorf("kustomize build failed: %w", err)
+	}
+
+	res, err := m.AsYaml()
+	if err != nil {
+		return nil, fmt.Errorf("kustomize build failed: %w", err)
+	}
+	return res, nil
 }

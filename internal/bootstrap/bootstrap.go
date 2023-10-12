@@ -676,12 +676,12 @@ func (b *Bootstrap) generateControllerManifest(ctx context.Context, ociRepo om.R
 	var latestSHA string
 	switch comp {
 	case env.OcmControllerName, env.GitControllerName, env.ReplicationControllerName:
-		sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
+		sha, err := b.installComponent(ctx, ociRepo, ref, comp, env.DefaultOCMNamespace, compNs)
 		if err != nil {
 			return "", err
 		}
 		latestSHA = sha
-		compNs["ocm-system"] = append(compNs["ocm-system"], comp)
+		compNs[env.DefaultOCMNamespace] = append(compNs[env.DefaultOCMNamespace], comp)
 	case env.MpasProductControllerName, env.MpasProjectControllerName:
 		sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
 		if err != nil {

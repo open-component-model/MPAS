@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
+	"github.com/open-component-model/mpas/internal/env"
 )
 
 var (
@@ -47,7 +48,7 @@ func newCertificateManifestInstaller(opts *certificateManifestOptions) *certific
 func (c *certificateManifestsInstall) Install(ctx context.Context) (string, error) {
 	clusterIssuerPath := filepath.Join(c.targetPath, "cert-manager", "cluster_issuer.yaml")
 	mpasCertificatePath := filepath.Join(c.targetPath, "mpas-system", "mpas_certificate.yaml")
-	ocmCertificatePath := filepath.Join(c.targetPath, "ocm-system", "ocm_certificate.yaml")
+	ocmCertificatePath := filepath.Join(c.targetPath, env.DefaultOCMNamespace, "ocm_certificate.yaml")
 	commitMsg := "Add cluster issuer and namespace certificates"
 	if c.commitMessageAppendix != "" {
 		commitMsg = commitMsg + "\n\n" + c.commitMessageAppendix

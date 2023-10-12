@@ -51,16 +51,23 @@ func Transfer(octx ocm.Context, repo, target ocm.Repository, writer io.Writer) (
 	printer := common.NewPrinter(writer)
 	closure := transfer.TransportClosure{}
 	transferopts := &standard.Options{}
-	transferhandler.From(octx.ConfigContext(), transferopts)
-	transferhandler.ApplyOptions(transferopts,
+	if err := transferhandler.From(octx.ConfigContext(), transferopts); err != nil {
+		return fmt.Errorf("failed to create transfer handler: %w", err)
+	}
+
+	if err := transferhandler.ApplyOptions(transferopts,
 		standard.Recursive(true),
 		standard.ResourcesByValue(true),
 		standard.Overwrite(),
-		standard.Resolver(target))
+		standard.Resolver(target)); err != nil {
+		return fmt.Errorf("failed to apply options: %w", err)
+	}
+
 	transferHandler, err := standard.New(transferopts)
 	if err != nil {
 		return err
 	}
+
 	for _, cname := range comps {
 		loop := finalize.Nested()
 

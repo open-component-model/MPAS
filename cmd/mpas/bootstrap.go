@@ -31,7 +31,7 @@ func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 				return fmt.Errorf("no provider specified, see mpas bootstrap --help for more information")
 			}
 			ctx := cmd.Context()
-			url := env.DefautBootstrapBundleLocation
+			url := env.DefaultBootstrapBundleLocation
 			err = bootstrap.Export(ctx, cfg, url)
 			if err != nil {
 				return err

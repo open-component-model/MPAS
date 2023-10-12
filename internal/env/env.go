@@ -40,23 +40,21 @@ const (
 	DefaultOCMHost = "ghcr.io/open-component-model"
 	// DefaultBootstrapComponentLocation is the default location of the bootstrap component.
 	DefaultBootstrapComponentLocation = "ghcr.io/open-component-model/mpas-bootstrap-component"
-	// DefautBootstrapBundleLocation is the default location of the bootstrap bundle.
-	DefautBootstrapBundleLocation = DefaultBootstrapComponentLocation + "-bundle"
+	// DefaultBootstrapBundleLocation is the default location of the bootstrap bundle.
+	DefaultBootstrapBundleLocation = DefaultBootstrapComponentLocation + "-bundle"
 	// DefaultFluxHost is the default host for the flux components.
 	DefaultFluxHost = "ghcr.io/fluxcd"
 	// DefaultCertManagerHost is the default host for the cert-manager components.
 	DefaultCertManagerHost = "quay.io/jetstack"
-	// DefaultOCMInstallPath is the default path to install the ocm components.
-	DefaultOCMInstallPath = "ocm-system"
 	// DefaultFluxNamespace is the default namespace to install the flux components.
 	DefaultFluxNamespace = "flux-system"
-	// RegistryTLSSecretName is the name of the secret in which we store the TLS creds for the in-cluster registry.
-	RegistryTLSSecretName = "ocm-registry-tls-certs"
 )
 
 const (
-	// DefaultsNamespace is the mpas-system namespace.
-	DefaultsNamespace = "mpas-system"
+	// DefaultOCMNamespace is the default path to install the ocm components.
+	DefaultOCMNamespace = "ocm-system"
+	// DefaultMPASNamespace is the mpas-system namespace.
+	DefaultMPASNamespace = "mpas-system"
 	// GithubTokenVar is the name of the environment variable to use to get the github token.
 	GithubTokenVar = "GITHUB_TOKEN"
 	// GiteaTokenVar is the name of the environment variable to use to get the gitea token.

@@ -26,7 +26,6 @@ import (
 	"github.com/fluxcd/pkg/git"
 	"github.com/fluxcd/pkg/git/gogit"
 	"github.com/fluxcd/pkg/git/repository"
-	"github.com/fluxcd/pkg/kustomize"
 	rateoption "github.com/fluxcd/pkg/runtime/client"
 	"github.com/open-component-model/mpas/internal/env"
 	"github.com/open-component-model/mpas/internal/kubeutils"
@@ -38,7 +37,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/kustomize/api/konfig"
 	kustypes "sigs.k8s.io/kustomize/api/types"
-	"sigs.k8s.io/kustomize/kyaml/filesys"
 	"sigs.k8s.io/yaml"
 )
 
@@ -219,34 +217,6 @@ func (f *fluxInstall) generateGOTKComponent(kconfig *cfd.ConfigData, imagesResou
 	}
 
 	return buildKustomization(kus, kfile, f.dir, &f.mu)
-}
-
-func buildKustomization(kus kustypes.Kustomization, kfile, dir string, mu sync.Locker) ([]byte, error) {
-	manifest, err := yaml.Marshal(kus)
-	if err != nil {
-		return nil, err
-	}
-
-	err = os.WriteFile(kfile, manifest, os.ModePerm)
-	if err != nil {
-		return nil, err
-	}
-
-	fs := filesys.MakeFsOnDisk()
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	m, err := kustomize.Build(fs, dir)
-	if err != nil {
-		return nil, fmt.Errorf("kustomize build failed: %w", err)
-	}
-
-	res, err := m.AsYaml()
-	if err != nil {
-		return nil, fmt.Errorf("kustomize build failed: %w", err)
-	}
-	return res, nil
 }
 
 func (f *fluxInstall) generateKustomization(fluxResource []byte) (string, kustypes.Kustomization, error) {

@@ -155,7 +155,6 @@ func bootstrapGithub(owner, token string) (*bootstrap.GithubCmd, error) {
 
 	// set kubeconfig
 	kubeconfig := envConf.KubeconfigFile()
-	fmt.Println("kubeconfig: ", kubeconfig)
 	cfg.KubeConfigArgs.KubeConfig = &kubeconfig
 
 	timeout, err := time.ParseDuration(cfg.Timeout)

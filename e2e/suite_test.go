@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 	cfg := envconf.NewWithKubeConfig(path)
 	testEnv = env.NewWithConfig(cfg)
 	//kindClusterName = envconf.RandomName("mpas-e2e", 32)
-	namespace = "ocm-system"
+	namespace = env.DefaultOCMNamespace
 
 	stopChannelRegistry := make(chan struct{}, 1)
 	stopChannelGitea := make(chan struct{}, 1)
