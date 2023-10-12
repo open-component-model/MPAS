@@ -20,6 +20,8 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envfuncs"
 
 	"github.com/open-component-model/ocm-e2e-framework/shared"
+
+	mpasenv "github.com/open-component-model/mpas/internal/env"
 )
 
 var (
@@ -34,8 +36,7 @@ func TestMain(m *testing.M) {
 	path := conf.ResolveKubeConfigFile()
 	cfg := envconf.NewWithKubeConfig(path)
 	testEnv = env.NewWithConfig(cfg)
-	//kindClusterName = envconf.RandomName("mpas-e2e", 32)
-	namespace = env.DefaultOCMNamespace
+	namespace = mpasenv.DefaultOCMNamespace
 
 	stopChannelRegistry := make(chan struct{}, 1)
 	stopChannelGitea := make(chan struct{}, 1)

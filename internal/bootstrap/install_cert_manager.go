@@ -39,7 +39,7 @@ type certManagerInstall struct {
 	componentName string
 	version       string
 	repository    ocm.Repository
-	kustomizer    *Kustomizer
+	kustomizer    Kustomizer
 
 	*certManagerOptions
 }
@@ -64,7 +64,7 @@ func newCertManagerInstall(name, version string, repository ocm.Repository, opts
 }
 
 func (c *certManagerInstall) Install(ctx context.Context, component string) (string, error) {
-	res, err := c.kustomizer.generateKustomizedResourceData(component)
+	res, err := c.kustomizer.GenerateKustomizedResourceData(component)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate component yaml: %w", err)
 	}

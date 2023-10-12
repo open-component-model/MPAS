@@ -16,8 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
-	"github.com/containers/image/v5/pkg/compression"
 	flux "github.com/fluxcd/flux2/v2/pkg/bootstrap"
 	"github.com/fluxcd/flux2/v2/pkg/log"
 	"github.com/fluxcd/flux2/v2/pkg/manifestgen/install"
@@ -31,7 +29,6 @@ import (
 	"github.com/open-component-model/mpas/internal/kubeutils"
 	cfd "github.com/open-component-model/ocm-controller/pkg/configdata"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,19 +64,6 @@ type fluxInstall struct {
 	*fluxOptions
 	// mu is used to synchronize access to the kustomization file
 	mu sync.Mutex
-}
-
-type nameTag struct {
-	Name string
-	Tag  string
-}
-
-// resources contains the resources extracted from the component version
-type resources struct {
-	componentResource []byte
-	ocmConfig         []byte
-	imagesResources   map[string]nameTag
-	componentList     []string
 }
 
 func newFluxInstall(name, version, owner string, repository ocm.Repository, opts *fluxOptions) (*fluxInstall, error) {
@@ -374,114 +358,6 @@ func generateKustomizationFile(path, resource string) (string, error) {
 		return "", err
 	}
 	return kfile, os.WriteFile(kfile, kd, os.ModePerm)
-}
-
-// getComponentVersion returns the component version matching the given version constraint.
-func getComponentVersion(repository ocm.Repository, componentName, version string) (ocm.ComponentVersionAccess, error) {
-	c, err := repository.LookupComponent(componentName)
-	if err != nil {
-		return nil, err
-	}
-	vnames, err := c.ListVersions()
-	if err != nil {
-		return nil, err
-	}
-	constraint, err := semver.NewConstraint(version)
-	if err != nil {
-		return nil, err
-	}
-	var ver *semver.Version
-	for _, vname := range vnames {
-		v, err := semver.NewVersion(vname)
-		if err != nil {
-			return nil, err
-		}
-		if constraint.Check(v) {
-			ver = v
-			break
-		}
-	}
-
-	if ver == nil {
-		return nil, errors.New("no matching version found")
-	}
-
-	cv, err := c.LookupVersion(ver.Original())
-	if err != nil {
-		return nil, err
-	}
-	return cv, nil
-}
-
-func getResources(cv ocm.ComponentVersionAccess, componentName string) (resources, error) {
-	res := cv.GetResources()
-	var (
-		componentResource []byte
-		ocmConfig         []byte
-		imagesResources   = make(map[string]nameTag, 0)
-		comps             = make([]string, 0)
-		err               error
-	)
-	for _, resource := range res {
-		switch resource.Meta().GetName() {
-		case componentName:
-			componentResource, err = getResourceContent(resource)
-			if err != nil {
-				return resources{}, err
-			}
-		case "ocm-config":
-			ocmConfig, err = getResourceContent(resource)
-			if err != nil {
-				return resources{}, err
-			}
-		default:
-			if resource.Meta().GetType() == "ociImage" {
-				name, version := getResourceRef(resource)
-				imagesResources[resource.Meta().GetName()] = struct {
-					Name string
-					Tag  string
-				}{
-					Name: name,
-					Tag:  version,
-				}
-				comps = append(comps, resource.Meta().GetName())
-			}
-		}
-	}
-	return resources{componentResource, ocmConfig, imagesResources, comps}, nil
-}
-
-func getResourceContent(resource ocm.ResourceAccess) ([]byte, error) {
-	access, err := resource.AccessMethod()
-	if err != nil {
-		return nil, err
-	}
-
-	reader, err := access.Reader()
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	decompressedReader, decompressed, err := compression.AutoDecompress(reader)
-	if err != nil {
-		return nil, err
-	}
-	if decompressed {
-		defer decompressedReader.Close()
-	}
-	return io.ReadAll(decompressedReader)
-}
-
-func getResourceRef(resource ocm.ResourceAccess) (string, string) {
-	a, err := resource.Access()
-	if err != nil {
-		return "", ""
-	}
-	spec := a.(*ociartifact.AccessSpec)
-	im := spec.ImageReference
-	name, version := strings.Split(im, ":")[0], strings.Split(im, ":")[1]
-	return name, version
 }
 
 func unMarshallConfig(data []byte) (*cfd.ConfigData, error) {

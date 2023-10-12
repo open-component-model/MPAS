@@ -140,13 +140,13 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 		var component *ocm.Component
 		switch comp {
 		case env.OcmControllerName:
-			component, err = r.ReleaseOcmControllerComponent(ctx, ocmControllerVersion, comp)
+			component, err = r.ReleaseOcmControllerComponent(ctx, ocmControllerVersion)
 			if err != nil {
 				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
 		case env.FluxName:
-			component, err = r.ReleaseFluxComponent(ctx, fluxVersion, comp)
+			component, err = r.ReleaseFluxComponent(ctx, fluxVersion)
 			if err != nil {
 				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
@@ -158,25 +158,25 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 				os.Exit(1)
 			}
 		case env.GitControllerName:
-			component, err = r.ReleaseGitControllerComponent(ctx, gitControllerVersion, comp)
+			component, err = r.ReleaseGitControllerComponent(ctx, gitControllerVersion)
 			if err != nil {
 				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
 		case env.ReplicationControllerName:
-			component, err = r.ReleaseReplicationControllerComponent(ctx, replicationControllerVersion, comp)
+			component, err = r.ReleaseReplicationControllerComponent(ctx, replicationControllerVersion)
 			if err != nil {
 				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
 		case env.MpasProductControllerName:
-			component, err = r.ReleaseMpasProductControllerComponent(ctx, mpasProductControllerVersion, comp)
+			component, err = r.ReleaseMpasProductControllerComponent(ctx, mpasProductControllerVersion)
 			if err != nil {
 				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
 			}
 		case env.MpasProjectControllerName:
-			component, err = r.ReleaseMpasProjectControllerComponent(ctx, mpasProjectControllerVersion, comp)
+			component, err = r.ReleaseMpasProjectControllerComponent(ctx, mpasProjectControllerVersion)
 			if err != nil {
 				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)
@@ -188,13 +188,13 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 		var component *ocm.Component
 		switch comp {
 		case "flux-cli":
-			component, err = r.ReleaseFluxCliComponent(ctx, fluxVersion, comp, targetOS, targetArch)
+			component, err = r.ReleaseFluxCliComponent(ctx, fluxVersion, targetOS, targetArch)
 			if err != nil {
 				fmt.Println("Failed to release flux-cli component: ", err)
 				os.Exit(1)
 			}
 		case "ocm-cli":
-			component, err = r.ReleaseOCMCliComponent(ctx, ocmCliVersion, comp, targetOS, targetArch)
+			component, err = r.ReleaseOCMCliComponent(ctx, ocmCliVersion, targetOS, targetArch)
 			if err != nil {
 				fmt.Println("Failed to release ocm-cli component: ", err)
 				os.Exit(1)
@@ -203,7 +203,7 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 		generatedComponents[comp] = component
 	}
 
-	if err := r.ReleaseBootstrapComponent(ctx, generatedComponents, version.Tag); err != nil {
+	if err := r.ReleaseBootstrapComponent(generatedComponents, version.Tag); err != nil {
 		fmt.Println("Failed to release bootstrap component: ", err)
 		os.Exit(1)
 	}

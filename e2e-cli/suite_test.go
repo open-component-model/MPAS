@@ -65,7 +65,7 @@ func TestMain(m *testing.M) {
 
 	testEnv.Setup(
 		envfuncs.CreateKindCluster(kindClusterName),
-		envfuncs.CreateNamespace(env.DefaultOCMNamespace),
+		envfuncs.CreateNamespace(env2.DefaultOCMNamespace),
 		envfuncs.CreateNamespace("mpas-system"),
 		envfuncs.CreateNamespace(namespace),
 		shared.StartGitServer(namespace),

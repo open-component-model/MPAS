@@ -76,7 +76,6 @@ func New(
 
 // ReleaseBootstrapComponent releases the bootstrap component.
 func (r *Releaser) ReleaseBootstrapComponent(
-	ctx context.Context,
 	components map[string]*ocm.Component,
 	bootstrapVersion string,
 ) (err error) {
@@ -115,7 +114,7 @@ func (r *Releaser) ReleaseBootstrapComponent(
 // ReleaseOcmControllerComponent releases the ocm-controller component.
 func (r *Releaser) ReleaseOcmControllerComponent(
 	ctx context.Context,
-	ocmVersion, comp string,
+	ocmVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -147,7 +146,7 @@ func (r *Releaser) ReleaseOcmControllerComponent(
 // ReleaseGitControllerComponent releases the git-controller component.
 func (r *Releaser) ReleaseGitControllerComponent(
 	ctx context.Context,
-	gitVersion, comp string,
+	gitVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -179,7 +178,7 @@ func (r *Releaser) ReleaseGitControllerComponent(
 // ReleaseReplicationControllerComponent releases the replication-controller component.
 func (r *Releaser) ReleaseReplicationControllerComponent(
 	ctx context.Context,
-	replicationVersion, comp string,
+	replicationVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -211,7 +210,7 @@ func (r *Releaser) ReleaseReplicationControllerComponent(
 // ReleaseMpasProductControllerComponent releases the mpas-product-controller component.
 func (r *Releaser) ReleaseMpasProductControllerComponent(
 	ctx context.Context,
-	mpasProductVersion, comp string,
+	mpasProductVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -243,7 +242,7 @@ func (r *Releaser) ReleaseMpasProductControllerComponent(
 // ReleaseMpasProjectControllerComponent releases the mpas-project-controller component.
 func (r *Releaser) ReleaseMpasProjectControllerComponent(
 	ctx context.Context,
-	mpasProjectVersion, comp string,
+	mpasProjectVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -275,7 +274,7 @@ func (r *Releaser) ReleaseMpasProjectControllerComponent(
 // ReleaseFluxComponent releases flux with all its components
 func (r *Releaser) ReleaseFluxComponent(
 	ctx context.Context,
-	fluxVersion, comp string,
+	fluxVersion string,
 ) (*ocm.Component, error) {
 	f, err := generateFlux(ctx, fluxVersion, r.tmpDir)
 	if err != nil {
@@ -303,7 +302,7 @@ func (r *Releaser) ReleaseFluxComponent(
 // ReleaseFluxCliComponent releases flux-cli.
 func (r *Releaser) ReleaseFluxCliComponent(
 	ctx context.Context,
-	fluxVersion, comp, targetOS, targetArch string,
+	fluxVersion, targetOS, targetArch string,
 ) (component *ocm.Component, err error) {
 	if fluxVersion == "" {
 		return nil, fmt.Errorf("flux version is empty")
@@ -385,7 +384,7 @@ func (r *Releaser) ReleaseCertManagerComponent(
 // ReleaseOCMCliComponent releases ocm-cli.
 func (r *Releaser) ReleaseOCMCliComponent(
 	ctx context.Context,
-	ocmCliVersion, comp, targetOS, targetArch string,
+	ocmCliVersion, targetOS, targetArch string,
 ) (component *ocm.Component, err error) {
 	if ocmCliVersion == "" {
 		return nil, fmt.Errorf("ocm version is empty")

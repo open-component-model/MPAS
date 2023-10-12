@@ -6,7 +6,6 @@ package componentsgen
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"testing"
 
@@ -30,7 +29,6 @@ func Test_FluxLastVersion(t *testing.T) {
 	apiURL += baseURL.Path
 	latest, err := getLatestVersion(context.Background(), apiURL)
 	require.NoError(t, err)
-	fmt.Println(latest)
 	f := &Flux{
 		Version: latest,
 	}

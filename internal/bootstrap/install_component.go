@@ -34,7 +34,7 @@ type componentOptions struct {
 type componentInstall struct {
 	componentName string
 	version       string
-	kustomizer    *Kustomizer
+	kustomizer    Kustomizer
 
 	*componentOptions
 }
@@ -58,7 +58,7 @@ func newComponentInstall(name, version string, repository ocm.Repository, opts *
 }
 
 func (c *componentInstall) install(ctx context.Context, component string) (string, error) {
-	res, err := c.kustomizer.generateKustomizedResourceData(component)
+	res, err := c.kustomizer.GenerateKustomizedResourceData(component)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate component yaml: %w", err)
 	}

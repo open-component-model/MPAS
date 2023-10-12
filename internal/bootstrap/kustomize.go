@@ -27,7 +27,12 @@ type kustomizerOptions struct {
 	host          string
 }
 
-type Kustomizer struct {
+// Kustomizer can kustomize a given component and change image information.
+type Kustomizer interface {
+	GenerateKustomizedResourceData(component string) ([]byte, error)
+}
+
+type Kustomize struct {
 	*kustomizerOptions
 
 	// mu is used to synchronize access to the kustomization file
@@ -35,13 +40,13 @@ type Kustomizer struct {
 }
 
 // NewKustomizer creates a new kustomizer based on mutation options.
-func NewKustomizer(opts *kustomizerOptions) *Kustomizer {
-	return &Kustomizer{
+func NewKustomizer(opts *kustomizerOptions) *Kustomize {
+	return &Kustomize{
 		kustomizerOptions: opts,
 	}
 }
 
-func (k *Kustomizer) generateKustomizedResourceData(component string) ([]byte, error) {
+func (k *Kustomize) GenerateKustomizedResourceData(component string) ([]byte, error) {
 	cv, err := getComponentVersion(k.repository, k.componentName, k.version)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get component version: %w", err)
@@ -69,7 +74,7 @@ func (k *Kustomizer) generateKustomizedResourceData(component string) ([]byte, e
 	return k.generateComponentYaml(kconfig, resources.imagesResources, kus, kfile)
 }
 
-func (k *Kustomizer) generateKustomization(componentResource []byte) (string, kustypes.Kustomization, error) {
+func (k *Kustomize) generateKustomization(componentResource []byte) (string, kustypes.Kustomization, error) {
 	if err := os.WriteFile(filepath.Join(k.dir, fmt.Sprintf("%s.yaml", strings.Split(k.componentName, "/")[2])), componentResource, os.ModePerm); err != nil {
 		return "", kustypes.Kustomization{}, err
 	}
@@ -77,7 +82,7 @@ func (k *Kustomizer) generateKustomization(componentResource []byte) (string, ku
 	return genKus(k.dir, fmt.Sprintf("./%s.yaml", strings.Split(k.componentName, "/")[2]))
 }
 
-func (k *Kustomizer) generateComponentYaml(kconfig *cfd.ConfigData, imagesResources map[string]nameTag, kus kustypes.Kustomization, kfile string) ([]byte, error) {
+func (k *Kustomize) generateComponentYaml(kconfig *cfd.ConfigData, imagesResources map[string]nameTag, kus kustypes.Kustomization, kfile string) ([]byte, error) {
 	for _, loc := range kconfig.Localization {
 		image := imagesResources[loc.Resource.Name]
 		kus.Images = append(kus.Images, kustypes.Image{
