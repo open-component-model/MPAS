@@ -87,9 +87,23 @@ func (c *certificateManifestsInstall) Install(ctx context.Context) (string, erro
 		})
 	}
 
-	commit, err := c.gitRepository.Commits().Create(ctx, c.branch, commitMsg, files)
-	if err != nil {
-		return "", fmt.Errorf("failed to add commit for certificate data: %w", err)
+	var commit gitprovider.Commit
+	// Note, this fix is necessary right now, because gitea has yet to implement their own API
+	// to allow to submit multiple files at once:
+	// https://github.com/go-gitea/gitea/pull/24887
+	switch c.provider {
+	case env.ProviderGitea:
+		for _, file := range files {
+			commit, err = c.gitRepository.Commits().Create(ctx, c.branch, commitMsg, []gitprovider.CommitFile{file})
+			if err != nil {
+				return "", fmt.Errorf("failed to add commit for certificate data: %w", err)
+			}
+		}
+	default:
+		commit, err = c.gitRepository.Commits().Create(ctx, c.branch, commitMsg, files)
+		if err != nil {
+			return "", fmt.Errorf("failed to add commit for certificate data: %w", err)
+		}
 	}
 
 	return commit.Get().Sha, nil
