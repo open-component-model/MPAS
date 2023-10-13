@@ -704,6 +704,7 @@ func (b *Bootstrap) generateCertificateManifests(ctx context.Context) (string, e
 		provider:              string(b.providerClient.ProviderID()),
 		timeout:               b.timeout,
 		commitMessageAppendix: b.commitMessageAppendix,
+		kubeClient:            b.kubeclient,
 	})
 
 	return installer.Install(ctx)
