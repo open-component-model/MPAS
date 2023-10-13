@@ -24,7 +24,7 @@ const (
 	// DefaultMpasProductControllerVer is the default version of the mpas-product-controller component.
 	DefaultMpasProductControllerVer = "v0.5.1"
 	// DefaultMpasProjectControllerVer is the default version of the mpas-project-controller component.
-	DefaultMpasProjectControllerVer = "v0.3.0"
+	DefaultMpasProjectControllerVer = "v0.3.1"
 	// DefaultOcmCliVer is the default version of the ocm-cli component.
 	DefaultOcmCliVer = "v0.4.1"
 )
