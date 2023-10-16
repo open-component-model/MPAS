@@ -1,7 +1,7 @@
 name: Blackduck Scan Cronjob
 on:
   schedule:
-    - cron:  '15 0 * * 0'
+    - cron:  '30 0 * * 0'
   
 permissions:
   checks: write
