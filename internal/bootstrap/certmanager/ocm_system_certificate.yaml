@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ocm-registry-tls-certs
+  namespace: ocm-system
+spec:
+  secretName: ocm-registry-tls-certs
+  dnsNames:
+    - registry.ocm-system.svc.cluster.local
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: mpas-certificate-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io

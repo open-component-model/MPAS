@@ -18,4 +18,5 @@ type Generator interface {
 var (
 	_ Generator = &Flux{}
 	_ Generator = &Controller{}
+	_ Generator = &CertManager{}
 )

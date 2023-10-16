@@ -108,8 +108,6 @@ func Test_Controller(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			assert.Contains(t, *c.Content, "path: registry-root.pem")
-
 			locs, err := c.GenerateLocalizationFromTemplate(localizationTemplateHeader, ocmlocalizationTemplate)
 			require.NoError(t, err)
 			assert.Contains(t, locs, "git-controller")

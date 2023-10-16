@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,6 +17,35 @@ import (
 
 	securejoin "github.com/cyphar/filepath-securejoin"
 )
+
+func fetch(ctx context.Context, url, version, dir, filename string) ([]byte, error) {
+	ghURL := fmt.Sprintf("%s/latest/download/%s", url, filename)
+	if strings.HasPrefix(version, "v") {
+		ghURL = fmt.Sprintf("%s/download/%s/%s", url, version, filename)
+	}
+
+	resp, err := getFrom(ctx, ghURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch from url: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to download %s from %s, status: %s", filename, ghURL, resp.Status)
+	}
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read content: %w", err)
+	}
+
+	if err := writeFile(dir, filename, string(content)); err != nil {
+		return nil, fmt.Errorf("failed to write out file: %w", err)
+	}
+
+	return content, nil
+}
 
 func getFrom(ctx context.Context, ghURL string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, ghURL, nil)
@@ -30,15 +60,34 @@ func getFrom(ctx context.Context, ghURL string) (*http.Response, error) {
 	return resp, nil
 }
 
-func validateVersion(version string) error {
-	if version == "" || version == "latest" {
-		return fmt.Errorf("version must not be empty or latest")
+func validateVersion(ctx context.Context, version, url, name string) error {
+	ver := version
+	if ver == "" {
+		return fmt.Errorf("version is empty")
 	}
 
-	if !strings.HasPrefix(version, "v") {
-		return fmt.Errorf("version must start with v")
+	if !strings.HasPrefix(ver, "v") && ver != "latest" {
+		ver = "v" + ver
 	}
-	return nil
+
+	ghURL := fmt.Sprintf(url+"/tags/%s", ver)
+	resp, err := getFrom(ctx, ghURL)
+	if err != nil {
+		return err
+	}
+
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return nil
+	case http.StatusNotFound:
+		return fmt.Errorf("target version %s does not exist for %s", ver, name)
+	default:
+		return fmt.Errorf("error while validating version %s for %s: %s", ver, name, resp.Status)
+	}
 }
 
 func getLatestVersion(ctx context.Context, releaseAPIURL string) (string, error) {

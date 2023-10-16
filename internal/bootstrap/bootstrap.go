@@ -23,11 +23,8 @@ import (
 	om "github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/utils"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
@@ -36,28 +33,27 @@ var (
 
 // options contains the options to be used during bootstrap
 type options struct {
-	description            string
-	defaultBranch          string
-	visibility             string
-	personal               bool
-	owner                  string
-	token                  string
-	repositoryName         string
-	targetPath             string
-	commitMessageAppendix  string
-	fromFile               string
-	registry               string
-	dockerConfigPath       string
-	transportType          string
-	kubeclient             client.Client
-	restClientGetter       genericclioptions.RESTClientGetter
-	components             []string
-	interval               time.Duration
-	timeout                time.Duration
-	printer                *printer.Printer
-	testURL                string
-	generateDevCertificate bool
-	caFile                 string
+	description           string
+	defaultBranch         string
+	visibility            string
+	personal              bool
+	owner                 string
+	token                 string
+	repositoryName        string
+	targetPath            string
+	commitMessageAppendix string
+	fromFile              string
+	registry              string
+	dockerConfigPath      string
+	transportType         string
+	kubeclient            client.Client
+	restClientGetter      genericclioptions.RESTClientGetter
+	components            []string
+	interval              time.Duration
+	timeout               time.Duration
+	printer               *printer.Printer
+	testURL               string
+	caFile                string
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -76,13 +72,6 @@ type Bootstrap struct {
 func WithRootFile(caFile string) Option {
 	return func(o *options) {
 		o.caFile = caFile
-	}
-}
-
-// WithGenerateDevCertificate if set, it will generate a self-signed certificate for all controllers.
-func WithGenerateDevCertificate(generate bool) Option {
-	return func(o *options) {
-		o.generateDevCertificate = generate
 	}
 }
 
@@ -258,250 +247,178 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 	b.printer.Printf("Running %s ...\n",
 		printer.BoldBlue("mpas bootstrap"))
 
-	if err := b.printer.PrintSpinner(fmt.Sprintf("Preparing Management repository %s",
-		printer.BoldBlue(b.repositoryName))); err != nil {
-		return err
-	}
-
-	if err := b.reconcileManagementRepository(ctx); err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Preparing Management repository %s",
-			printer.BoldBlue(b.repositoryName))); er != nil {
-			err = errors.Join(err, er)
-		}
-		return err
-	}
-
-	if err := b.printer.StopSpinner(fmt.Sprintf("Preparing Management repository %s",
-		printer.BoldBlue(b.repositoryName))); err != nil {
-		return err
+	if err := b.inSpinner(fmt.Sprintf("Preparing Management repository %s",
+		printer.BoldBlue(b.repositoryName)), func() error {
+		return b.reconcileManagementRepository(ctx)
+	}); err != nil {
+		return fmt.Errorf("failed to prepare management repository: %w", err)
 	}
 
 	if b.fromFile != "" {
-		if err := b.printer.PrintSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
-			printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); err != nil {
-			return err
+		fromFileToOciRepo := func() error {
+			ctf, err := ocm.RepositoryFromCTF(b.fromFile)
+			if err != nil {
+				return fmt.Errorf("failed to create CTF from file %q: %w", b.fromFile, err)
+			}
+			defer ctf.Close()
+
+			target, err := ocm.MakeRepositoryWithDockerConfig(octx, b.registry, b.dockerConfigPath)
+			if err != nil {
+				return fmt.Errorf("failed to create target repository: %w", err)
+			}
+			defer target.Close()
+
+			if err := ocm.Transfer(octx, ctf, target, io.Discard); err != nil {
+				return fmt.Errorf("failed to transfer CTF from %q to %q: %w", b.fromFile, b.registry, err)
+			}
+
+			return nil
 		}
-		ctf, err := ocm.RepositoryFromCTF(b.fromFile)
+
+		if err := b.inSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
+			printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry)), fromFileToOciRepo); err != nil {
+			return fmt.Errorf("failed to prepare from file: %w", err)
+		}
+	}
+
+	var (
+		refs    map[string]compdesc.ComponentReference
+		ociRepo om.Repository
+		err     error
+	)
+
+	if err := b.inSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
+		printer.BoldBlue(b.registry)), func() error {
+		ociRepo, err = ocm.MakeRepositoryWithDockerConfig(octx, b.registry, b.dockerConfigPath)
 		if err != nil {
-			if er := b.printer.StopFailSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
-				printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); er != nil {
-				err = errors.Join(err, er)
-			}
-			return fmt.Errorf("failed to create CTF from file %q: %w", b.fromFile, err)
+			return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
 		}
-		defer ctf.Close()
 
-		target, err := ocm.MakeRepositoryWithDockerConfig(octx, b.registry, b.dockerConfigPath)
+		refs, err = b.fetchBootstrapComponentReferences(ociRepo)
 		if err != nil {
-			if er := b.printer.StopFailSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
-				printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); er != nil {
-				err = errors.Join(err, er)
-			}
-			return fmt.Errorf("failed to create target repository: %w", err)
-		}
-		defer target.Close()
-
-		if err := ocm.Transfer(octx, ctf, target, io.Discard); err != nil {
-			if er := b.printer.StopFailSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
-				printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); er != nil {
-				err = errors.Join(err, er)
-			}
-			return fmt.Errorf("failed to transfer CTF from %q to %q: %w", b.fromFile, b.registry, err)
+			return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
 		}
 
-		if err := b.printer.StopSpinner(fmt.Sprintf("Transferring bootstrap component from %s to %s",
-			printer.BoldBlue(b.fromFile), printer.BoldBlue(b.registry))); err != nil {
-			return err
-		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to fetch bootstrap components: %w", err)
 	}
 
-	if err := b.printer.PrintSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
-		printer.BoldBlue(b.registry))); err != nil {
-		return err
-	}
-	ociRepo, err := ocm.MakeRepositoryWithDockerConfig(octx, b.registry, b.dockerConfigPath)
+	sha, err := b.installInfrastructure(ctx, ociRepo, refs)
 	if err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
-			printer.BoldBlue(b.registry))); er != nil {
-			err = errors.Join(err, er)
-		}
-		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
+		return fmt.Errorf("failed to install infrastructure: %w", err)
 	}
 
-	defer ociRepo.Close()
-
-	refs, err := b.fetchBootstrapComponentReferences(ociRepo)
-	if err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
-			printer.BoldBlue(b.registry))); er != nil {
-			err = errors.Join(err, er)
-		}
-		return fmt.Errorf("failed to fetch bootstrap component references: %w", err)
-	}
-
-	if err := b.printer.StopSpinner(fmt.Sprintf("Fetching bootstrap component from %s",
-		printer.BoldBlue(b.registry))); err != nil {
+	if err := b.inSpinner("Reconciling infrastructure components", func() error {
+		return b.syncManagementRepository(ctx, sha)
+	}); err != nil {
 		return err
 	}
 
-	fluxRef, ok := refs[env.FluxName]
-	if !ok {
-		return fmt.Errorf("flux component not found")
-	}
-
-	err = b.printer.PrintSpinner(fmt.Sprintf("Installing %s with version %s",
-		printer.BoldBlue(env.FluxName),
-		printer.BoldBlue(fluxRef.GetVersion())))
-	if err != nil {
-		return err
-	}
-	if err = b.installFlux(ctx, ociRepo, fluxRef); err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Installing %s with version %s",
-			printer.BoldBlue(env.FluxName),
-			printer.BoldBlue(fluxRef.GetVersion()))); er != nil {
-			err = errors.Join(err, er)
+	if err := b.inSpinner("Waiting for cert-manager to be available", func() error {
+		if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, []string{
+			certManager,
+			certManagerCAInjector,
+			certManagerWebhook,
+		}, "cert-manager"); err != nil {
+			return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
 		}
-		return fmt.Errorf("failed to install flux: %w", err)
-	}
 
-	if err := b.printer.StopSpinner(fmt.Sprintf("Installing %s with version %s",
-		printer.BoldBlue(env.FluxName),
-		printer.BoldBlue(fluxRef.GetVersion()))); err != nil {
-		return err
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to wait for cert-manager to be available: %w", err)
 	}
-	delete(refs, env.FluxName)
 
 	compNs := make(map[string][]string)
+	var latestSHA string
 	// install components in order by using the ordered keys
 	comps := getOrderedKeys(refs)
-	var latestSHA string
 	for _, comp := range comps {
 		ref := refs[comp]
-		err := b.printer.PrintSpinner(fmt.Sprintf("Generating %s manifest with version %s",
-			printer.BoldBlue(comp),
-			printer.BoldBlue(ref.GetVersion())))
-		if err != nil {
-			return err
-		}
 
-		switch comp {
-		case env.OcmControllerName, env.GitControllerName, env.ReplicationControllerName:
-			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "ocm-system", compNs)
+		if err := b.inSpinner(fmt.Sprintf("Generating %s manifest with version %s",
+			printer.BoldBlue(comp),
+			printer.BoldBlue(ref.GetVersion())), func() error {
+			latestSHA, err = b.generateControllerManifest(ctx, ociRepo, comp, ref, compNs)
 			if err != nil {
 				return err
 			}
-			latestSHA = sha
-			compNs["ocm-system"] = append(compNs["ocm-system"], comp)
-		case env.MpasProductControllerName, env.MpasProjectControllerName:
-			sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
-			if err != nil {
-				return err
-			}
-			latestSHA = sha
-			compNs["mpas-system"] = append(compNs["mpas-system"], comp)
-		default:
-			err := fmt.Errorf("unknown component %q", comp)
-			if er := b.printer.StopFailSpinner(fmt.Sprintf("Generating %s manifest with version %s",
-				printer.BoldBlue(comp),
-				printer.BoldBlue(ref.GetVersion()))); er != nil {
-				err = errors.Join(err, er)
-			}
-			return err
-		}
 
-		if err := b.printer.StopSpinner(fmt.Sprintf("Generating %s manifest with version %s",
-			printer.BoldBlue(comp),
-			printer.BoldBlue(ref.GetVersion()))); err != nil {
-			return err
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed to generate manifest: %w", err)
 		}
 	}
 
-	err = b.printer.PrintSpinner("Waiting for components to be ready")
-	if err != nil {
+	if err := b.inSpinner("Generate certificate manifests", func() error {
+		latestSHA, err = b.generateCertificateManifests(ctx)
+
+		if err != nil {
+			return fmt.Errorf("failed to generate manifests: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to generate certificate manifests: %w", err)
+	}
+
+	if err := b.inSpinner("Reconciling infrastructure components", func() error {
+		return b.syncManagementRepository(ctx, latestSHA)
+	}); err != nil {
 		return err
 	}
 
+	if err := b.inSpinner("Waiting for components to be ready", func() error {
+		for ns, comps := range compNs {
+			if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, comps, ns); err != nil {
+				return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to wait for components to be ready: %w", err)
+	}
+
+	b.printer.Printf("\n")
+	b.printer.Printf("Bootstrap completed successfully!\n")
+
+	return nil
+}
+
+func (b *Bootstrap) inSpinner(msg string, f func() error) (err error) {
+	if err := b.printer.PrintSpinner(msg); err != nil {
+		return err
+	}
+
+	if err := f(); err != nil {
+		if serr := b.printer.StopFailSpinner(msg); serr != nil {
+			err = errors.Join(err, serr)
+		}
+
+		return err
+	}
+
+	return b.printer.StopSpinner(msg)
+}
+
+func (b *Bootstrap) syncManagementRepository(ctx context.Context, latestSHA string) error {
 	expectedRevision := fmt.Sprintf("%s@sha1:%s", b.defaultBranch, latestSHA)
 	if err := kubeutils.ReconcileGitrepository(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace); err != nil {
-		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-			err = errors.Join(err, er)
-		}
 		return err
 	}
 
 	if err := kubeutils.ReportGitrepositoryHealth(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace, expectedRevision, env.DefaultPollInterval, b.timeout); err != nil {
-		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-			err = errors.Join(err, er)
-		}
 		return fmt.Errorf("failed to report gitrepository health: %w", err)
 	}
 
 	if err := kubeutils.ReconcileKustomization(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace); err != nil {
-		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-			err = errors.Join(err, er)
-		}
 		return err
 	}
 
 	if err := kubeutils.ReportKustomizationHealth(ctx, b.kubeclient, env.DefaultFluxNamespace, env.DefaultFluxNamespace, expectedRevision, env.DefaultPollInterval, b.timeout); err != nil {
-		if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-			err = errors.Join(err, er)
-		}
 		return fmt.Errorf("failed to report kustomization health: %w", err)
 	}
-
-	// Create Certificate secret if needed
-	if b.generateDevCertificate {
-		ca, key, err := GenerateDeveloperSelfSignedCertificate()
-		if err != nil {
-			return fmt.Errorf("failed to generate developer certificate: %w", err)
-		}
-
-		for _, namespace := range []string{env.DefaultOCMInstallPath, env.DefaultsNamespace} {
-			// Create the Secret in ocm-system and mpas-system namespaces.
-			// After that the secret will have to be duplicated to the project namespace,
-			// but that is out of the scope of the bootstrapper.
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      env.RegistryTLSSecretName,
-					Namespace: namespace,
-				},
-				// These keys are expected by flux to be in this format.
-				Data: map[string][]byte{
-					"ca.crt":  ca,
-					"tls.crt": ca,
-					"tls.key": key,
-				},
-				Type: corev1.SecretTypeOpaque,
-			}
-
-			if _, err := controllerutil.CreateOrUpdate(ctx, b.kubeclient, secret, func() error {
-				err = b.printer.PrintSpinner(fmt.Sprintf("Registry secret in namespace %s already exist; skip creating",
-					printer.BoldBlue(namespace)))
-				if err != nil {
-					return err
-				}
-
-				return nil
-			}); err != nil {
-				return fmt.Errorf("failed to create certificate secret in namespace %s: %w", namespace, err)
-			}
-		}
-	}
-
-	for ns, comps := range compNs {
-		if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, comps, ns); err != nil {
-			if er := b.printer.StopFailSpinner("Waiting for components to be ready"); er != nil {
-				err = errors.Join(err, er)
-			}
-			return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
-		}
-	}
-	if err := b.printer.StopSpinner("Waiting for components to be ready"); err != nil {
-		return err
-	}
-	b.printer.Printf("\n")
-	b.printer.Printf("Bootstrap completed successfully!\n")
 
 	return nil
 }
@@ -513,8 +430,6 @@ func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository,
 	}
 	defer os.RemoveAll(dir)
 	opts := &componentOptions{
-		kubeClient:            b.kubeclient,
-		restClientGetter:      b.restClientGetter,
 		gitRepository:         b.repository,
 		branch:                b.defaultBranch,
 		targetPath:            b.targetPath,
@@ -532,11 +447,6 @@ func (b *Bootstrap) installComponent(ctx context.Context, ociRepo om.Repository,
 	}
 	sha, err := inst.install(ctx, fmt.Sprintf("%s-file", comp))
 	if err != nil {
-		if er := b.printer.StopFailSpinner(fmt.Sprintf("Generating %s manifest with version %s",
-			printer.BoldBlue(comp),
-			printer.BoldBlue(ref.GetVersion()))); er != nil {
-			err = errors.Join(err, er)
-		}
 		return "", err
 	}
 	return sha, nil
@@ -581,6 +491,35 @@ func (b *Bootstrap) installFlux(ctx context.Context, ociRepo om.Repository, ref 
 		return err
 	}
 	return nil
+}
+
+func (b *Bootstrap) installCertManager(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference) (string, error) {
+	dir, err := mkdirTempDir("cert-manager-install")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(dir)
+
+	opts := &certManagerOptions{
+		gitRepository:         b.repository,
+		dir:                   dir,
+		branch:                b.defaultBranch,
+		targetPath:            b.targetPath,
+		namespace:             "cert-manager",
+		provider:              string(b.providerClient.ProviderID()),
+		timeout:               b.timeout,
+		commitMessageAppendix: b.commitMessageAppendix,
+	}
+
+	inst, err := newCertManagerInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
+	if err != nil {
+		return "", fmt.Errorf("failed to create new cert manager installer: %w", err)
+	}
+	sha, err := inst.Install(ctx, "cert-manager")
+	if err != nil {
+		return "", fmt.Errorf("failed to install cert manager: %w", err)
+	}
+	return sha, nil
 }
 
 func (b *Bootstrap) fetchBootstrapComponentReferences(ociRepo om.Repository) (map[string]compdesc.ComponentReference, error) {
@@ -687,6 +626,88 @@ func (b *Bootstrap) getCloneURL(repository gitprovider.UserRepository, transport
 	}
 
 	return url, nil
+}
+
+func (b *Bootstrap) installInfrastructure(ctx context.Context, ociRepo om.Repository, refs map[string]compdesc.ComponentReference) (string, error) {
+	fluxRef, ok := refs[env.FluxName]
+	if !ok {
+		return "", fmt.Errorf("flux component not found")
+	}
+
+	if err := b.inSpinner(fmt.Sprintf("Installing %s with version %s",
+		printer.BoldBlue(env.FluxName),
+		printer.BoldBlue(fluxRef.GetVersion())), func() error {
+
+		return b.installFlux(ctx, ociRepo, fluxRef)
+	}); err != nil {
+		return "", fmt.Errorf("failed to install flux: %w", err)
+	}
+
+	delete(refs, env.FluxName)
+
+	certManagerRef, ok := refs[env.CertManagerName]
+	if !ok {
+		return "", fmt.Errorf("cert-manager component not found")
+	}
+
+	var (
+		sha string
+		err error
+	)
+	if err := b.inSpinner(fmt.Sprintf("Installing %s with version %s",
+		printer.BoldBlue(env.CertManagerName),
+		printer.BoldBlue(certManagerRef.GetVersion())), func() error {
+		sha, err = b.installCertManager(ctx, ociRepo, certManagerRef)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return "", fmt.Errorf("failed to install cert-manager: %w", err)
+	}
+
+	delete(refs, env.CertManagerName)
+
+	return sha, nil
+}
+
+func (b *Bootstrap) generateControllerManifest(ctx context.Context, ociRepo om.Repository, comp string, ref compdesc.ComponentReference, compNs map[string][]string) (string, error) {
+	var latestSHA string
+	switch comp {
+	case env.OcmControllerName, env.GitControllerName, env.ReplicationControllerName:
+		sha, err := b.installComponent(ctx, ociRepo, ref, comp, env.DefaultOCMNamespace, compNs)
+		if err != nil {
+			return "", err
+		}
+		latestSHA = sha
+		compNs[env.DefaultOCMNamespace] = append(compNs[env.DefaultOCMNamespace], comp)
+	case env.MpasProductControllerName, env.MpasProjectControllerName:
+		sha, err := b.installComponent(ctx, ociRepo, ref, comp, "mpas-system", compNs)
+		if err != nil {
+			return "", err
+		}
+		latestSHA = sha
+		compNs["mpas-system"] = append(compNs["mpas-system"], comp)
+	default:
+		return "", fmt.Errorf("unknown component %q", comp)
+	}
+
+	return latestSHA, nil
+}
+
+func (b *Bootstrap) generateCertificateManifests(ctx context.Context) (string, error) {
+	installer := newCertificateManifestInstaller(&certificateManifestOptions{
+		gitRepository:         b.repository,
+		branch:                b.defaultBranch,
+		targetPath:            b.targetPath,
+		provider:              string(b.providerClient.ProviderID()),
+		timeout:               b.timeout,
+		commitMessageAppendix: b.commitMessageAppendix,
+		kubeClient:            b.kubeclient,
+	})
+
+	return installer.Install(ctx)
 }
 
 func splitSubOrganizationsFromRepositoryName(name string) ([]string, string) {

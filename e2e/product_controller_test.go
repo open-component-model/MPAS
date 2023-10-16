@@ -19,9 +19,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/sourcegraph/conc/pool"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -47,7 +45,6 @@ func newProductFeature(projectRepoName string) *features.FeatureBuilder {
 		getYAMLField("product_description.yaml", "spec.pipelines[2].name")}
 
 	return features.New("Reconcile Product Deployment").
-		WithSetup("Create ocm-registry-tls-certs for target namespace", replicateRegistryCerts(getYAMLField("target.yaml", "spec.access.targetNamespace"))).
 		WithSetup("Add Target to project git repository", setup.AddFilesToGitRepository(
 			setup.File{
 				RepoName:       projectRepoName,
@@ -422,65 +419,6 @@ func checkDeploymentsReady(namespace string, pipelineNames []string) features.Fu
 			if err != nil {
 				t.Fatal(err)
 			}
-		}
-		return ctx
-	}
-}
-func replicateRegistryCerts(namespace string) features.Func {
-	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-		t.Helper()
-
-		name := "ocm-registry-tls-certs"
-		client, err := cfg.NewClient()
-		if err != nil {
-			t.Fatal(err)
-		}
-		clientset, err := kubernetes.NewForConfig(cfg.Client().RESTConfig())
-		if err != nil {
-			t.Fatal(err)
-			return ctx
-		}
-		t.Logf("checking if secret with with name: %s exists", name)
-		gr := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "ocm-system"},
-		}
-		err = wait.For(conditions.New(client.Resources()).ResourceMatch(gr, func(object k8s.Object) bool {
-			obj, ok := object.(*corev1.Secret)
-			if !ok {
-				return false
-			}
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
-				Data: map[string][]byte{
-					"ca.crt":  obj.Data["ca.crt"],
-					"tls.crt": obj.Data["tls.crt"],
-					"tls.key": obj.Data["tls.key"]},
-			}
-
-			_, err = clientset.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
-			if err != nil {
-				fmt.Println(err)
-				t.Fatal(err)
-			}
-
-			newSecret := corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			}
-			err = wait.For(conditions.New(cfg.Client().Resources()).ResourceMatch(&newSecret, func(object k8s.Object) bool {
-				_, ok := object.(*corev1.Secret)
-				if !ok {
-					return false
-				}
-				return true
-			}), wait.WithTimeout(time.Minute*1))
-
-			return true
-		}), wait.WithTimeout(time.Minute*1))
-		if err != nil {
-			t.Fatal(err)
 		}
 		return ctx
 	}

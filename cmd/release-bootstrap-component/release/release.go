@@ -26,6 +26,12 @@ var (
   resource:
     name: %s
 `
+	certManagerLocalizationTemplate = `- name: %s
+  file: cert-manager.yaml
+  image: spec.template.spec.containers[0].image
+  resource:
+    name: %s
+`
 	ocmLocalizationTemplate = `- name: %s
   file: install.yaml
   image: spec.template.spec.containers[0].image
@@ -70,10 +76,9 @@ func New(
 
 // ReleaseBootstrapComponent releases the bootstrap component.
 func (r *Releaser) ReleaseBootstrapComponent(
-	ctx context.Context,
 	components map[string]*ocm.Component,
 	bootstrapVersion string,
-) error {
+) (err error) {
 	component, err := ocm.NewComponent(r.octx,
 		fmt.Sprintf("%s/bootstrap", env.ComponentNamePrefix),
 		bootstrapVersion,
@@ -89,9 +94,8 @@ func (r *Releaser) ReleaseBootstrapComponent(
 		return fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
-		er := component.Close()
-		if err == nil {
-			err = errors.Join(err, er)
+		if cerr := component.Close(); cerr != nil {
+			err = errors.Join(err, cerr)
 		}
 	}()
 
@@ -110,7 +114,7 @@ func (r *Releaser) ReleaseBootstrapComponent(
 // ReleaseOcmControllerComponent releases the ocm-controller component.
 func (r *Releaser) ReleaseOcmControllerComponent(
 	ctx context.Context,
-	ocmVersion, comp string,
+	ocmVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -142,7 +146,7 @@ func (r *Releaser) ReleaseOcmControllerComponent(
 // ReleaseGitControllerComponent releases the git-controller component.
 func (r *Releaser) ReleaseGitControllerComponent(
 	ctx context.Context,
-	gitVersion, comp string,
+	gitVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -174,7 +178,7 @@ func (r *Releaser) ReleaseGitControllerComponent(
 // ReleaseReplicationControllerComponent releases the replication-controller component.
 func (r *Releaser) ReleaseReplicationControllerComponent(
 	ctx context.Context,
-	replicationVersion, comp string,
+	replicationVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -206,7 +210,7 @@ func (r *Releaser) ReleaseReplicationControllerComponent(
 // ReleaseMpasProductControllerComponent releases the mpas-product-controller component.
 func (r *Releaser) ReleaseMpasProductControllerComponent(
 	ctx context.Context,
-	mpasProductVersion, comp string,
+	mpasProductVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -238,7 +242,7 @@ func (r *Releaser) ReleaseMpasProductControllerComponent(
 // ReleaseMpasProjectControllerComponent releases the mpas-project-controller component.
 func (r *Releaser) ReleaseMpasProjectControllerComponent(
 	ctx context.Context,
-	mpasProjectVersion, comp string,
+	mpasProjectVersion string,
 ) (*ocm.Component, error) {
 	o, err := generateController(
 		ctx,
@@ -270,12 +274,13 @@ func (r *Releaser) ReleaseMpasProjectControllerComponent(
 // ReleaseFluxComponent releases flux with all its components
 func (r *Releaser) ReleaseFluxComponent(
 	ctx context.Context,
-	fluxVersion, comp string,
+	fluxVersion string,
 ) (*ocm.Component, error) {
 	f, err := generateFlux(ctx, fluxVersion, r.tmpDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate flux manifests: %v", err)
 	}
+
 	component, err := ocm.NewComponent(r.octx,
 		fmt.Sprintf("%s/%s", env.ComponentNamePrefix, env.FluxName),
 		fluxVersion,
@@ -297,7 +302,7 @@ func (r *Releaser) ReleaseFluxComponent(
 // ReleaseFluxCliComponent releases flux-cli.
 func (r *Releaser) ReleaseFluxCliComponent(
 	ctx context.Context,
-	fluxVersion, comp, targetOS, targetArch string,
+	fluxVersion, targetOS, targetArch string,
 ) (component *ocm.Component, err error) {
 	if fluxVersion == "" {
 		return nil, fmt.Errorf("flux version is empty")
@@ -333,9 +338,8 @@ func (r *Releaser) ReleaseFluxCliComponent(
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
-		er := component.Close()
-		if err == nil {
-			err = errors.Join(err, er)
+		if cerr := component.Close(); cerr != nil {
+			err = errors.Join(err, cerr)
 		}
 	}()
 
@@ -349,10 +353,38 @@ func (r *Releaser) ReleaseFluxCliComponent(
 	return component, nil
 }
 
+// ReleaseCertManagerComponent releases cert-manager with all its components
+func (r *Releaser) ReleaseCertManagerComponent(
+	ctx context.Context,
+	version string,
+) (*ocm.Component, error) {
+	f, err := generateCertManager(ctx, version, r.tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate cert-manager manifests: %v", err)
+	}
+
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix, env.CertManagerName),
+		version,
+		ocm.WithProvider("jetstack"),
+		ocm.WithUsername(r.username),
+		ocm.WithToken(r.token),
+		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
+
+	if err := r.release(ctx, r.octx, component, r.ctf, &f, env.CertManagerName, certManagerLocalizationTemplate); err != nil {
+		return nil, fmt.Errorf("failed to release cert-manager component: %w", err)
+	}
+
+	return component, nil
+}
+
 // ReleaseOCMCliComponent releases ocm-cli.
 func (r *Releaser) ReleaseOCMCliComponent(
 	ctx context.Context,
-	ocmCliVersion, comp, targetOS, targetArch string,
+	ocmCliVersion, targetOS, targetArch string,
 ) (component *ocm.Component, err error) {
 	if ocmCliVersion == "" {
 		return nil, fmt.Errorf("ocm version is empty")
@@ -381,8 +413,8 @@ func (r *Releaser) ReleaseOCMCliComponent(
 		return nil, fmt.Errorf("failed to create component archive: %w", err)
 	}
 	defer func() {
-		if er := component.Close(); err == nil {
-			err = errors.Join(err, er)
+		if cerr := component.Close(); cerr != nil {
+			err = errors.Join(err, cerr)
 		}
 	}()
 
@@ -408,9 +440,8 @@ func (r *Releaser) release(
 		return fmt.Errorf("failed to create ctf: %w", err)
 	}
 	defer func() {
-		er := component.Close()
-		if err == nil {
-			err = errors.Join(err, er)
+		if cerr := component.Close(); cerr != nil {
+			err = errors.Join(err, cerr)
 		}
 	}()
 
@@ -418,10 +449,12 @@ func (r *Releaser) release(
 	if err != nil {
 		return fmt.Errorf("failed to generate localization from template: %w", err)
 	}
+
 	images, err := gen.GenerateImages()
 	if err != nil {
 		return fmt.Errorf("failed to generate images: %w", err)
 	}
+
 	err = os.WriteFile(path.Join(r.tmpDir, "config.yaml"), []byte(tmpl), 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write config.yaml: %w", err)
@@ -431,7 +464,7 @@ func (r *Releaser) release(
 		ocm.WithResourcePath(path.Join(r.tmpDir, gen.GetPath())),
 		ocm.WithResourceType("file"),
 		ocm.WithResourceVersion(component.Version)); err != nil {
-		return fmt.Errorf("failed to add resource %s: %w", name, err)
+		return fmt.Errorf("failed to add file resource %s: %w", name, err)
 	}
 
 	if err := component.AddResource(ocm.WithResourceName("ocm-config"),
@@ -446,7 +479,7 @@ func (r *Releaser) release(
 			ocm.WithResourceType("ociImage"),
 			ocm.WithResourceImage(image),
 			ocm.WithResourceVersion(nameVersion[1])); err != nil {
-			return fmt.Errorf("failed to add resource %s: %w", image, err)
+			return fmt.Errorf("failed to add ociImage resource %s: %w", image, err)
 		}
 	}
 
@@ -469,6 +502,16 @@ func generateFlux(ctx context.Context, version, tmpDir string) (cgen.Flux, error
 	}
 
 	f := cgen.Flux{Version: version}
+	err := f.GenerateManifests(ctx, tmpDir)
+	return f, err
+}
+
+func generateCertManager(ctx context.Context, version, tmpDir string) (cgen.CertManager, error) {
+	if version == "" {
+		return cgen.CertManager{}, fmt.Errorf("cert manager version is empty")
+	}
+
+	f := cgen.CertManager{Version: version}
 	err := f.GenerateManifests(ctx, tmpDir)
 	return f, err
 }

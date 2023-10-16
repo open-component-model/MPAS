@@ -13,18 +13,20 @@ import (
 const (
 	// DefaultFluxVer is the default version of the flux component.
 	DefaultFluxVer = "v2.1.0"
+	// DefaultCertManagerVer is the default version of the flux component.
+	DefaultCertManagerVer = "v1.13.1"
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
-	DefaultOcmControllerVer = "v0.13.0"
+	DefaultOcmControllerVer = "v0.14.0"
 	// DefaultGitControllerVer is the default version of the git-controller component.
 	DefaultGitControllerVer = "v0.8.0"
 	// DefaultReplicationVer is the default version of the replication-controller component.
-	DefaultReplicationVer = "v0.7.0"
+	DefaultReplicationVer = "v0.8.0"
 	// DefaultMpasProductControllerVer is the default version of the mpas-product-controller component.
-	DefaultMpasProductControllerVer = "v0.4.0"
+	DefaultMpasProductControllerVer = "v0.5.1"
 	// DefaultMpasProjectControllerVer is the default version of the mpas-project-controller component.
-	DefaultMpasProjectControllerVer = "v0.1.2"
+	DefaultMpasProjectControllerVer = "v0.3.1"
 	// DefaultOcmCliVer is the default version of the ocm-cli component.
-	DefaultOcmCliVer = "v0.3.0"
+	DefaultOcmCliVer = "v0.4.1"
 )
 
 const (
@@ -38,21 +40,21 @@ const (
 	DefaultOCMHost = "ghcr.io/open-component-model"
 	// DefaultBootstrapComponentLocation is the default location of the bootstrap component.
 	DefaultBootstrapComponentLocation = "ghcr.io/open-component-model/mpas-bootstrap-component"
-	// DefautBootstrapBundleLocation is the default location of the bootstrap bundle.
-	DefautBootstrapBundleLocation = DefaultBootstrapComponentLocation + "-bundle"
+	// DefaultBootstrapBundleLocation is the default location of the bootstrap bundle.
+	DefaultBootstrapBundleLocation = DefaultBootstrapComponentLocation + "-bundle"
 	// DefaultFluxHost is the default host for the flux components.
 	DefaultFluxHost = "ghcr.io/fluxcd"
-	// DefaultOCMInstallPath is the default path to install the ocm components.
-	DefaultOCMInstallPath = "ocm-system"
+	// DefaultCertManagerHost is the default host for the cert-manager components.
+	DefaultCertManagerHost = "quay.io/jetstack"
 	// DefaultFluxNamespace is the default namespace to install the flux components.
 	DefaultFluxNamespace = "flux-system"
-	// RegistryTLSSecretName is the name of the secret in which we store the TLS creds for the in-cluster registry.
-	RegistryTLSSecretName = "ocm-registry-tls-certs"
 )
 
 const (
-	// DefaultsNamespace is the mpas-system namespace.
-	DefaultsNamespace = "mpas-system"
+	// DefaultOCMNamespace is the default path to install the ocm components.
+	DefaultOCMNamespace = "ocm-system"
+	// DefaultMPASNamespace is the mpas-system namespace.
+	DefaultMPASNamespace = "mpas-system"
 	// GithubTokenVar is the name of the environment variable to use to get the github token.
 	GithubTokenVar = "GITHUB_TOKEN"
 	// GiteaTokenVar is the name of the environment variable to use to get the gitea token.
@@ -73,6 +75,7 @@ const (
 	MpasProductControllerName = "mpas-product-controller"
 	MpasProjectControllerName = "mpas-project-controller"
 	FluxName                  = "flux"
+	CertManagerName           = "cert-manager"
 )
 
 var (
@@ -80,6 +83,7 @@ var (
 	Components = []string{
 		OcmControllerName,
 		FluxName,
+		CertManagerName,
 		GitControllerName,
 		ReplicationControllerName,
 		MpasProductControllerName,

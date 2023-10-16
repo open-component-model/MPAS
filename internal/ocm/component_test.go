@@ -52,7 +52,8 @@ func Test_Component(t *testing.T) {
 	err = comp.AddResource(WithResourceType("ociImage"),
 		WithResourceName("my-image"),
 		WithResourceVersion("v0.1.0"),
-		WithResourceImage("ghcr.io/my-registry/my-image:v0.1.0"))
+		WithResourceImage("ghcr.io/my-registry/my-image:v0.1.0"),
+		WithSkipVerify(true))
 	require.NoError(t, err)
 }
 

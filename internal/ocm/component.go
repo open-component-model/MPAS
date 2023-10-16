@@ -114,6 +114,7 @@ type ResourceOptions struct {
 	version       string
 	image         string
 	componentName string
+	skipDigest    bool
 }
 
 // ResourceOption is a function that configures a resource options.
@@ -168,6 +169,13 @@ func WithResourceVersion(version string) ResourceOption {
 	}
 }
 
+// WithSkipVerify adds an option to skip the digest calculation of this resource.
+func WithSkipVerify(skip bool) ResourceOption {
+	return func(o *ResourceOptions) {
+		o.skipDigest = skip
+	}
+}
+
 // AddResource adds a resource to a component archive.
 // It accepts options for configuring the resource.
 // The resource type can be one of the following:
@@ -206,9 +214,10 @@ func (c *Component) AddResource(opts ...ResourceOption) (rerr error) {
 		}
 	case "ociImage":
 		o := &addImageOpts{
-			name:    resOpt.name,
-			image:   resOpt.image,
-			version: resOpt.version,
+			name:       resOpt.name,
+			image:      resOpt.image,
+			version:    resOpt.version,
+			skipDigest: resOpt.skipDigest,
 		}
 		if err := imageHandler(cv, o); err != nil {
 			return err

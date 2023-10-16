@@ -6,6 +6,7 @@ package bootstrap
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -13,57 +14,62 @@ import (
 
 	"github.com/fluxcd/go-git-providers/gitprovider"
 	"github.com/open-component-model/mpas/internal/env"
-	"github.com/open-component-model/mpas/internal/kubeutils"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 )
 
-type componentOptions struct {
-	gitRepository gitprovider.UserRepository
-	branch        string
-	targetPath    string
-	namespace     string
-	dir           string
-	provider      string
-	// we bookkeep the installed components so we can cleanup unnecessary namespaces
-	installedNS           map[string][]string
-	commitMessageAppendix string
+const (
+	certManager           = "cert-manager"
+	certManagerCAInjector = "cert-manager-cainjector"
+	certManagerWebhook    = "cert-manager-webhook"
+)
+
+type certManagerOptions struct {
+	gitRepository         gitprovider.UserRepository
+	dir                   string
+	branch                string
+	targetPath            string
+	namespace             string
+	provider              string
 	timeout               time.Duration
+	commitMessageAppendix string
 }
 
-// componentInstall is used to install a component
-type componentInstall struct {
+// certManagerInstall is used to install cert-manager
+type certManagerInstall struct {
 	componentName string
 	version       string
+	repository    ocm.Repository
 	kustomizer    Kustomizer
 
-	*componentOptions
+	*certManagerOptions
 }
 
-// newComponentInstall returns a new component install
-func newComponentInstall(name, version string, repository ocm.Repository, opts *componentOptions) (*componentInstall, error) {
-	c := &componentInstall{
-		componentName:    name,
-		version:          version,
-		componentOptions: opts,
+// newCertManagerInstall returns a new component install
+func newCertManagerInstall(name, version string, repository ocm.Repository, opts *certManagerOptions) (*certManagerInstall, error) {
+	c := &certManagerInstall{
+		componentName:      name,
+		version:            version,
+		repository:         repository,
+		certManagerOptions: opts,
 		kustomizer: NewKustomizer(&kustomizerOptions{
 			componentName: name,
 			version:       version,
 			repository:    repository,
 			dir:           opts.dir,
-			host:          env.DefaultOCMHost,
+			host:          env.DefaultCertManagerHost,
 		}),
 	}
 
 	return c, nil
 }
 
-func (c *componentInstall) install(ctx context.Context, component string) (string, error) {
+func (c *certManagerInstall) Install(ctx context.Context, component string) (string, error) {
 	res, err := c.kustomizer.GenerateKustomizedResourceData(component)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate component yaml: %w", err)
 	}
 
-	sha, err := c.reconcileComponents(ctx, res)
+	sha, err := c.createCommit(ctx, res)
 	if err != nil {
 		return "", fmt.Errorf("failed to reconcile components: %w", err)
 	}
@@ -71,26 +77,14 @@ func (c *componentInstall) install(ctx context.Context, component string) (strin
 	return sha, nil
 }
 
-func (c *componentInstall) reconcileComponents(ctx context.Context, content []byte) (string, error) {
-	if _, ok := c.installedNS[c.namespace]; ok {
-		// remove ns from content
-		objects, err := kubeutils.YamlToUnstructructured(content)
-		if err != nil {
-			return "", fmt.Errorf("failed to convert yaml to unstructured: %w", err)
-		}
-
-		content, err = kubeutils.UnstructuredToYaml(kubeutils.FilterUnstructured(objects, kubeutils.NSFilter(c.namespace)))
-		if err != nil {
-			return "", fmt.Errorf("failed to convert unstructured to yaml: %w", err)
-		}
-	}
-
+func (c *certManagerInstall) createCommit(ctx context.Context, content []byte) (string, error) {
 	data := SetProviderDataFormat(c.provider, content)
 	path := filepath.Join(c.targetPath, c.namespace, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2]))
 	commitMsg := fmt.Sprintf("Add %s %s manifests", c.componentName, c.version)
 	if c.commitMessageAppendix != "" {
 		commitMsg = commitMsg + "\n\n" + c.commitMessageAppendix
 	}
+
 	commit, err := c.gitRepository.Commits().Create(ctx,
 		c.branch,
 		commitMsg,

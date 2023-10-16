@@ -71,8 +71,8 @@ func New(ctx context.Context, args []string) (*cobra.Command, error) {
 }
 
 func setDefaultNamespace(kubeConfigArgs *genericclioptions.ConfigFlags) error {
-	*kubeConfigArgs.Namespace = env.DefaultsNamespace
-	kubeConfigArgs.Namespace = pointer.String(env.DefaultsNamespace)
+	*kubeConfigArgs.Namespace = env.DefaultMPASNamespace
+	kubeConfigArgs.Namespace = pointer.String(env.DefaultMPASNamespace)
 	fromEnv := os.Getenv("MPAS_SYSTEM_NAMESPACE")
 	if fromEnv != "" {
 		if e := validation.IsDNS1123Label(fromEnv); len(e) > 0 {
