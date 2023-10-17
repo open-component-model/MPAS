@@ -7,6 +7,7 @@ metadata:
     target.mpas.ocm.software/ingress-enabled: "true"
 spec:
   type: kubernetes
+  interval: 10m
   access:
     targetNamespace: mpas-test-001
 #    secretRef:
