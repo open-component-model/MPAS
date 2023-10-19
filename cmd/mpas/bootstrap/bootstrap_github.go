@@ -53,8 +53,10 @@ type GithubCmd struct {
 	// DestructiveActions indicates whether destructive actions are allowed
 	DestructiveActions bool
 	// CaFile defines and optional root certificate for the git repository used by flux.
-	CaFile       string
-	bootstrapper *bootstrap.Bootstrap
+	CaFile string
+	// DisableExternalSecretComponent will make sure that the external secrets component is not installed.
+	DisableExternalSecretComponent bool
+	bootstrapper                   *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -117,6 +119,7 @@ func (b *GithubCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 		bootstrap.WithCommitMessageAppendix(b.CommitMessageAppendix),
 		bootstrap.WithVisibility(visibility),
 		bootstrap.WithRootFile(b.CaFile),
+		bootstrap.WithDisableExternalSecretsComponent(b.DisableExternalSecretComponent),
 	)
 
 	if err != nil {

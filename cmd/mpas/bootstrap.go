@@ -66,17 +66,18 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.GithubCmd{
-				Owner:                 c.Owner,
-				Personal:              c.Personal,
-				Repository:            c.Repository,
-				FromFile:              c.FromFile,
-				Registry:              c.Registry,
-				DockerconfigPath:      cfg.DockerconfigPath,
-				Path:                  c.Path,
-				CommitMessageAppendix: c.CommitMessageAppendix,
-				Hostname:              c.Hostname,
-				Components:            append(env.Components, c.Components...),
-				CaFile:                c.CaFile,
+				Owner:                          c.Owner,
+				Personal:                       c.Personal,
+				Repository:                     c.Repository,
+				FromFile:                       c.FromFile,
+				Registry:                       c.Registry,
+				DockerconfigPath:               cfg.DockerconfigPath,
+				Path:                           c.Path,
+				CommitMessageAppendix:          c.CommitMessageAppendix,
+				Hostname:                       c.Hostname,
+				Components:                     append(env.Components, c.Components...),
+				CaFile:                         c.CaFile,
+				DisableExternalSecretComponent: c.DisableExternalSecretComponent,
 			}
 
 			if len(c.Components) != 0 {
@@ -144,17 +145,18 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.GiteaCmd{
-				Owner:                 c.Owner,
-				Personal:              c.Personal,
-				Repository:            c.Repository,
-				FromFile:              c.FromFile,
-				Registry:              c.Registry,
-				DockerconfigPath:      cfg.DockerconfigPath,
-				Path:                  c.Path,
-				CommitMessageAppendix: c.CommitMessageAppendix,
-				Hostname:              c.Hostname,
-				Components:            append(env.Components, c.Components...),
-				CaFile:                c.CaFile,
+				Owner:                          c.Owner,
+				Personal:                       c.Personal,
+				Repository:                     c.Repository,
+				FromFile:                       c.FromFile,
+				Registry:                       c.Registry,
+				DockerconfigPath:               cfg.DockerconfigPath,
+				Path:                           c.Path,
+				CommitMessageAppendix:          c.CommitMessageAppendix,
+				Hostname:                       c.Hostname,
+				Components:                     append(env.Components, c.Components...),
+				CaFile:                         c.CaFile,
+				DisableExternalSecretComponent: c.DisableExternalSecretComponent,
 			}
 
 			if len(c.Components) != 0 {

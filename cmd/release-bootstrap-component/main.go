@@ -27,6 +27,8 @@ var (
 	fluxVersion string
 	// The version of the cert-manager component to use.
 	certManagerVersion string
+	// The version of the external secrets component to use.
+	externalSecretsVersion string
 	// The version of the ocm-controller component to use.
 	ocmControllerVersion string
 	// The version of the git-controller component to use.
@@ -52,6 +54,7 @@ var (
 func main() {
 	flag.StringVar(&fluxVersion, "flux-version", env.DefaultFluxVer, "The version of the flux component to use.")
 	flag.StringVar(&certManagerVersion, "cert-manager-version", env.DefaultCertManagerVer, "The version of the cert-manager component to use.")
+	flag.StringVar(&externalSecretsVersion, "external-secrets-version", env.DefaultExternalSecretsVer, "The version of the external secrets component to use.")
 	flag.StringVar(&ocmControllerVersion, "ocm-controller-version", env.DefaultOcmControllerVer, "The version of the ocm-controller component to use.")
 	flag.StringVar(&gitControllerVersion, "git-controller-version", env.DefaultGitControllerVer, "The version of the git-controller component to use.")
 	flag.StringVar(&replicationControllerVersion, "replication-controller-version", env.DefaultReplicationVer, "The version of the replication-controller component to use.")
@@ -153,6 +156,12 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 			}
 		case env.CertManagerName:
 			component, err = r.ReleaseCertManagerComponent(ctx, certManagerVersion)
+			if err != nil {
+				fmt.Printf("Failed to release %s component: %v\n", comp, err)
+				os.Exit(1)
+			}
+		case env.ExternalSecretsName:
+			component, err = r.ReleaseExternalSecretsComponent(ctx, externalSecretsVersion)
 			if err != nil {
 				fmt.Printf("Failed to release %s component: %v\n", comp, err)
 				os.Exit(1)

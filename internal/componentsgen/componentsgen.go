@@ -19,4 +19,5 @@ var (
 	_ Generator = &Flux{}
 	_ Generator = &Controller{}
 	_ Generator = &CertManager{}
+	_ Generator = &ExternalSecrets{}
 )

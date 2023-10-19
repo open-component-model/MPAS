@@ -13,8 +13,10 @@ import (
 const (
 	// DefaultFluxVer is the default version of the flux component.
 	DefaultFluxVer = "v2.1.0"
-	// DefaultCertManagerVer is the default version of the flux component.
+	// DefaultCertManagerVer is the default version of the cert-manager component.
 	DefaultCertManagerVer = "v1.13.1"
+	// DefaultExternalSecretsVer is the default version of the external secrets component.
+	DefaultExternalSecretsVer = "v0.9.6"
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
 	DefaultOcmControllerVer = "v0.14.0"
 	// DefaultGitControllerVer is the default version of the git-controller component.
@@ -46,6 +48,8 @@ const (
 	DefaultFluxHost = "ghcr.io/fluxcd"
 	// DefaultCertManagerHost is the default host for the cert-manager components.
 	DefaultCertManagerHost = "quay.io/jetstack"
+	// DefaultExternalSecretsHost is the default host for the external-secrets components.
+	DefaultExternalSecretsHost = "ghcr.io/external-secrets"
 	// DefaultFluxNamespace is the default namespace to install the flux components.
 	DefaultFluxNamespace = "flux-system"
 )
@@ -76,6 +80,7 @@ const (
 	MpasProjectControllerName = "mpas-project-controller"
 	FluxName                  = "flux"
 	CertManagerName           = "cert-manager"
+	ExternalSecretsName       = "external-secrets"
 )
 
 var (
@@ -84,6 +89,7 @@ var (
 		OcmControllerName,
 		FluxName,
 		CertManagerName,
+		ExternalSecretsName,
 		GitControllerName,
 		ReplicationControllerName,
 		MpasProductControllerName,

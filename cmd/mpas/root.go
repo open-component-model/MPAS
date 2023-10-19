@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -72,14 +72,14 @@ func New(ctx context.Context, args []string) (*cobra.Command, error) {
 
 func setDefaultNamespace(kubeConfigArgs *genericclioptions.ConfigFlags) error {
 	*kubeConfigArgs.Namespace = env.DefaultMPASNamespace
-	kubeConfigArgs.Namespace = pointer.String(env.DefaultMPASNamespace)
+	kubeConfigArgs.Namespace = ptr.To(env.DefaultMPASNamespace)
 	fromEnv := os.Getenv("MPAS_SYSTEM_NAMESPACE")
 	if fromEnv != "" {
 		if e := validation.IsDNS1123Label(fromEnv); len(e) > 0 {
 			return fmt.Errorf("invalid namespace %s: %v", fromEnv, e)
 		}
 
-		kubeConfigArgs.Namespace = pointer.String(fromEnv)
+		kubeConfigArgs.Namespace = ptr.To(fromEnv)
 	}
 	return nil
 }

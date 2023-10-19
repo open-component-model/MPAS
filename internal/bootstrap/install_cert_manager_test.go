@@ -7,7 +7,7 @@ import (
 	"github.com/fluxcd/go-git-providers/gitprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 func TestCertManagerInstall(t *testing.T) {
@@ -47,8 +47,8 @@ func TestCertManagerInstall(t *testing.T) {
 	assert.Equal(t, "Add ocm.software/mpas/test-component v1.0.1 manifests", args[1])
 	assert.Equal(t, []gitprovider.CommitFile{
 		{
-			Path:    pointer.String("target/ocm-system/test-component.yaml"),
-			Content: pointer.String("YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGdpdC1jb250cm9sbGVyCiAgbmFtZXNwYWNlOiBvY20tc3lzdGVtCnNwZWM6CiAgc2VsZWN0b3I6CiAgICBtYXRjaExhYmVsczoKICAgICAgYXBwOiBnaXQtY29udHJvbGxlcgogIHJlcGxpY2FzOiAxCiAgdGVtcGxhdGU6CiAgICBtZXRhZGF0YToKICAgICAgbGFiZWxzOgogICAgICAgIGFwcDogZ2l0LWNvbnRyb2xsZXIKICAgIHNwZWM6CiAgICAgIGNvbnRhaW5lcnM6CiAgICAgIC0gbmFtZTogbWFuYWdlcgogICAgICAgIGltYWdlOiBnaGNyLmlvL3VzZXIvZ2l0LWNvbnRyb2xsZXI6djEuMC4wCg=="),
+			Path:    ptr.To("target/ocm-system/test-component.yaml"),
+			Content: ptr.To("YXBpVmVyc2lvbjogYXBwcy92MQpraW5kOiBEZXBsb3ltZW50Cm1ldGFkYXRhOgogIG5hbWU6IGdpdC1jb250cm9sbGVyCiAgbmFtZXNwYWNlOiBvY20tc3lzdGVtCnNwZWM6CiAgc2VsZWN0b3I6CiAgICBtYXRjaExhYmVsczoKICAgICAgYXBwOiBnaXQtY29udHJvbGxlcgogIHJlcGxpY2FzOiAxCiAgdGVtcGxhdGU6CiAgICBtZXRhZGF0YToKICAgICAgbGFiZWxzOgogICAgICAgIGFwcDogZ2l0LWNvbnRyb2xsZXIKICAgIHNwZWM6CiAgICAgIGNvbnRhaW5lcnM6CiAgICAgIC0gbmFtZTogbWFuYWdlcgogICAgICAgIGltYWdlOiBnaGNyLmlvL3VzZXIvZ2l0LWNvbnRyb2xsZXI6djEuMC4wCg=="),
 		},
 	}, args[2])
 }

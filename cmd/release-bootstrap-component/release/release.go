@@ -32,6 +32,12 @@ var (
   resource:
     name: %s
 `
+	externalSecretsLocalizationTemplate = `- name: %s
+  file: external-secrets.yaml
+  image: spec.template.spec.containers[0].image
+  resource:
+    name: %s
+`
 	ocmLocalizationTemplate = `- name: %s
   file: install.yaml
   image: spec.template.spec.containers[0].image
@@ -381,6 +387,34 @@ func (r *Releaser) ReleaseCertManagerComponent(
 	return component, nil
 }
 
+// ReleaseExternalSecretsComponent releases external-secrets with all its components
+func (r *Releaser) ReleaseExternalSecretsComponent(
+	ctx context.Context,
+	version string,
+) (*ocm.Component, error) {
+	f, err := generateExternalSecrets(ctx, version, r.tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate external secrets manifests: %v", err)
+	}
+
+	component, err := ocm.NewComponent(r.octx,
+		fmt.Sprintf("%s/%s", env.ComponentNamePrefix, env.ExternalSecretsName),
+		version,
+		ocm.WithProvider("external-secrets"),
+		ocm.WithUsername(r.username),
+		ocm.WithToken(r.token),
+		ocm.WithRepositoryURL(r.repositoryURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create component: %w", err)
+	}
+
+	if err := r.release(ctx, r.octx, component, r.ctf, &f, env.ExternalSecretsName, externalSecretsLocalizationTemplate); err != nil {
+		return nil, fmt.Errorf("failed to release external-secrets component: %w", err)
+	}
+
+	return component, nil
+}
+
 // ReleaseOCMCliComponent releases ocm-cli.
 func (r *Releaser) ReleaseOCMCliComponent(
 	ctx context.Context,
@@ -512,6 +546,16 @@ func generateCertManager(ctx context.Context, version, tmpDir string) (cgen.Cert
 	}
 
 	f := cgen.CertManager{Version: version}
+	err := f.GenerateManifests(ctx, tmpDir)
+	return f, err
+}
+
+func generateExternalSecrets(ctx context.Context, version, tmpDir string) (cgen.ExternalSecrets, error) {
+	if version == "" {
+		return cgen.ExternalSecrets{}, fmt.Errorf("external secrets version is empty")
+	}
+
+	f := cgen.ExternalSecrets{Version: version}
 	err := f.GenerateManifests(ctx, tmpDir)
 	return f, err
 }
