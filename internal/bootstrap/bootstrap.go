@@ -342,7 +342,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 			externalSecret,
 			externalSecretCertController,
 			externalSecretWebhook,
-		}, "external-secrets"); err != nil {
+		}, env.DefaultExternalSecretsNamespace); err != nil {
 			return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
 		}
 
@@ -527,7 +527,7 @@ func (b *Bootstrap) installCertManager(ctx context.Context, ociRepo om.Repositor
 		dir:                   dir,
 		branch:                b.defaultBranch,
 		targetPath:            b.targetPath,
-		namespace:             "cert-manager",
+		namespace:             env.DefaultCertManagerNamespace,
 		provider:              string(b.providerClient.ProviderID()),
 		timeout:               b.timeout,
 		commitMessageAppendix: b.commitMessageAppendix,
@@ -537,7 +537,7 @@ func (b *Bootstrap) installCertManager(ctx context.Context, ociRepo om.Repositor
 	if err != nil {
 		return "", fmt.Errorf("failed to create new cert manager installer: %w", err)
 	}
-	sha, err := inst.Install(ctx, "cert-manager")
+	sha, err := inst.Install(ctx, env.CertManagerName)
 	if err != nil {
 		return "", fmt.Errorf("failed to install cert manager: %w", err)
 	}
@@ -556,7 +556,7 @@ func (b *Bootstrap) installExternalSecrets(ctx context.Context, ociRepo om.Repos
 		dir:                   dir,
 		branch:                b.defaultBranch,
 		targetPath:            b.targetPath,
-		namespace:             "default",
+		namespace:             env.DefaultExternalSecretsNamespace,
 		provider:              string(b.providerClient.ProviderID()),
 		timeout:               b.timeout,
 		commitMessageAppendix: b.commitMessageAppendix,

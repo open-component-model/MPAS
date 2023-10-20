@@ -85,7 +85,7 @@ func (c *ExternalSecrets) GenerateImages() (map[string][]string, error) {
 			}
 			image += v
 		}
-		// cert-manager manifest wraps strings into ""
+
 		image = strings.Trim(image, "\"")
 		version := strings.Trim(strings.Split(image, ":")[1], "\"")
 		images[image] = []string{

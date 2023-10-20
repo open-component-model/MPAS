@@ -52,6 +52,10 @@ const (
 	DefaultExternalSecretsHost = "ghcr.io/external-secrets"
 	// DefaultFluxNamespace is the default namespace to install the flux components.
 	DefaultFluxNamespace = "flux-system"
+	// DefaultCertManagerNamespace is the default namespace to install the cert-manager components.
+	DefaultCertManagerNamespace = "cert-manager"
+	// DefaultExternalSecretsNamespace is the default namespace to install the external secrets components.
+	DefaultExternalSecretsNamespace = "default"
 )
 
 const (
@@ -80,7 +84,7 @@ const (
 	MpasProjectControllerName = "mpas-project-controller"
 	FluxName                  = "flux"
 	CertManagerName           = "cert-manager"
-	ExternalSecretsName       = "external-secrets"
+	ExternalSecretsName       = "external-secrets-operator"
 )
 
 var (
