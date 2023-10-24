@@ -312,6 +312,10 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to fetch bootstrap components: %w", err)
 	}
 
+	if b.disableExternalSecretsComponent {
+		delete(refs, env.ExternalSecretsName)
+	}
+
 	sha, err := b.installInfrastructure(ctx, ociRepo, refs)
 	if err != nil {
 		return fmt.Errorf("failed to install infrastructure: %w", err)
@@ -337,18 +341,20 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to wait for cert-manager to be available: %w", err)
 	}
 
-	if err := b.inSpinner("Waiting for external-secrets to be available", func() error {
-		if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, []string{
-			externalSecret,
-			externalSecretCertController,
-			externalSecretWebhook,
-		}, env.DefaultExternalSecretsNamespace); err != nil {
-			return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
-		}
+	if !b.disableExternalSecretsComponent {
+		if err := b.inSpinner("Waiting for external-secrets to be available", func() error {
+			if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, []string{
+				externalSecret,
+				externalSecretCertController,
+				externalSecretWebhook,
+			}, env.DefaultExternalSecretsNamespace); err != nil {
+				return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
+			}
 
-		return nil
-	}); err != nil {
-		return fmt.Errorf("failed to wait for external-secrets to be available: %w", err)
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed to wait for external-secrets to be available: %w", err)
+		}
 	}
 
 	compNs := make(map[string][]string)
@@ -722,27 +728,29 @@ func (b *Bootstrap) installInfrastructure(ctx context.Context, ociRepo om.Reposi
 
 	delete(refs, env.CertManagerName)
 
-	if !b.disableExternalSecretsComponent {
-		externalSecretsRef, ok := refs[env.ExternalSecretsName]
-		if !ok {
-			return "", fmt.Errorf("external-secrets component not found")
-		}
-
-		if err := b.inSpinner(fmt.Sprintf("Installing %s with version %s",
-			printer.BoldBlue(env.ExternalSecretsName),
-			printer.BoldBlue(externalSecretsRef.GetVersion())), func() error {
-			sha, err = b.installExternalSecrets(ctx, ociRepo, externalSecretsRef)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}); err != nil {
-			return "", fmt.Errorf("failed to install external-secrets: %w", err)
-		}
-
-		delete(refs, env.ExternalSecretsName)
+	if b.disableExternalSecretsComponent {
+		return sha, nil
 	}
+
+	externalSecretsRef, ok := refs[env.ExternalSecretsName]
+	if !ok {
+		return "", fmt.Errorf("external-secrets component not found")
+	}
+
+	if err := b.inSpinner(fmt.Sprintf("Installing %s with version %s",
+		printer.BoldBlue(env.ExternalSecretsName),
+		printer.BoldBlue(externalSecretsRef.GetVersion())), func() error {
+		sha, err = b.installExternalSecrets(ctx, ociRepo, externalSecretsRef)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return "", fmt.Errorf("failed to install external-secrets: %w", err)
+	}
+
+	delete(refs, env.ExternalSecretsName)
 
 	return sha, nil
 }

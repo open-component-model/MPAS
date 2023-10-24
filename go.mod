@@ -43,9 +43,9 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-logr/logr v1.2.4
 	github.com/mandelsoft/vfs v0.0.0-20230713123140-269aa4fb1338
-	github.com/open-component-model/git-controller v0.8.1-0.20231020125131-b163849674e6
+	github.com/open-component-model/git-controller v0.9.0
 	github.com/open-component-model/mpas-product-controller v0.5.1
-	github.com/open-component-model/mpas-project-controller v0.3.2-0.20231020125225-daa090eb5b6f
+	github.com/open-component-model/mpas-project-controller v0.4.0
 	github.com/open-component-model/ocm v0.4.1
 	github.com/open-component-model/ocm-controller v0.14.2-0.20231018132945-e60f59db8c74
 	github.com/open-component-model/ocm-e2e-framework v0.7.0
