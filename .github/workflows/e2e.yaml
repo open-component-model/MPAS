@@ -32,43 +32,43 @@ jobs:
     steps:
       - run: curl -s https://fluxcd.io/install.sh | sudo bash
       - name: Checkout mpas repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ github.repository }}
           path: MPAS
 
       - name: Checkout ocm-controller
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: open-component-model/ocm-controller
           path: ocm-controller
 
       - name: Checkout mpas-project-controller
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: open-component-model/mpas-project-controller
           path: mpas-project-controller
 
       - name: Checkout mpas-product-controller
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: open-component-model/mpas-product-controller
           path: mpas-product-controller
 
       - name: Checkout replication-controller
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: open-component-model/replication-controller
           path: replication-controller
 
       - name: Checkout git-controller
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: open-component-model/git-controller
           path: git-controller
 
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version-file: '${{ github.workspace }}/MPAS/go.mod'
       - name: Restore Go cache
