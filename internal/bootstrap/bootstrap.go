@@ -33,28 +33,27 @@ var (
 
 // options contains the options to be used during bootstrap
 type options struct {
-	description                     string
-	defaultBranch                   string
-	visibility                      string
-	personal                        bool
-	owner                           string
-	token                           string
-	repositoryName                  string
-	targetPath                      string
-	commitMessageAppendix           string
-	fromFile                        string
-	registry                        string
-	dockerConfigPath                string
-	transportType                   string
-	kubeclient                      client.Client
-	restClientGetter                genericclioptions.RESTClientGetter
-	components                      []string
-	interval                        time.Duration
-	timeout                         time.Duration
-	printer                         *printer.Printer
-	testURL                         string
-	caFile                          string
-	disableExternalSecretsComponent bool
+	description           string
+	defaultBranch         string
+	visibility            string
+	personal              bool
+	owner                 string
+	token                 string
+	repositoryName        string
+	targetPath            string
+	commitMessageAppendix string
+	fromFile              string
+	registry              string
+	dockerConfigPath      string
+	transportType         string
+	kubeclient            client.Client
+	restClientGetter      genericclioptions.RESTClientGetter
+	components            []string
+	interval              time.Duration
+	timeout               time.Duration
+	printer               *printer.Printer
+	testURL               string
+	caFile                string
 }
 
 // Option is a function that sets an option on the bootstrap
@@ -217,13 +216,6 @@ func WithTransportType(transportType string) Option {
 	}
 }
 
-// WithDisableExternalSecretsComponent sets disabling external secrets component
-func WithDisableExternalSecretsComponent(value bool) Option {
-	return func(o *options) {
-		o.disableExternalSecretsComponent = value
-	}
-}
-
 // New returns a new Bootstrap. It accepts a gitprovider.Client and a list of options.
 func New(providerClient gitprovider.Client, opts ...Option) (*Bootstrap, error) {
 	b := &Bootstrap{
@@ -312,10 +304,6 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to fetch bootstrap components: %w", err)
 	}
 
-	if b.disableExternalSecretsComponent {
-		delete(refs, env.ExternalSecretsName)
-	}
-
 	sha, err := b.installInfrastructure(ctx, ociRepo, refs)
 	if err != nil {
 		return fmt.Errorf("failed to install infrastructure: %w", err)
@@ -339,22 +327,6 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to wait for cert-manager to be available: %w", err)
-	}
-
-	if !b.disableExternalSecretsComponent {
-		if err := b.inSpinner("Waiting for external-secrets to be available", func() error {
-			if err := kubeutils.ReportComponentsHealth(ctx, b.restClientGetter, b.timeout, []string{
-				externalSecret,
-				externalSecretCertController,
-				externalSecretWebhook,
-			}, env.DefaultExternalSecretsNamespace); err != nil {
-				return fmt.Errorf("failed to report health, please try again in a few minutes: %w", err)
-			}
-
-			return nil
-		}); err != nil {
-			return fmt.Errorf("failed to wait for external-secrets to be available: %w", err)
-		}
 	}
 
 	compNs := make(map[string][]string)
@@ -728,30 +700,6 @@ func (b *Bootstrap) installInfrastructure(ctx context.Context, ociRepo om.Reposi
 
 	delete(refs, env.CertManagerName)
 
-	if b.disableExternalSecretsComponent {
-		return sha, nil
-	}
-
-	externalSecretsRef, ok := refs[env.ExternalSecretsName]
-	if !ok {
-		return "", fmt.Errorf("external-secrets component not found")
-	}
-
-	if err := b.inSpinner(fmt.Sprintf("Installing %s with version %s",
-		printer.BoldBlue(env.ExternalSecretsName),
-		printer.BoldBlue(externalSecretsRef.GetVersion())), func() error {
-		sha, err = b.installExternalSecrets(ctx, ociRepo, externalSecretsRef)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return "", fmt.Errorf("failed to install external-secrets: %w", err)
-	}
-
-	delete(refs, env.ExternalSecretsName)
-
 	return sha, nil
 }
 
@@ -772,6 +720,13 @@ func (b *Bootstrap) generateControllerManifest(ctx context.Context, ociRepo om.R
 		}
 		latestSHA = sha
 		compNs["mpas-system"] = append(compNs["mpas-system"], comp)
+	case env.ExternalSecretsName:
+		sha, err := b.installExternalSecrets(ctx, ociRepo, ref)
+		if err != nil {
+			return "", err
+		}
+		latestSHA = sha
+		compNs["default"] = append(compNs["default"], externalSecret, externalSecretCertController, externalSecretWebhook)
 	default:
 		return "", fmt.Errorf("unknown component %q", comp)
 	}

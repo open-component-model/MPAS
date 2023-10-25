@@ -93,7 +93,6 @@ var (
 		OcmControllerName,
 		FluxName,
 		CertManagerName,
-		ExternalSecretsName,
 		GitControllerName,
 		ReplicationControllerName,
 		MpasProductControllerName,

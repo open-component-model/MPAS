@@ -67,13 +67,11 @@ type BootstrapConfig struct {
 	Private bool
 	// CaFile defines and optional root certificate for the git repository used by flux.
 	CaFile string
-	// DisableExternalSecretComponent will make sure that the external secrets component is not installed.
-	DisableExternalSecretComponent bool
 }
 
 // AddFlags adds the bootstrap flags to the given flag set.
 func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&m.Components, "components", []string{}, "The components to include in the management repository")
+	flags.StringSliceVar(&m.Components, "components", []string{env.ExternalSecretsName}, "The components to include in the management repository")
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")
 	flags.StringVar(&m.Repository, "repository", "", "The name of the management repository")
 	flags.StringVar(&m.FromFile, "from-file", "", "The path to a file containing the bootstrap component in archive format")
@@ -84,7 +82,6 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.CommitMessageAppendix, "commit-message-appendix", "", "The appendix to add to the commit message, e.g. [ci skip]")
 	flags.BoolVar(&m.Private, "private", false, "Whether the management repository should be private")
 	flags.StringVar(&m.CaFile, "ca-file", "", "Root certificate for the remote git server.")
-	flags.BoolVar(&m.DisableExternalSecretComponent, "disable-external-secret-component", false, "Do not install external secrets manager component.")
 }
 
 // GithubConfig is the configuration for the Github bootstrap command.

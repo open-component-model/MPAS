@@ -52,10 +52,8 @@ type GiteaCmd struct {
 	// TestURL is the URL to use for testing the management repository
 	TestURL string
 	// CaFile defines and optional root certificate for the git repository used by flux.
-	CaFile string
-	// DisableExternalSecretComponent will make sure that the external secrets component is not installed.
-	DisableExternalSecretComponent bool
-	bootstrapper                   *bootstrap.Bootstrap
+	CaFile       string
+	bootstrapper *bootstrap.Bootstrap
 }
 
 // Execute executes the command and returns an error if one occurred.
@@ -118,7 +116,6 @@ func (b *GiteaCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 		bootstrap.WithVisibility(visibility),
 		bootstrap.WithTestURL(b.TestURL),
 		bootstrap.WithRootFile(b.CaFile),
-		bootstrap.WithDisableExternalSecretsComponent(b.DisableExternalSecretComponent),
 	)
 
 	if err != nil {
