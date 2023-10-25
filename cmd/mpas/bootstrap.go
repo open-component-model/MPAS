@@ -79,10 +79,6 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				CaFile:                c.CaFile,
 			}
 
-			if len(c.Components) != 0 {
-				return fmt.Errorf("additional  components are not yet supported for github")
-			}
-
 			token := os.Getenv(env.GithubTokenVar)
 			if token == "" {
 				token, err = passwdFromStdin("Github token: ")
@@ -155,10 +151,6 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				Hostname:              c.Hostname,
 				Components:            append(env.Components, c.Components...),
 				CaFile:                c.CaFile,
-			}
-
-			if len(c.Components) != 0 {
-				return fmt.Errorf("additional  components are not yet supported for gitea")
 			}
 
 			token := os.Getenv(env.GiteaTokenVar)

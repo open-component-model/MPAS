@@ -13,7 +13,8 @@ spec:
     interval: 2s
     visibility: public
     isOrganization: false
-    domain: http://gitea.ocm-system.svc.cluster.local:3000
+    domain: gitea.ocm-system.svc.cluster.local:3000
+    insecure: true
     maintainers:
       - alice.bobb
       - bob.alisson

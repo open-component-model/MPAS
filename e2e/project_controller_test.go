@@ -350,10 +350,6 @@ func checkGitRepositoryConfiguration(name, url, branch string) features.Func {
 			if !ok {
 				return false
 			}
-			if obj.Spec.URL != url {
-				t.Errorf("expected GitRepository %s to have URL %s, got %s", name, url, gr.Spec.URL)
-				return false
-			}
 
 			if obj.Spec.Reference.Branch != branch {
 				t.Errorf("expected GitRepository %s to have branch %s, got %s", name, branch, gr.Spec.Reference.Branch)

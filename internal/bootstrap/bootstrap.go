@@ -505,7 +505,7 @@ func (b *Bootstrap) installCertManager(ctx context.Context, ociRepo om.Repositor
 		dir:                   dir,
 		branch:                b.defaultBranch,
 		targetPath:            b.targetPath,
-		namespace:             "cert-manager",
+		namespace:             env.DefaultCertManagerNamespace,
 		provider:              string(b.providerClient.ProviderID()),
 		timeout:               b.timeout,
 		commitMessageAppendix: b.commitMessageAppendix,
@@ -515,10 +515,41 @@ func (b *Bootstrap) installCertManager(ctx context.Context, ociRepo om.Repositor
 	if err != nil {
 		return "", fmt.Errorf("failed to create new cert manager installer: %w", err)
 	}
-	sha, err := inst.Install(ctx, "cert-manager")
+	sha, err := inst.Install(ctx, env.CertManagerName)
 	if err != nil {
 		return "", fmt.Errorf("failed to install cert manager: %w", err)
 	}
+	return sha, nil
+}
+
+func (b *Bootstrap) installExternalSecrets(ctx context.Context, ociRepo om.Repository, ref compdesc.ComponentReference) (string, error) {
+	dir, err := mkdirTempDir("external-secrets-install")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(dir)
+
+	opts := &externalSecretOptions{
+		gitRepository:         b.repository,
+		dir:                   dir,
+		branch:                b.defaultBranch,
+		targetPath:            b.targetPath,
+		namespace:             env.DefaultExternalSecretsNamespace,
+		provider:              string(b.providerClient.ProviderID()),
+		timeout:               b.timeout,
+		commitMessageAppendix: b.commitMessageAppendix,
+	}
+
+	inst, err := newExternalSecretInstall(ref.GetComponentName(), ref.GetVersion(), ociRepo, opts)
+	if err != nil {
+		return "", fmt.Errorf("failed to create new external secrets installer: %w", err)
+	}
+
+	sha, err := inst.Install(ctx, env.ExternalSecretsName)
+	if err != nil {
+		return "", fmt.Errorf("failed to install external secrets: %w", err)
+	}
+
 	return sha, nil
 }
 
@@ -689,6 +720,13 @@ func (b *Bootstrap) generateControllerManifest(ctx context.Context, ociRepo om.R
 		}
 		latestSHA = sha
 		compNs["mpas-system"] = append(compNs["mpas-system"], comp)
+	case env.ExternalSecretsName:
+		sha, err := b.installExternalSecrets(ctx, ociRepo, ref)
+		if err != nil {
+			return "", err
+		}
+		latestSHA = sha
+		compNs["default"] = append(compNs["default"], externalSecret, externalSecretCertController, externalSecretWebhook)
 	default:
 		return "", fmt.Errorf("unknown component %q", comp)
 	}

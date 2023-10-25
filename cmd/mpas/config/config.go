@@ -71,7 +71,7 @@ type BootstrapConfig struct {
 
 // AddFlags adds the bootstrap flags to the given flag set.
 func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&m.Components, "components", []string{}, "The components to include in the management repository")
+	flags.StringSliceVar(&m.Components, "components", []string{env.ExternalSecretsName}, "The components to include in the management repository")
 	flags.StringVar(&m.Owner, "owner", "", "The owner of the management repository")
 	flags.StringVar(&m.Repository, "repository", "", "The name of the management repository")
 	flags.StringVar(&m.FromFile, "from-file", "", "The path to a file containing the bootstrap component in archive format")

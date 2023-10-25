@@ -10,5 +10,3 @@ spec:
   interval: 10m
   access:
     targetNamespace: mpas-test-001
-#    secretRef:
-#      name: ingress-kubeconfig

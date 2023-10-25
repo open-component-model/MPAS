@@ -18,12 +18,12 @@ import (
 )
 
 const (
-	certManager           = "cert-manager"
-	certManagerCAInjector = "cert-manager-cainjector"
-	certManagerWebhook    = "cert-manager-webhook"
+	externalSecret               = "external-secrets"
+	externalSecretWebhook        = "external-secrets-webhook"
+	externalSecretCertController = "external-secrets-cert-controller"
 )
 
-type certManagerOptions struct {
+type externalSecretOptions struct {
 	gitRepository         gitprovider.UserRepository
 	dir                   string
 	branch                string
@@ -34,36 +34,36 @@ type certManagerOptions struct {
 	commitMessageAppendix string
 }
 
-// certManagerInstall is used to install cert-manager
-type certManagerInstall struct {
+// externalSecretInstall is used to install external-secrets
+type externalSecretInstall struct {
 	componentName string
 	version       string
 	repository    ocm.Repository
 	kustomizer    Kustomizer
 
-	*certManagerOptions
+	*externalSecretOptions
 }
 
-// newCertManagerInstall returns a new component install
-func newCertManagerInstall(name, version string, repository ocm.Repository, opts *certManagerOptions) (*certManagerInstall, error) {
-	c := &certManagerInstall{
-		componentName:      name,
-		version:            version,
-		repository:         repository,
-		certManagerOptions: opts,
+// newExternalSecretInstall returns a new component install
+func newExternalSecretInstall(name, version string, repository ocm.Repository, opts *externalSecretOptions) (*externalSecretInstall, error) {
+	c := &externalSecretInstall{
+		componentName:         name,
+		version:               version,
+		repository:            repository,
+		externalSecretOptions: opts,
 		kustomizer: NewKustomizer(&kustomizerOptions{
 			componentName: name,
 			version:       version,
 			repository:    repository,
 			dir:           opts.dir,
-			host:          env.DefaultCertManagerHost,
+			host:          env.DefaultExternalSecretsHost,
 		}),
 	}
 
 	return c, nil
 }
 
-func (c *certManagerInstall) Install(ctx context.Context, component string) (string, error) {
+func (c *externalSecretInstall) Install(ctx context.Context, component string) (string, error) {
 	res, err := c.kustomizer.GenerateKustomizedResourceData(component)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate component yaml: %w", err)
@@ -71,13 +71,13 @@ func (c *certManagerInstall) Install(ctx context.Context, component string) (str
 
 	sha, err := c.createCommit(ctx, res)
 	if err != nil {
-		return "", fmt.Errorf("failed to reconcile cert manager: %w", err)
+		return "", fmt.Errorf("failed to reconcile external secret: %w", err)
 	}
 
 	return sha, nil
 }
 
-func (c *certManagerInstall) createCommit(ctx context.Context, content []byte) (string, error) {
+func (c *externalSecretInstall) createCommit(ctx context.Context, content []byte) (string, error) {
 	data := SetProviderDataFormat(c.provider, content)
 	path := filepath.Join(c.targetPath, c.namespace, fmt.Sprintf("%s.yaml", strings.Split(c.componentName, "/")[2]))
 	commitMsg := fmt.Sprintf("Add %s %s manifests", c.componentName, c.version)

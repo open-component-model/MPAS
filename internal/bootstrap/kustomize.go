@@ -98,12 +98,12 @@ func (k *Kustomize) generateComponentYaml(kconfig *cfd.ConfigData, imagesResourc
 func buildKustomization(kus kustypes.Kustomization, kfile, dir string, mu sync.Locker) ([]byte, error) {
 	manifest, err := yaml.Marshal(kus)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal kustomization: %w", err)
 	}
 
 	err = os.WriteFile(kfile, manifest, os.ModePerm)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write file: %w", err)
 	}
 
 	fs := filesys.MakeFsOnDisk()
@@ -118,7 +118,7 @@ func buildKustomization(kus kustypes.Kustomization, kfile, dir string, mu sync.L
 
 	res, err := m.AsYaml()
 	if err != nil {
-		return nil, fmt.Errorf("kustomize build failed: %w", err)
+		return nil, fmt.Errorf("kustomize failed to generate yaml: %w", err)
 	}
 	return res, nil
 }
