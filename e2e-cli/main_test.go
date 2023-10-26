@@ -148,7 +148,7 @@ func bootstrapGithub(owner, token string) (*bootstrap.GithubCmd, error) {
 		Token:              token,
 		Path:               targetPath,
 		Registry:           registry,
-		Components:         env.Components,
+		Components:         env.InstallComponents,
 		DockerconfigPath:   cfg.DockerconfigPath,
 		DestructiveActions: true,
 	}
@@ -188,7 +188,7 @@ func bootstrapGitea(owner, token, hostname string) (*bootstrap.GiteaCmd, error) 
 		Path:               targetPath,
 		Registry:           registry,
 		TestURL:            fmt.Sprintf("http://%s/%s/%s", defautHostname, owner, repository),
-		Components:         env.Components,
+		Components:         env.InstallComponents,
 		DockerconfigPath:   cfg.DockerconfigPath,
 		DestructiveActions: true,
 	}

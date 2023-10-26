@@ -139,7 +139,7 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 	r := release.New(octx, username, token, tmpDir, repositoryURL, ctf)
 
 	generatedComponents := make(map[string]*ocm.Component)
-	for _, comp := range env.Components {
+	for _, comp := range env.BootstrapComponents {
 		var component *ocm.Component
 		switch comp {
 		case env.OcmControllerName:
@@ -193,6 +193,7 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 		}
 		generatedComponents[comp] = component
 	}
+
 	for _, comp := range env.BinaryComponents {
 		var component *ocm.Component
 		switch comp {
@@ -209,6 +210,7 @@ func releaseComponents(ctx context.Context, octx om.Context, token, tmpDir, ctfP
 				os.Exit(1)
 			}
 		}
+
 		generatedComponents[comp] = component
 	}
 
