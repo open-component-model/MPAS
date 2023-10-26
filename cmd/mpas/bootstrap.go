@@ -75,7 +75,7 @@ func NewBootstrapGithub(cfg *config.MpasConfig) *cobra.Command {
 				Path:                  c.Path,
 				CommitMessageAppendix: c.CommitMessageAppendix,
 				Hostname:              c.Hostname,
-				Components:            append(env.Components, c.Components...),
+				Components:            append(env.InstallComponents, c.Components...),
 				CaFile:                c.CaFile,
 			}
 
@@ -149,7 +149,7 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 				Path:                  c.Path,
 				CommitMessageAppendix: c.CommitMessageAppendix,
 				Hostname:              c.Hostname,
-				Components:            append(env.Components, c.Components...),
+				Components:            append(env.InstallComponents, c.Components...),
 				CaFile:                c.CaFile,
 			}
 

@@ -88,11 +88,23 @@ const (
 )
 
 var (
-	// Components is the list of components to install or package.
-	Components = []string{
+	// InstallComponents is the list of components to install or package.
+	InstallComponents = []string{
 		OcmControllerName,
 		FluxName,
 		CertManagerName,
+		GitControllerName,
+		ReplicationControllerName,
+		MpasProductControllerName,
+		MpasProjectControllerName,
+	}
+	// BootstrapComponents is the list of components for creating a package.
+	// Note, these components might contain more than what is installed later on using InstallComponents.
+	BootstrapComponents = []string{
+		OcmControllerName,
+		FluxName,
+		CertManagerName,
+		ExternalSecretsName,
 		GitControllerName,
 		ReplicationControllerName,
 		MpasProductControllerName,
