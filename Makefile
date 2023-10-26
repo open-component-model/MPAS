@@ -40,7 +40,7 @@ build-release-bootstrap-component:
 	-o ./bin/mpas-rel ./cmd/release-bootstrap-component
 
 
-.PHONY e2e:
+.PHONY: e2e
 e2e: prime-test-cluster test-summary-tool
 	$(GOTESTSUM) --format testname -- -count=1 -timeout=30m -tags=e2e ./e2e
 
@@ -66,6 +66,8 @@ test:
 .PHONY: prime-test-cluster
 prime-test-cluster: mkcert ## Runs prime-test-cluster in the ocm-controller project. It expects the project to exist.
 	./hack/prime_test_cluster.sh
+
+MKCERT ?= $(LOCALBIN)/mkcert
 
 .PHONY: mkcert
 mkcert: $(MKCERT)
