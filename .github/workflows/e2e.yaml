@@ -108,12 +108,11 @@ jobs:
               "blocks": [
                 {
                   "type": "section",
-                  "text": [
+                  "text":
                    {
                       "type": "mrkdwn",
                       "text": "e2e Test for MPAS  ${{ job.status == 'success' && ':white_check_mark:' || ':x:' }}  <https://github.com/open-component-model/MPAS/actions/workflows/e2e.yaml|Github Action>"
                     }
-                  ]
                 }
               ]
             }
