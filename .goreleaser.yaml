@@ -4,7 +4,7 @@ builds:
       binary: mpas
       main: ./cmd/mpas
       ldflags:
-        - -s -w -X main.VERSION={{ .Version }}
+        - -s -w -X main.Version={{ .Version }}
       env:
         - CGO_ENABLED=0
     id: linux
