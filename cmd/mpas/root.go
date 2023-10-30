@@ -57,6 +57,7 @@ func New(ctx context.Context, args []string) (*cobra.Command, error) {
 
 	cmd.AddCommand(NewBootstrap(cfg))
 	cmd.AddCommand(NewCreate(cfg))
+	cmd.AddCommand(NewVersion(cfg))
 
 	cmd.InitDefaultHelpCmd()
 
