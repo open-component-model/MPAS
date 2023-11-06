@@ -7,6 +7,7 @@ BOOTSTRAP_RELEASE_VERSION?=v0.1.0
 DEV_VERSION?=0.0.0-$(shell git rev-parse --abbrev-ref HEAD)-$(shell git rev-parse --short HEAD)-$(shell date +%s)
 GO_TEST_ARGS ?= -race
 TAG ?= latest
+UNAME ?= $(shell uname|tr '[:upper:]' '[:lower:]')
 
 # gitea e2e test
 GITEA_TOKEN?=
@@ -68,6 +69,7 @@ prime-test-cluster: mkcert ## Runs prime-test-cluster in the ocm-controller proj
 	./hack/prime_test_cluster.sh
 
 MKCERT ?= $(LOCALBIN)/mkcert
+MKCERT_VERSION ?= v1.4.4
 
 .PHONY: mkcert
 mkcert: $(MKCERT)
