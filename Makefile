@@ -8,6 +8,10 @@ DEV_VERSION?=0.0.0-$(shell git rev-parse --abbrev-ref HEAD)-$(shell git rev-pars
 GO_TEST_ARGS ?= -race
 TAG ?= latest
 
+# podinfo component
+PODINFO_VERSION ?= v1.0.0
+PODINFO_GITHUB_REPOSITORY ?= ghcr.io/open-component-model/mpas
+
 # gitea e2e test
 GITEA_TOKEN?=
 MPAS_MANAGEMENT_REPO_OWNER?=mpas-management
@@ -74,3 +78,9 @@ mkcert: $(MKCERT)
 $(MKCERT): $(LOCALBIN)
 	curl -L "https://github.com/FiloSottile/mkcert/releases/download/$(MKCERT_VERSION)/mkcert-$(MKCERT_VERSION)-$(UNAME)-amd64" -o $(LOCALBIN)/mkcert
 	chmod +x $(LOCALBIN)/mkcert
+
+podinfo:
+	ocm add componentversion --create --version $(PODINFO_VERSION) --scheme v3alpha1 ./podinfo_component/componentfile.yaml
+
+push-podinfo:
+	ocm transfer component -f ./transport-archive $(PODINFO_GITHUB_REPOSITORY)
