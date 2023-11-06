@@ -309,7 +309,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to install infrastructure: %w", err)
 	}
 
-	if err := b.inSpinner("Reconciling infrastructure components", func() error {
+	if err := b.inSpinner("Reconciling bootstrap components", func() error {
 		return b.syncManagementRepository(ctx, sha)
 	}); err != nil {
 		return err
@@ -350,7 +350,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		}
 	}
 
-	if err := b.inSpinner("Generate certificate manifests", func() error {
+	if err := b.inSpinner("Generating certificate manifests", func() error {
 		latestSHA, err = b.generateCertificateManifests(ctx)
 
 		if err != nil {
@@ -362,7 +362,7 @@ func (b *Bootstrap) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to generate certificate manifests: %w", err)
 	}
 
-	if err := b.inSpinner("Reconciling infrastructure components", func() error {
+	if err := b.inSpinner("Reconciling component manifests", func() error {
 		return b.syncManagementRepository(ctx, latestSHA)
 	}); err != nil {
 		return err
