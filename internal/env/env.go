@@ -16,7 +16,7 @@ const (
 	// DefaultCertManagerVer is the default version of the cert-manager component.
 	DefaultCertManagerVer = "v1.13.1"
 	// DefaultExternalSecretsVer is the default version of the external secrets component.
-	DefaultExternalSecretsVer = "v0.9.6"
+	DefaultExternalSecretsVer = "v0.9.8"
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
 	DefaultOcmControllerVer = "v0.14.1"
 	// DefaultGitControllerVer is the default version of the git-controller component.
