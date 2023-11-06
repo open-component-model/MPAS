@@ -16,18 +16,18 @@ The distribution of secrets in the cluster can be difficult to pull of securely,
 multiple namespaces that require the same access information; i.e.: pulling components, fetching images, accessing the
 management repository, etc.
 
-These secrets must live in all of the provided namespaces including every new namespace created by the project
-controller. We must do so in a secure manner without requiring the admins of the cluster to do leg-work for us every
+These secrets need to exist in all of the provided namespaces including every new namespace created by the project
+controller. It needs to be done in a secure manner without requiring adminstrators of the cluster to do leg-work every
 time a new project is needed.
 
-We can do this by combining industry standard solutions and with a bit of help from the project controller.
+This can be achieved by combining industry standard solutions with a bit of help from the project controller.
 
 ## Proposal
 
-There are two aspects of secrets that we need to tackle. One is the certificate generation for the in-cluster registry
+There are two aspects of secrets that need to be covered. One is the certificate generation for the in-cluster registry
 that is running using HTTPS, and the other is replicating access to all namespaces, including every potential new one.
 
-The trick here is the new namespaces which we know nothing about and we can't know their names either.
+The trick here is the new namespaces which we know nothing about and don't even know their names either.
 
 ### Generating certificates for the internal registry
 
@@ -66,9 +66,9 @@ spec:
     group: cert-manager.io
 ```
 
-Once this is done, now we can create another `ClusterIssuer` which will use this rootCA as a CA for every new certificate
-it generates. This will allow us in e2e test suits to easily prime a cluster, then download this certificate and access
-the internal registry using https to create new component for testing.
+Once this is done, we can create another `ClusterIssuer` which will use this rootCA as a CA for every new certificate
+it generates. This will allows the usage in e2e test suits to easily prime a cluster, then download this certificate and access
+the internal registry using https to create new components for testing.
 
 The new `ClusterIssuer` looks like this:
 
@@ -83,7 +83,7 @@ spec:
 ```
 
 Now, what's left, is to deal with any new project namespaces that might pop up. However, since mpas-project-controller
-already creates resources in the project namespace, it also creates `Certificate` object for this using this specific
+already creates resources in the project namespace, it also creates a `Certificate` resource for this using this specific
 `ClusterIssuer`.
 
 Which means, every new namespace will automatically get a certificate secret generated for the OciRepositories to use
@@ -91,8 +91,8 @@ to access the internal registry.
 
 ### Replicating secrets inside all namespaces including new ones
 
-Now, the next we have to deal with is access to various facilities outside the cluster, like the management repository.
-For this, we offer an integration with [external-secrets](https://external-secrets.io/). External secrets is a
+Next is the access to various facilities outside the cluster, like the management repository.
+For this, we offer an integration with [external-secrets](https://external-secrets.io/). External secrets are a
 convenient approach in getting secrets into the cluster and then distributing them to all namespaces.
 
 To achieve this, we have to get acquainted with two new concepts/objects. [ClusterSecretStore](https://external-secrets.io/latest/api/clustersecretstore/) and
@@ -100,11 +100,11 @@ To achieve this, we have to get acquainted with two new concepts/objects. [Clust
 
 #### ClusterSecretStore
 
-ClusterSecretStore defines from WHERE the secrets are coming from. External Secrets support for a wast number of stores
-from which it can fetch these secrets. All store configurations will need to be managed by the cluster Admin. Secrets
+ClusterSecretStore defines from WHERE the secrets are coming. External Secrets support for a wast number of secret stores
+from which it can fetch the secrets. All store configurations will need to be managed by the cluster administrator. Secrets
 that contain access for these stores can be put into the cluster or fetched via other means.
 
-For example, if secrets are already sitting in the management cluster, we could create a cluster store like this:
+For example, if secrets are already stored in the management cluster, we could create a cluster store like this:
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1
@@ -155,14 +155,14 @@ The important part of all of this is the following bit, that _EVERY_ cluster sto
             operator: exists
 ```
 
-That last `namespaceSelector` bit enabled the secrets to be automatically created in EVERY new namespace that our
+That last `namespaceSelector` bit enables the secrets to be automatically created in EVERY new namespace that the
 project controller creates. The project controller creates namespaces that have this annotation on them with the value
-that is the name of the `Project` object created in the cluster. Here, we only care that the annotation `exists`.
+that is the name of the `Project` resource created in the cluster. Here, we only care that the annotation `exists`.
 
 #### ClusterExternalSecret
 
-Once the store exists, we will need to create `ClusterExternalSecret` objects. One for each secret we need in the
-cluster. For example, consider a pull secret for components and images. We need that secret to exist in the `ocm-system`
+Once the store exists, we will need to create `ClusterExternalSecret` objects, one for each secret in the cluster is required.
+For example, consider a pull secret for components and images. We need that secret to exist in the `ocm-system`
 namespace, the `mpas-system` namespace and every new namespace that the project controller might create.
 
 The `ClusterExternalSecret` object's job is to create `Secret`s in each namespace that it is watching.
@@ -215,11 +215,11 @@ spec:
         property: .dockerconfigjson
 ```
 
-Note two things of importance.
+Note two things of importance:
 
 First, the same `namespaceSelector` that defines where the secrets will be created. We use the same `exists` operator
 here as in the store. This allows external secrets to replicate secrets into every future project that might be created
-without the need of an admin or any controller, to update this object with the name of the new namespace.
+without the need of an administrator or K8s controller, to update this object with the name of the new namespace.
 
 Second, we have an annotation that is applied to the secret here:
 
@@ -230,7 +230,7 @@ Second, we have an annotation that is applied to the secret here:
             mpas.ocm.system/secret.dockerconfig: managed
 ```
 
-This annotation is for our project controller. The project controller will make sure that any secret with this
+This annotation is for the project controller. The project controller makes sure that any secret with this
 annotation is synced into the `ServiceAccount` of the project. Doing this, allows the controllers in the project
 namespace to have access to pulling components and authentication against any remote repositories.
 
@@ -262,7 +262,7 @@ Notice the added `--components=""`. This clears the optional component list whic
 
 This scenario makes spinning up the bootstrap clusters a lot easier. No need to pre-generate any certificates. We still
 use `mkcert` to install the generated root certificate locally so the e2e script has access to the internal https
-registry; but we are no longer required to generate and create a secret by hand.
+registry; but we are no longer required to generate and create any secret by hand.
 
 In the ocm-controller and the MPAS repository, there is a script under the `hack` folder to prime any clusters with a
 certificate already installed.
