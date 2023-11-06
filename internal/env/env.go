@@ -12,13 +12,13 @@ import (
 // The default versions of the components. Please update this list when a new version is released.
 const (
 	// DefaultFluxVer is the default version of the flux component.
-	DefaultFluxVer = "v2.1.0"
+	DefaultFluxVer = "v2.1.2"
 	// DefaultCertManagerVer is the default version of the cert-manager component.
 	DefaultCertManagerVer = "v1.13.1"
 	// DefaultExternalSecretsVer is the default version of the external secrets component.
 	DefaultExternalSecretsVer = "v0.9.8"
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
-	DefaultOcmControllerVer = "v0.14.1"
+	DefaultOcmControllerVer = "v0.15.0"
 	// DefaultGitControllerVer is the default version of the git-controller component.
 	DefaultGitControllerVer = "v0.9.0"
 	// DefaultReplicationVer is the default version of the replication-controller component.
