@@ -18,13 +18,13 @@ const (
 	// DefaultExternalSecretsVer is the default version of the external secrets component.
 	DefaultExternalSecretsVer = "v0.9.8"
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
-	DefaultOcmControllerVer = "v0.15.0"
+	DefaultOcmControllerVer = "v0.16.0"
 	// DefaultGitControllerVer is the default version of the git-controller component.
-	DefaultGitControllerVer = "v0.9.0"
+	DefaultGitControllerVer = "v0.10.0"
 	// DefaultReplicationVer is the default version of the replication-controller component.
-	DefaultReplicationVer = "v0.8.0"
+	DefaultReplicationVer = "v0.9.2"
 	// DefaultMpasProductControllerVer is the default version of the mpas-product-controller component.
-	DefaultMpasProductControllerVer = "v0.6.0"
+	DefaultMpasProductControllerVer = "v0.7.0"
 	// DefaultMpasProjectControllerVer is the default version of the mpas-project-controller component.
 	DefaultMpasProjectControllerVer = "v0.5.0"
 	// DefaultOcmCliVer is the default version of the ocm-cli component.
