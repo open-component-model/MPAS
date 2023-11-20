@@ -7,7 +7,7 @@
 
 ## About this project
 
-MPAS (Multi Platform Automation System) enables the release of complex software
+MPAS (Multi Product Pipeline Automation System) enables the release of complex software
 systems in a fully automated way. It is based on the [Open component model](https://github.com/open-component-model/ocm)
 and uses [Kubernetes](https://kubernetes.io/) as a runtime environment.
 
