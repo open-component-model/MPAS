@@ -8,5 +8,6 @@ metadata:
 spec:
   type: kubernetes
   interval: 10m
+  serviceAccountName: mpas-test-001
   access:
     targetNamespace: mpas-test-001
