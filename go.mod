@@ -32,7 +32,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/fluxcd/flux2/v2 v2.0.0-rc.3
 	github.com/fluxcd/go-git-providers v0.18.1-0.20230706132206-211750e8915d
-	github.com/fluxcd/kustomize-controller/api v1.1.0
+	github.com/fluxcd/kustomize-controller/api v1.1.1
 	github.com/fluxcd/pkg/apis/meta v1.1.2
 	github.com/fluxcd/pkg/git v0.11.0
 	github.com/fluxcd/pkg/git/gogit v0.8.1
