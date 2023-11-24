@@ -39,7 +39,7 @@ require (
 	github.com/fluxcd/pkg/kustomize v1.3.4
 	github.com/fluxcd/pkg/runtime v0.35.0
 	github.com/fluxcd/pkg/ssa v0.28.2
-	github.com/fluxcd/source-controller/api v1.1.0
+	github.com/fluxcd/source-controller/api v1.1.2
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-logr/logr v1.3.0
 	github.com/mandelsoft/vfs v0.0.0-20230713123140-269aa4fb1338
