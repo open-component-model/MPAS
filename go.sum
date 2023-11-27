@@ -1277,8 +1277,8 @@ github.com/open-component-model/mpas-project-controller v0.4.0 h1:RnFzagQ55cK6Pd
 github.com/open-component-model/mpas-project-controller v0.4.0/go.mod h1:3wl7jnUYqoWkRbUh4+acNuk7Im53lYcB6D/O5rbKdwM=
 github.com/open-component-model/ocm v0.4.1 h1:YXzOZhRJz9M/Ku9jsPzFxcZEF8VK4aS1sRwmstbL9zA=
 github.com/open-component-model/ocm v0.4.1/go.mod h1:KsuXGr4sw1EWgPRFQ8i5Ly7kKY6fBHbsr0wgfoGDyT0=
-github.com/open-component-model/ocm-controller v0.14.2-0.20231018132945-e60f59db8c74 h1:jQdEIMnYbh7Abcajv3Mk7Qed+4Wo7uNeWcuK+ey5OwU=
-github.com/open-component-model/ocm-controller v0.14.2-0.20231018132945-e60f59db8c74/go.mod h1:B3FRIq6lu7iaaNePY5vztOek6gKJot6LhiyJ2lWiYA0=
+github.com/open-component-model/ocm-controller v0.16.1 h1:Vr04cTivp/kBYktTwDMG4FgmpIS+DdgxX1QnBdBp/hA=
+github.com/open-component-model/ocm-controller v0.16.1/go.mod h1:lYax3VEjWAZ7qEr90opJQl+qm/gO3wIeoz1WSEdje2c=
 github.com/open-component-model/ocm-e2e-framework v0.7.0 h1:O+PH/xQrJdzA+Tan2qZcHBJgWgoJ64GXkiNEMM/rag0=
 github.com/open-component-model/ocm-e2e-framework v0.7.0/go.mod h1:ehOW7rZeI0mHcWLKUpiCj19IWefBlJR7LrgSbtFtTfI=
 github.com/open-component-model/replication-controller v0.7.0 h1:HZg2VXgcCCwFnqP7izz5T/B7y1QzELlDW3NR+j4rnQs=
