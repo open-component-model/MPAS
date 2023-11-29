@@ -19,6 +19,8 @@ podinfo: {
   // this field is optional
   message?: string
   // this field is optional
-  serviceAccountName?: string
+  serviceAccountName?: *"podinfo-sa" | string
+
+  max_replicas: replicas * 5 @private(true)
 }
 
