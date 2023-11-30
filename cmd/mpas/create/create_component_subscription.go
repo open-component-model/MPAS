@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fluxcd/pkg/apis/meta"
 	"github.com/open-component-model/mpas/cmd/mpas/config"
 	"github.com/open-component-model/mpas/internal/kubeutils"
 	"github.com/open-component-model/mpas/internal/printer"
 	"github.com/open-component-model/mpas/internal/resource"
 	rep1alpha1 "github.com/open-component-model/replication-controller/api/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -70,7 +70,7 @@ func (c *ComponentSubscriptionCmd) Execute(ctx context.Context, cfg *config.Mpas
 	}
 
 	if c.SourceSecretRef != "" {
-		csub.Spec.Source.SecretRef = &meta.LocalObjectReference{
+		csub.Spec.Source.SecretRef = &v1.LocalObjectReference{
 			Name: c.SourceSecretRef,
 		}
 	}
@@ -78,7 +78,7 @@ func (c *ComponentSubscriptionCmd) Execute(ctx context.Context, cfg *config.Mpas
 	if c.DestinationUrl != "" {
 		csub.Spec.Destination = &rep1alpha1.OCMRepository{
 			URL: c.DestinationUrl,
-			SecretRef: &meta.LocalObjectReference{
+			SecretRef: &v1.LocalObjectReference{
 				Name: c.DestinationSecretRef,
 			},
 		}
@@ -95,7 +95,7 @@ func (c *ComponentSubscriptionCmd) Execute(ctx context.Context, cfg *config.Mpas
 			signatures = append(signatures, rep1alpha1.Signature{
 				Name: name,
 				PublicKey: rep1alpha1.SecretRef{
-					SecretRef: meta.LocalObjectReference{
+					SecretRef: v1.LocalObjectReference{
 						Name: pubkey,
 					},
 				},

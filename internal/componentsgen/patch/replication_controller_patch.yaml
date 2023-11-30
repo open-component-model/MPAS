@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: # manifests generated during bootstrap
+  - install.yaml
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: replication-controller
+      namespace: ocm-system
+    spec:
+      template:
+        spec:
+          containers:
+            - name: manager
+              args:
+                - --mpas-enabled
+                - --leader-elect
+                - --zap-log-level=4

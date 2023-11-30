@@ -13,6 +13,7 @@ replace github.com/docker/cli => github.com/docker/cli v23.0.5+incompatible
 
 // Flux dependent re-writes. These are needed to be compatible with the flux version at all times.
 replace (
+	github.com/fluxcd/pkg/runtime => github.com/fluxcd/pkg/runtime v0.35.0
 	k8s.io/api => k8s.io/api v0.26.3
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.26.3
 	k8s.io/apimachinery => k8s.io/apimachinery v0.26.3
@@ -37,7 +38,7 @@ require (
 	github.com/fluxcd/pkg/git v0.11.0
 	github.com/fluxcd/pkg/git/gogit v0.8.1
 	github.com/fluxcd/pkg/kustomize v1.3.4
-	github.com/fluxcd/pkg/runtime v0.35.0
+	github.com/fluxcd/pkg/runtime v0.42.0
 	github.com/fluxcd/pkg/ssa v0.28.2
 	github.com/fluxcd/source-controller/api v1.1.0
 	github.com/gabriel-vasile/mimetype v1.4.3
@@ -49,7 +50,7 @@ require (
 	github.com/open-component-model/ocm v0.4.1
 	github.com/open-component-model/ocm-controller v0.16.1
 	github.com/open-component-model/ocm-e2e-framework v0.7.0
-	github.com/open-component-model/replication-controller v0.7.0
+	github.com/open-component-model/replication-controller v0.11.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc5
 	github.com/oras-project/oras-credentials-go v0.2.0
@@ -366,14 +367,14 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/oauth2 v0.13.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/oauth2 v0.14.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect

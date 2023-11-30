@@ -12,7 +12,12 @@ import (
 	"strings"
 
 	"github.com/open-component-model/mpas/internal/env"
+	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
 )
+
+//go:embed patch/replication_controller_patch.yaml
+var replicationControllerPatch []byte
 
 // Controller is a component that generates manifests for a controller,
 // localization files from a template, and images for a given controller.
@@ -53,6 +58,12 @@ func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error
 	content, err := fetch(ctx, o.ReleaseURL, o.Version, tmpDir, "install.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to download install.yaml file: %w", err)
+	}
+
+	if o.Name == env.ReplicationControllerName {
+		if err := o.enableMpasForReplicationController(); err != nil {
+			return fmt.Errorf("failed to update replication controller: %w", err)
+		}
 	}
 
 	o.Path = filepath.Join(o.Name, "install.yaml")
@@ -97,4 +108,30 @@ func (o *Controller) GenerateImages() (map[string][]string, error) {
 // GetPath returns the path to the manifests.
 func (o *Controller) GetPath() string {
 	return o.Path
+}
+
+func (o *Controller) enableMpasForReplicationController() (err error) {
+	fs := filesys.MakeFsInMemory()
+	if err := fs.WriteFile("kustomization.yaml", replicationControllerPatch); err != nil {
+		return fmt.Errorf("failed to create kustomization file: %w", err)
+	}
+
+	if err := fs.WriteFile("install.yaml", []byte(o.Content)); err != nil {
+		return fmt.Errorf("failed to create install file: %w", err)
+	}
+
+	kustomizer := krusty.MakeKustomizer(krusty.MakeDefaultOptions())
+	result, err := kustomizer.Run(fs, ".")
+	if err != nil {
+		return fmt.Errorf("failed to run kustomize for controller %s: %w", o.Name, err)
+	}
+
+	asYaml, err := result.AsYaml()
+	if err != nil {
+		return fmt.Errorf("failed to create yaml from kustomize result: %w", err)
+	}
+
+	o.Content = string(asYaml)
+
+	return nil
 }
