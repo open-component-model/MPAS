@@ -1,0 +1,41 @@
+name: Publish Site
+
+on:
+  push:
+    branches: 
+    - main
+  pull_request:
+  workflow_dispatch:
+
+env:
+  OUTPUT_DIR: ./docs/site
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'write'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: '0.4.35'
+
+      - name: Build mdBook
+        run: mdbook build ./docs/site
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/site/book
