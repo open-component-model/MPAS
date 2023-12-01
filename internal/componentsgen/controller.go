@@ -61,7 +61,9 @@ func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error
 	}
 
 	if o.Name == env.ReplicationControllerName {
-		if err := o.enableMpasForReplicationController(); err != nil {
+		var err error
+		content, err = o.enableMpasForReplicationController(content)
+		if err != nil {
 			return fmt.Errorf("failed to update replication controller: %w", err)
 		}
 	}
@@ -83,6 +85,10 @@ func (o *Controller) GenerateLocalizationFromTemplate(tmpl, loc string) (string,
 func (o *Controller) GenerateImages() (map[string][]string, error) {
 	var images = make(map[string][]string)
 	index := strings.Index(o.Content, fmt.Sprintf("%s/%s", o.Registry, o.Name))
+	if index < 0 {
+		return nil, fmt.Errorf("failed to find registry and name in content")
+	}
+
 	var image string
 	for i := index; i < len(o.Content); i++ {
 		v := string((o.Content)[i])
@@ -110,28 +116,26 @@ func (o *Controller) GetPath() string {
 	return o.Path
 }
 
-func (o *Controller) enableMpasForReplicationController() (err error) {
+func (o *Controller) enableMpasForReplicationController(content []byte) ([]byte, error) {
 	fs := filesys.MakeFsInMemory()
 	if err := fs.WriteFile("kustomization.yaml", replicationControllerPatch); err != nil {
-		return fmt.Errorf("failed to create kustomization file: %w", err)
+		return nil, fmt.Errorf("failed to create kustomization file: %w", err)
 	}
 
-	if err := fs.WriteFile("install.yaml", []byte(o.Content)); err != nil {
-		return fmt.Errorf("failed to create install file: %w", err)
+	if err := fs.WriteFile("install.yaml", content); err != nil {
+		return nil, fmt.Errorf("failed to create install file: %w", err)
 	}
 
 	kustomizer := krusty.MakeKustomizer(krusty.MakeDefaultOptions())
 	result, err := kustomizer.Run(fs, ".")
 	if err != nil {
-		return fmt.Errorf("failed to run kustomize for controller %s: %w", o.Name, err)
+		return nil, fmt.Errorf("failed to run kustomize for controller %s: %w", o.Name, err)
 	}
 
 	asYaml, err := result.AsYaml()
 	if err != nil {
-		return fmt.Errorf("failed to create yaml from kustomize result: %w", err)
+		return nil, fmt.Errorf("failed to create yaml from kustomize result: %w", err)
 	}
 
-	o.Content = string(asYaml)
-
-	return nil
+	return asYaml, nil
 }

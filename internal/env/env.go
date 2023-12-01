@@ -22,7 +22,7 @@ const (
 	// DefaultGitControllerVer is the default version of the git-controller component.
 	DefaultGitControllerVer = "v0.10.1"
 	// DefaultReplicationVer is the default version of the replication-controller component.
-	DefaultReplicationVer = "v0.10.0"
+	DefaultReplicationVer = "v0.11.0"
 	// DefaultMpasProductControllerVer is the default version of the mpas-product-controller component.
 	DefaultMpasProductControllerVer = "v0.8.0"
 	// DefaultMpasProjectControllerVer is the default version of the mpas-project-controller component.
