@@ -23,9 +23,6 @@ cmd/flux/manifests/
 cmd/flux/.manifests.done
 testbin/
 
-# Docs
-site/
-
 # ignore uneccessary testdatae2e/testdata/testOCMController/podinfo/backend/manifests/*
 e2e/testdata/podinfo/backend/manifests/*
 e2e/testdata/podinfo/frontend/manifests/*
