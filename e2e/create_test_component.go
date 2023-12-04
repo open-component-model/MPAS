@@ -75,19 +75,14 @@ func podinfoBackend(t *testing.T) setup.Component {
 		t.Fatal("failed to read config file: %w", err)
 	}
 
-	readmeContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "backend", "README.md"))
-	if err != nil {
-		t.Fatal("failed to read readme file: %w", err)
-	}
-
 	manifestContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "backend", "manifests.tar"))
 	if err != nil {
 		t.Fatal("failed to read manifest file: %w", err)
 	}
 
-	validationContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "backend", "validation.rego"))
+	schemaContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "backend", "schema.cue"))
 	if err != nil {
-		t.Fatal("failed to read validation file: %w", err)
+		t.Fatal("failed to read schema file: %w", err)
 	}
 
 	return setup.Component{
@@ -102,8 +97,8 @@ func podinfoBackend(t *testing.T) setup.Component {
 				Type: "configdata.ocm.software",
 			}),
 			shared.BlobResource(shared.Resource{
-				Name: "instructions",
-				Data: string(readmeContent),
+				Name: "schema",
+				Data: string(schemaContent),
 				Type: "PlainText",
 			}),
 			shared.ImageRefResource("ghcr.io/stefanprodan/podinfo:6.2.0", shared.Resource{
@@ -115,11 +110,6 @@ func podinfoBackend(t *testing.T) setup.Component {
 				Name: "manifests",
 				Data: string(manifestContent),
 				Type: "kustomize.ocm.fluxcd.io",
-			}),
-			shared.BlobResource(shared.Resource{
-				Name: "validation",
-				Data: string(validationContent),
-				Type: "validator.mpas.ocm.software",
 			}),
 		},
 	}
@@ -133,19 +123,14 @@ func podinfoFrontend(t *testing.T) setup.Component {
 		t.Fatal("failed to read config file: %w", err)
 	}
 
-	readmeContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "frontend", "README.md"))
-	if err != nil {
-		t.Fatal("failed to read readme file: %w", err)
-	}
-
 	manifestContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "frontend", "manifests.tar"))
 	if err != nil {
 		t.Fatal("failed to read manifest file: %w", err)
 	}
 
-	validationContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "frontend", "validation.rego"))
+	schemaContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "frontend", "schema.cue"))
 	if err != nil {
-		t.Fatal("failed to read validation file: %w", err)
+		t.Fatal("failed to read schema file: %w", err)
 	}
 
 	return setup.Component{
@@ -160,8 +145,8 @@ func podinfoFrontend(t *testing.T) setup.Component {
 				Type: "configdata.ocm.software",
 			}),
 			shared.BlobResource(shared.Resource{
-				Name: "instructions",
-				Data: string(readmeContent),
+				Name: "schema",
+				Data: string(schemaContent),
 				Type: "PlainText",
 			}),
 			shared.ImageRefResource("ghcr.io/stefanprodan/podinfo:6.2.0", shared.Resource{
@@ -173,11 +158,6 @@ func podinfoFrontend(t *testing.T) setup.Component {
 				Name: "manifests",
 				Data: string(manifestContent),
 				Type: "kustomize.ocm.fluxcd.io",
-			}),
-			shared.BlobResource(shared.Resource{
-				Name: "validation",
-				Data: string(validationContent),
-				Type: "validator.mpas.ocm.software",
 			}),
 		},
 	}
@@ -191,19 +171,14 @@ func podinfoRedis(t *testing.T) setup.Component {
 		t.Fatal("failed to read config file: %w", err)
 	}
 
-	readmeContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "redis", "README.md"))
-	if err != nil {
-		t.Fatal("failed to read readme file: %w", err)
-	}
-
 	manifestContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "redis", "manifests.tar"))
 	if err != nil {
 		t.Fatal("failed to read manifest file: %w", err)
 	}
 
-	validationContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "redis", "validation.rego"))
+	schemaContent, err := os.ReadFile(filepath.Join("testdata", "podinfo", "redis", "schema.cue"))
 	if err != nil {
-		t.Fatal("failed to read validation file: %w", err)
+		t.Fatal("failed to read schema file: %w", err)
 	}
 
 	return setup.Component{
@@ -218,8 +193,8 @@ func podinfoRedis(t *testing.T) setup.Component {
 				Type: "configdata.ocm.software",
 			}),
 			shared.BlobResource(shared.Resource{
-				Name: "instructions",
-				Data: string(readmeContent),
+				Name: "schema",
+				Data: string(schemaContent),
 				Type: "PlainText",
 			}),
 			shared.ImageRefResource("redis:6.0.1", shared.Resource{
@@ -231,11 +206,6 @@ func podinfoRedis(t *testing.T) setup.Component {
 				Name: "manifests",
 				Data: string(manifestContent),
 				Type: "kustomize.ocm.fluxcd.io",
-			}),
-			shared.BlobResource(shared.Resource{
-				Name: "validation",
-				Data: string(validationContent),
-				Type: "validator.mpas.ocm.software",
 			}),
 		},
 	}
