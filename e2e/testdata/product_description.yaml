@@ -23,13 +23,8 @@ spec:
         version: 1.0.0
         referencePath:
         - name: backend
-      readme:
-        name: instructions
-        version: 1.0.0
-        referencePath:
-        - name: backend
-    validation:
-      name: validation
+    schema:
+      name: schema
       version: 1.0.0
       referencePath:
       - name: backend
@@ -51,13 +46,8 @@ spec:
         version: 1.0.0
         referencePath:
         - name: frontend
-      readme:
-        name: instructions
-        version: 1.0.0
-        referencePath:
-        - name: frontend
-    validation:
-      name: validation
+    schema:
+      name: schema
       version: 1.0.0
       referencePath:
       - name: frontend
@@ -79,13 +69,8 @@ spec:
         version: 1.0.0
         referencePath:
         - name: redis
-      readme:
-        name: instructions
-        version: 1.0.0
-        referencePath:
-        - name: redis
-    validation:
-      name: validation
+    schema:
+      name: schema
       version: 1.0.0
       referencePath:
       - name: redis
