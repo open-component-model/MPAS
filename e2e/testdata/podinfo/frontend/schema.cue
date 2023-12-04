@@ -16,7 +16,7 @@
 frontend: {
   color: *"red" | "blue" | "green" | "yellow"
   // this field is required
-  message !: *"Hello, world!" | string
+  message: *"Hello, world!" | string
   // this field has a default value of 1 and must be an integer between 1 and 2
   replicas: *1 | int & >0 & <2
 }

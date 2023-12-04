@@ -16,5 +16,5 @@ backend: {
   // this field has a default value of 2 and must be less than 4
   replicas: *2 | int & >0 & <4
   // this field is required and must match the regex
-  cacheAddr: *"tcp://redis:6379" | string & =~"^tcp://[a-z.-]+:\d+"
+  cacheAddr: *"tcp://redis:6379" | string & =~"^tcp://[a-z.-]+:\\d+"
 }
