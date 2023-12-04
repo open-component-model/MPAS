@@ -66,6 +66,10 @@ func (o *Controller) GenerateManifests(ctx context.Context, tmpDir string) error
 		if err != nil {
 			return fmt.Errorf("failed to update replication controller: %w", err)
 		}
+
+		if err := writeFile(tmpDir, "install.yaml", string(content)); err != nil {
+			return fmt.Errorf("failed to write out file: %w", err)
+		}
 	}
 
 	o.Path = filepath.Join(o.Name, "install.yaml")
