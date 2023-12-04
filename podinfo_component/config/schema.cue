@@ -21,4 +21,3 @@ podinfo: {
   // this field is optional
   serviceAccountName?: string
 }
-

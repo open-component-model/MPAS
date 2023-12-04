@@ -81,7 +81,7 @@ func newProductFeature(projectRepoName string) *features.FeatureBuilder {
 				Path:       "products/" + prodDepGenName + "/product-deployment.yaml"},
 			assess.File{
 				Repository: projectRepoName,
-				Path:       "products/" + prodDepGenName + "/values.yaml"},
+				Path:       "products/" + prodDepGenName + "/config.cue"},
 		)).
 		Assess(fmt.Sprintf("ProductDeployment %s exists in namespace %s", prodDepGenName, projectRepoName), checkIfProductDeploymentExists(prodDepGenName, projectRepoName)).
 		Assess(fmt.Sprintf("ProductDeploymentPipelines exist in namespace %s", projectRepoName), checkIfProductDeploymentPipelinesExist(projectRepoName, pipelineNames)).
