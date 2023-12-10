@@ -48,7 +48,7 @@ require (
 	github.com/open-component-model/mpas-product-controller v0.5.1
 	github.com/open-component-model/mpas-project-controller v0.4.0
 	github.com/open-component-model/ocm v0.4.1
-	github.com/open-component-model/ocm-controller v0.16.1
+	github.com/open-component-model/ocm-controller v0.18.1
 	github.com/open-component-model/ocm-e2e-framework v0.7.0
 	github.com/open-component-model/replication-controller v0.11.0
 	github.com/opencontainers/go-digest v1.0.0
@@ -294,8 +294,7 @@ require (
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oleiade/reflections v1.0.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.12.0 // indirect
-	github.com/onsi/gomega v1.27.10 // indirect
+	github.com/onsi/gomega v1.30.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/outcaste-io/ristretto v0.2.3 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
