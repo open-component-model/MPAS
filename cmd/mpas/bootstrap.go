@@ -42,6 +42,7 @@ func NewBootstrap(cfg *config.MpasConfig) *cobra.Command {
 
 	cmd.AddCommand(NewBootstrapGithub(cfg))
 	cmd.AddCommand(NewBootstrapGitea(cfg))
+	cmd.AddCommand(NewBootstrapGitlab(cfg))
 
 	return cmd
 }
@@ -168,6 +169,80 @@ func NewBootstrapGitea(cfg *config.MpasConfig) *cobra.Command {
 
 			if b.Hostname == "" {
 				return fmt.Errorf("hostname must be set")
+			}
+
+			if b.Repository == "" {
+				return fmt.Errorf("repository must be set")
+			}
+
+			if b.Registry == "" {
+				return fmt.Errorf("registry must be set")
+			}
+
+			b.Timeout, err = time.ParseDuration(cfg.Timeout)
+			if err != nil {
+				return err
+			}
+
+			b.Interval, err = time.ParseDuration(c.Interval)
+			if err != nil {
+				return err
+			}
+
+			return b.Execute(cmd.Context(), cfg)
+
+		},
+	}
+
+	c.AddFlags(cmd.Flags())
+
+	return cmd
+}
+
+// NewBootstrapGitlab returns a new cobra.Command for gitlab bootstrap
+func NewBootstrapGitlab(cfg *config.MpasConfig) *cobra.Command {
+	c := &config.GitlabConfig{}
+	cmd := &cobra.Command{
+		Use:   "gitlab [flags]",
+		Short: "Bootstrap an mpas management repository on Gitlab",
+		Example: `  - Bootstrap with a private organization repository
+    mpas bootstrap gitlab --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --path clusters/my-cluster --hostname gitlab.example.com
+
+    - Bootstrap with a private user repository
+    mpas bootstrap gitlab --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --path clusters/my-cluster --hostname gitlab.example.com
+
+    - Bootstrap with a public user repository
+    mpas bootstrap gitlab --owner myUser --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --personal --private=false --path clusters/my-cluster --hostname gitlab.example.com
+
+    - Bootstrap with a public organization repository
+    mpas bootstrap gitlab --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster --hostname gitlab.example.com
+`,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			b := bootstrap.GitlabCmd{
+				Owner:                 c.Owner,
+				Personal:              c.Personal,
+				Repository:            c.Repository,
+				FromFile:              c.FromFile,
+				Registry:              c.Registry,
+				DockerconfigPath:      cfg.DockerconfigPath,
+				Path:                  c.Path,
+				CommitMessageAppendix: c.CommitMessageAppendix,
+				Hostname:              c.Hostname,
+				Components:            append(env.InstallComponents, c.Components...),
+				CaFile:                c.CaFile,
+			}
+
+			token := os.Getenv(env.GitlabTokenVar)
+			if token == "" {
+				token, err = passwdFromStdin("Gitlab token: ")
+				if err != nil {
+					return fmt.Errorf("failed to read token from stdin: %w", err)
+				}
+			}
+			b.Token = token
+
+			if b.Owner == "" {
+				return fmt.Errorf("owner must be set")
 			}
 
 			if b.Repository == "" {

@@ -67,6 +67,8 @@ const (
 	GithubTokenVar = "GITHUB_TOKEN"
 	// GiteaTokenVar is the name of the environment variable to use to get the gitea token.
 	GiteaTokenVar = "GITEA_TOKEN"
+	// GitlabTokenVar is the name of the environment variable to use to get the gitlab token.
+	GitlabTokenVar = "GITLAB_TOKEN"
 )
 
 const (
@@ -74,6 +76,8 @@ const (
 	ProviderGithub = "github"
 	// ProviderGitea is the gitea provider.
 	ProviderGitea = "gitea"
+	// ProviderGitlab is the gitlab provider.
+	ProviderGitlab = "gitlab"
 )
 
 const (
