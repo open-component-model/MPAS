@@ -68,7 +68,7 @@ jobs:
           path: git-controller
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version-file: '${{ github.workspace }}/MPAS/go.mod'
       - name: Restore Go cache
