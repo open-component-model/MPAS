@@ -111,12 +111,14 @@ func (g *GiteaConfig) AddFlags(flags *pflag.FlagSet) {
 // GitlabConfig is the configuration for the Gitlab bootstrap command.
 type GitlabConfig struct {
 	BootstrapConfig
-	Personal bool
+	Personal  bool
+	TokenType string
 }
 
 // AddFlags adds the Gitea bootstrap flags to the given flag set.
 func (g *GitlabConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.BoolVar(&g.Personal, "personal", false, "The personal access token to use to access the Gitlab API")
+	flags.StringVar(&g.TokenType, "token-type", "oauth2", "The token type of the Gitlab token. By default it's set to oauth2.")
 	g.BootstrapConfig.AddFlags(flags)
 }
 

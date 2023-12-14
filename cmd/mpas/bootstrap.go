@@ -216,10 +216,14 @@ func NewBootstrapGitlab(cfg *config.MpasConfig) *cobra.Command {
 
     - Bootstrap with a public organization repository
     mpas bootstrap gitlab --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster --hostname gitlab.example.com
+
+    - Bootstrap with a public organization repository by setting token type to oauth
+    mpas bootstrap gitlab --owner ocmOrg --repository mpas --registry ghcr.io/open-component-model/mpas-bootstrap-component --private=false --path clusters/my-cluster --hostname gitlab.example.com --token-type oauth
 `,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			b := bootstrap.GitlabCmd{
 				Owner:                 c.Owner,
+				TokenType:             c.TokenType,
 				Personal:              c.Personal,
 				Repository:            c.Repository,
 				FromFile:              c.FromFile,

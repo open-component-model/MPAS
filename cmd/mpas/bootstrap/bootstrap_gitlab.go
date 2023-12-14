@@ -21,6 +21,8 @@ type GitlabCmd struct {
 	Owner string
 	// Token is the token to use for authentication
 	Token string
+	// Token is the token to use for authentication
+	TokenType string
 	// Personal indicates whether the repository is a personal repository
 	Personal bool
 	// Hostname is the hostname of the Gitlab instance
@@ -64,14 +66,11 @@ func (b *GitlabCmd) Execute(ctx context.Context, cfg *config.MpasConfig) error {
 	ctx, cancel := context.WithTimeout(ctx, t)
 	defer cancel()
 
-	//if b.Hostname == "" {
-	//	return fmt.Errorf("hostname must be specified")
-	//}
-
 	providerOpts := provider.ProviderOptions{
 		Provider:           env.ProviderGitlab,
 		Hostname:           b.Hostname,
 		Token:              b.Token,
+		TokenType:          b.TokenType,
 		DestructiveActions: b.DestructiveActions,
 	}
 

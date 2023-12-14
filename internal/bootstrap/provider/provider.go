@@ -36,6 +36,7 @@ type ProviderOptions struct {
 	Hostname           string
 	Token              string
 	Username           string
+	TokenType          string
 	DestructiveActions bool
 }
 
@@ -87,8 +88,7 @@ func giteaProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
 
 func gitlabProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
 	o := makeProviderOpts(opts)
-	// TODO: Put that into an option somewhere.
-	client, err := gitlab.NewClient(opts.Token, "oauth2", o...)
+	client, err := gitlab.NewClient(opts.Token, opts.TokenType, o...)
 	if err != nil {
 		return nil, err
 	}
