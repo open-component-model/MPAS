@@ -9,6 +9,7 @@ import (
 
 	"github.com/fluxcd/go-git-providers/gitea"
 	"github.com/fluxcd/go-git-providers/github"
+	"github.com/fluxcd/go-git-providers/gitlab"
 	"github.com/fluxcd/go-git-providers/gitprovider"
 	"github.com/open-component-model/mpas/internal/env"
 )
@@ -26,6 +27,7 @@ func init() {
 	providers = make(providerMap)
 	providers.register(env.ProviderGithub, githubProviderFunc)
 	providers.register(env.ProviderGitea, giteaProviderFunc)
+	providers.register(env.ProviderGitlab, gitlabProviderFunc)
 }
 
 // ProviderOptions contains the options for the provider
@@ -34,6 +36,7 @@ type ProviderOptions struct {
 	Hostname           string
 	Token              string
 	Username           string
+	TokenType          string
 	DestructiveActions bool
 }
 
@@ -77,6 +80,15 @@ func githubProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
 func giteaProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
 	o := makeProviderOpts(opts)
 	client, err := gitea.NewClient(opts.Token, o...)
+	if err != nil {
+		return nil, err
+	}
+	return client, err
+}
+
+func gitlabProviderFunc(opts ProviderOptions) (gitprovider.Client, error) {
+	o := makeProviderOpts(opts)
+	client, err := gitlab.NewClient(opts.Token, opts.TokenType, o...)
 	if err != nil {
 		return nil, err
 	}

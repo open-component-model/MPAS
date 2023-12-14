@@ -84,19 +84,19 @@ func (m *BootstrapConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&m.CaFile, "ca-file", "", "Root certificate for the remote git server.")
 }
 
-// GithubConfig is the configuration for the Github bootstrap command.
+// GithubConfig is the configuration for the GitHub bootstrap command.
 type GithubConfig struct {
 	BootstrapConfig
 	Personal bool
 }
 
-// AddFlags adds the Github bootstrap flags to the given flag set.
+// AddFlags adds the GitHub bootstrap flags to the given flag set.
 func (g *GithubConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.BoolVar(&g.Personal, "personal", false, "The personal access token to use to access the Github API")
 	g.BootstrapConfig.AddFlags(flags)
 }
 
-// GiteaConfig is the configuration for the Github bootstrap command.
+// GiteaConfig is the configuration for the GitHub bootstrap command.
 type GiteaConfig struct {
 	BootstrapConfig
 	Personal bool
@@ -105,6 +105,20 @@ type GiteaConfig struct {
 // AddFlags adds the Gitea bootstrap flags to the given flag set.
 func (g *GiteaConfig) AddFlags(flags *pflag.FlagSet) {
 	flags.BoolVar(&g.Personal, "personal", false, "The personal access token to use to access the Gitea API")
+	g.BootstrapConfig.AddFlags(flags)
+}
+
+// GitlabConfig is the configuration for the Gitlab bootstrap command.
+type GitlabConfig struct {
+	BootstrapConfig
+	Personal  bool
+	TokenType string
+}
+
+// AddFlags adds the Gitea bootstrap flags to the given flag set.
+func (g *GitlabConfig) AddFlags(flags *pflag.FlagSet) {
+	flags.BoolVar(&g.Personal, "personal", false, "The personal access token to use to access the Gitlab API")
+	flags.StringVar(&g.TokenType, "token-type", "oauth2", "The token type of the Gitlab token. By default it's set to oauth2.")
 	g.BootstrapConfig.AddFlags(flags)
 }
 

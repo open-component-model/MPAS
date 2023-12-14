@@ -20,11 +20,11 @@ const (
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
 	DefaultOcmControllerVer = "v0.18.1"
 	// DefaultGitControllerVer is the default version of the git-controller component.
-	DefaultGitControllerVer = "v0.11.0"
+	DefaultGitControllerVer = "v0.11.1"
 	// DefaultReplicationVer is the default version of the replication-controller component.
 	DefaultReplicationVer = "v0.12.2"
 	// DefaultMpasProductControllerVer is the default version of the mpas-product-controller component.
-	DefaultMpasProductControllerVer = "v0.10.0"
+	DefaultMpasProductControllerVer = "v0.10.1"
 	// DefaultMpasProjectControllerVer is the default version of the mpas-project-controller component.
 	DefaultMpasProjectControllerVer = "v0.5.0"
 	// DefaultOcmCliVer is the default version of the ocm-cli component.
@@ -67,6 +67,8 @@ const (
 	GithubTokenVar = "GITHUB_TOKEN"
 	// GiteaTokenVar is the name of the environment variable to use to get the gitea token.
 	GiteaTokenVar = "GITEA_TOKEN"
+	// GitlabTokenVar is the name of the environment variable to use to get the gitlab token.
+	GitlabTokenVar = "GITLAB_TOKEN"
 )
 
 const (
@@ -74,6 +76,8 @@ const (
 	ProviderGithub = "github"
 	// ProviderGitea is the gitea provider.
 	ProviderGitea = "gitea"
+	// ProviderGitlab is the gitlab provider.
+	ProviderGitlab = "gitlab"
 )
 
 const (
