@@ -88,7 +88,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">2.</strong> Setup</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation.html" class="active"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="boostrap.html"><strong aria-hidden="true">2.2.</strong> Bootstrap</a></li></ol></li><li class="chapter-item expanded "><a href="administration.html"><strong aria-hidden="true">3.</strong> Administration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="project_setup.html"><strong aria-hidden="true">3.1.</strong> Project Setup</a></li><li class="chapter-item expanded "><a href="credentials.html"><strong aria-hidden="true">3.2.</strong> Credentials</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="product_management.html"><strong aria-hidden="true">4.</strong> Product Management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_subscriptions.html"><strong aria-hidden="true">4.1.</strong> Subscriptions</a></li><li class="chapter-item expanded "><a href="product_deployment.html"><strong aria-hidden="true">4.2.</strong> Deployment</a></li><li class="chapter-item expanded "><a href="product_configuration.html"><strong aria-hidden="true">4.3.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="product_authoring.html"><strong aria-hidden="true">5.</strong> Product Authoring</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_description.html"><strong aria-hidden="true">5.1.</strong> Product Description</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="architecture.html"><strong aria-hidden="true">6.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">7.</strong> Troubleshooting</a></li><li class="chapter-item expanded "><a href="fqa.html"><strong aria-hidden="true">8.</strong> Frequently Asked Questions</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="setup.html"><strong aria-hidden="true">2.</strong> Setup</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation.html" class="active"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="bootstrap.html"><strong aria-hidden="true">2.2.</strong> Bootstrap</a></li></ol></li><li class="chapter-item expanded "><a href="getting_started.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li class="chapter-item expanded "><a href="administration.html"><strong aria-hidden="true">4.</strong> Administration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="project_setup.html"><strong aria-hidden="true">4.1.</strong> Project Setup</a></li><li class="chapter-item expanded "><a href="credentials.html"><strong aria-hidden="true">4.2.</strong> Credentials</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="product_management.html"><strong aria-hidden="true">5.</strong> Product Management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_subscriptions.html"><strong aria-hidden="true">5.1.</strong> Subscriptions</a></li><li class="chapter-item expanded "><a href="product_deployment.html"><strong aria-hidden="true">5.2.</strong> Deployment</a></li><li class="chapter-item expanded "><a href="product_configuration.html"><strong aria-hidden="true">5.3.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="product_authoring.html"><strong aria-hidden="true">6.</strong> Product Authoring</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_description.html"><strong aria-hidden="true">6.1.</strong> Product Description</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="architecture.html"><strong aria-hidden="true">7.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">8.</strong> Troubleshooting</a></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">9.</strong> Frequently Asked Questions</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -172,16 +172,24 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<h2 id="install-using-binaries"><a class="header" href="#install-using-binaries">Install using Binaries</a></h2>
+<p>To install the MPAS CLI, you can download the binaries for major platforms from the GitHub <a href="https://github.com/open-component-model/mpas/releases">releases page</a>.</p>
+<h2 id="install-using-homebrew"><a class="header" href="#install-using-homebrew">Install using Homebrew</a></h2>
+<p>You can also install via <a href="https://brew.sh/">homebrew</a> for macOS and Linux:</p>
+<p><code>brew install open-component-model/tap/mpas</code></p>
+<h2 id="install-using-curl-bash"><a class="header" href="#install-using-curl-bash">Install using curl-bash</a></h2>
+<p>To install with <code>bash</code> for macOS or Linux execute the following command:</p>
+<p><code>curl -sfL https://raw.githubusercontent.com/open-component-model/mpas/main/install.sh | sh -</code></p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="setup.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="boostrap.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="bootstrap.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -191,11 +199,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="setup.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="boostrap.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="bootstrap.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

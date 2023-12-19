@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Setup - MPAS Documentation</title>
+        <title>Introduction - MPAS Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -88,7 +88,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html" class="active"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="introduction.html" class="active"><strong aria-hidden="true">2.</strong> Setup</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="boostrap.html"><strong aria-hidden="true">2.2.</strong> Bootstrap</a></li></ol></li><li class="chapter-item expanded "><a href="administration.html"><strong aria-hidden="true">3.</strong> Administration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="project_setup.html"><strong aria-hidden="true">3.1.</strong> Project Setup</a></li><li class="chapter-item expanded "><a href="credentials.html"><strong aria-hidden="true">3.2.</strong> Credentials</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="product_management.html"><strong aria-hidden="true">4.</strong> Product Management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_subscriptions.html"><strong aria-hidden="true">4.1.</strong> Subscriptions</a></li><li class="chapter-item expanded "><a href="product_deployment.html"><strong aria-hidden="true">4.2.</strong> Deployment</a></li><li class="chapter-item expanded "><a href="product_configuration.html"><strong aria-hidden="true">4.3.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="product_authoring.html"><strong aria-hidden="true">5.</strong> Product Authoring</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_description.html"><strong aria-hidden="true">5.1.</strong> Product Description</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="architecture.html"><strong aria-hidden="true">6.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">7.</strong> Troubleshooting</a></li><li class="chapter-item expanded "><a href="fqa.html"><strong aria-hidden="true">8.</strong> Frequently Asked Questions</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html" class="active"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="setup.html"><strong aria-hidden="true">2.</strong> Setup</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="bootstrap.html"><strong aria-hidden="true">2.2.</strong> Bootstrap</a></li></ol></li><li class="chapter-item expanded "><a href="getting_started.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li class="chapter-item expanded "><a href="administration.html"><strong aria-hidden="true">4.</strong> Administration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="project_setup.html"><strong aria-hidden="true">4.1.</strong> Project Setup</a></li><li class="chapter-item expanded "><a href="credentials.html"><strong aria-hidden="true">4.2.</strong> Credentials</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="product_management.html"><strong aria-hidden="true">5.</strong> Product Management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_subscriptions.html"><strong aria-hidden="true">5.1.</strong> Subscriptions</a></li><li class="chapter-item expanded "><a href="product_deployment.html"><strong aria-hidden="true">5.2.</strong> Deployment</a></li><li class="chapter-item expanded "><a href="product_configuration.html"><strong aria-hidden="true">5.3.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="product_authoring.html"><strong aria-hidden="true">6.</strong> Product Authoring</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_description.html"><strong aria-hidden="true">6.1.</strong> Product Description</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="architecture.html"><strong aria-hidden="true">7.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">8.</strong> Troubleshooting</a></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">9.</strong> Frequently Asked Questions</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -171,17 +171,26 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="setup"><a class="header" href="#setup">Setup</a></h1>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>MPAS (Multi Product Pipeline Automation System) enables the release of complex software
+systems in a fully automated way. It is based on the <a href="https://github.com/open-component-model/ocm">Open component model</a>
+and uses <a href="https://kubernetes.io/">Kubernetes</a> as a runtime environment.</p>
+<p>MPAS provides a cloud-native operational model for packaging and running applications. It takes an opinionated approach that considers the packaging unit to be an Open Component Model (OCM) component, Git to be the configuration interface and GitOps to be the deployment methodology. </p>
+<p>Therefore an environment in which MPAS can be bootstrapped requires only the following cloud-native primitives:</p>
+<ul>
+<li>Kubernetes Cluster</li>
+<li>OCI Registry</li>
+<li>Git Provider (currently we support Gitea and GitHub)</li>
+</ul>
+<p>MPAS has a strong focus on tooling and our CLI helps with automating all of the hard stuff.</p>
+<p>Take a look at the <a href="./getting_started.html">getting started guide</a> to get going straight away or peruse the <a href="./architecture.html">architecture</a> documentation to get a technical overview of how MPAS functions.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
-                                <i class="fa fa-angle-left"></i>
-                            </a>
 
-                            <a rel="next prefetch" href="introduction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="setup.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -191,11 +200,8 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
-                        <i class="fa fa-angle-left"></i>
-                    </a>
 
-                    <a rel="next prefetch" href="introduction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="setup.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

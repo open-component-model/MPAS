@@ -3,8 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>MPAS Documentation</title>
-        <meta name="robots" content="noindex">
+        <title>Getting Started - MPAS Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -89,7 +88,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="setup.html"><strong aria-hidden="true">2.</strong> Setup</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="bootstrap.html"><strong aria-hidden="true">2.2.</strong> Bootstrap</a></li></ol></li><li class="chapter-item expanded "><a href="getting_started.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li class="chapter-item expanded "><a href="administration.html"><strong aria-hidden="true">4.</strong> Administration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="project_setup.html"><strong aria-hidden="true">4.1.</strong> Project Setup</a></li><li class="chapter-item expanded "><a href="credentials.html"><strong aria-hidden="true">4.2.</strong> Credentials</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="product_management.html"><strong aria-hidden="true">5.</strong> Product Management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_subscriptions.html"><strong aria-hidden="true">5.1.</strong> Subscriptions</a></li><li class="chapter-item expanded "><a href="product_deployment.html"><strong aria-hidden="true">5.2.</strong> Deployment</a></li><li class="chapter-item expanded "><a href="product_configuration.html"><strong aria-hidden="true">5.3.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="product_authoring.html"><strong aria-hidden="true">6.</strong> Product Authoring</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_description.html"><strong aria-hidden="true">6.1.</strong> Product Description</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="architecture.html"><strong aria-hidden="true">7.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">8.</strong> Troubleshooting</a></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">9.</strong> Frequently Asked Questions</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="setup.html"><strong aria-hidden="true">2.</strong> Setup</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="bootstrap.html"><strong aria-hidden="true">2.2.</strong> Bootstrap</a></li></ol></li><li class="chapter-item expanded "><a href="getting_started.html" class="active"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li class="chapter-item expanded "><a href="administration.html"><strong aria-hidden="true">4.</strong> Administration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="project_setup.html"><strong aria-hidden="true">4.1.</strong> Project Setup</a></li><li class="chapter-item expanded "><a href="credentials.html"><strong aria-hidden="true">4.2.</strong> Credentials</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="product_management.html"><strong aria-hidden="true">5.</strong> Product Management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_subscriptions.html"><strong aria-hidden="true">5.1.</strong> Subscriptions</a></li><li class="chapter-item expanded "><a href="product_deployment.html"><strong aria-hidden="true">5.2.</strong> Deployment</a></li><li class="chapter-item expanded "><a href="product_configuration.html"><strong aria-hidden="true">5.3.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="product_authoring.html"><strong aria-hidden="true">6.</strong> Product Authoring</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_description.html"><strong aria-hidden="true">6.1.</strong> Product Description</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="architecture.html"><strong aria-hidden="true">7.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">8.</strong> Troubleshooting</a></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">9.</strong> Frequently Asked Questions</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -172,153 +171,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>MPAS (Multi Product Pipeline Automation System) enables the release of complex software
-systems in a fully automated way. It is based on the <a href="https://github.com/open-component-model/ocm">Open component model</a>
-and uses <a href="https://kubernetes.io/">Kubernetes</a> as a runtime environment.</p>
-<p>MPAS provides a cloud-native operational model for packaging and running applications. It takes an opinionated approach that considers the packaging unit to be an Open Component Model (OCM) component, Git to be the configuration interface and GitOps to be the deployment methodology. </p>
-<p>Therefore an environment in which MPAS can be bootstrapped requires only the following cloud-native primitives:</p>
-<ul>
-<li>Kubernetes Cluster</li>
-<li>OCI Registry</li>
-<li>Git Provider (currently we support Gitea and GitHub)</li>
-</ul>
-<p>MPAS has a strong focus on tooling and our CLI helps with automating all of the hard stuff.</p>
-<p>Take a look at the <a href="./getting_started.html">getting started guide</a> to get going straight away or peruse the <a href="./architecture.html">architecture</a> documentation to get a technical overview of how MPAS functions.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="setup"><a class="header" href="#setup">Setup</a></h1>
-<p>We provide a number of options for <a href="./installation.html">installing</a> MPAS.</p>
-<blockquote>
-<p><strong>Note</strong>: If you are managing an MPAS environment then you'll also need to take a look at our <a href="./boostrap.html">bootstrap</a> section which guides you through the process of deploying MPAS.</p>
-</blockquote>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
-<h2 id="install-using-binaries"><a class="header" href="#install-using-binaries">Install using Binaries</a></h2>
-<p>To install the MPAS CLI, you can download the binaries for major platforms from the GitHub <a href="https://github.com/open-component-model/mpas/releases">releases page</a>.</p>
-<h2 id="install-using-homebrew"><a class="header" href="#install-using-homebrew">Install using Homebrew</a></h2>
-<p>You can also install via <a href="https://brew.sh/">homebrew</a> for macOS and Linux:</p>
-<p><code>brew install open-component-model/tap/mpas</code></p>
-<h2 id="install-using-curl-bash"><a class="header" href="#install-using-curl-bash">Install using curl-bash</a></h2>
-<p>To install with <code>bash</code> for macOS or Linux execute the following command:</p>
-<p><code>curl -sfL https://raw.githubusercontent.com/open-component-model/mpas/main/install.sh | sh -</code></p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="bootstrap"><a class="header" href="#bootstrap">Bootstrap</a></h1>
-<p>The <code>mpas bootstrap</code> command deploys the following components to your cluster:</p>
-<ul>
-<li><a href="https://fluxcd.io/docs/components/">Flux</a>: A Kubernetes operator that will
-install and manage the other components.</li>
-<li><a href="https://github.com/open-component-model/ocm-controller">ocm-controller</a>: A Kubernetes controller 
-that enables the automated deployment of software using the <a href="https://ocm.software">Open Component Model</a> and <code>Flux</code>.</li>
-<li><a href="https://github.com/open-component-model/git-controller">git-controller</a>: A
-Kubernetes controller that will create pull requests in the target Github repository
-when changes are made to the cluster.</li>
-<li><a href="https://github.com/open-component-model/git-controller">replication-controller</a>: A Kubernetes controller that replicates
-everything defined and bundled in an OCM component version (and that the consumer subscribed to)
-into the local OCI registry of the cluster.</li>
-<li><a href="https://github.com/open-component-model/mpas-product-controller">mpas-product-controller</a>: A Kubernetes controller responsible
-for creating the custom resource <code>Product</code>. </li>
-<li><a href="https://github.com/open-component-model/mpas-project-controller">mpas-project-controller</a>: A Kubernetes controller responsible
-for bootstrapping a whole project and creating relevant access credentials, service accounts, roles and the main repository.
-It reconciles the <code>Project</code> resource.</li>
-</ul>
-<p>Besides the above components, the <code>mpas bootstrap</code> command will also push the corresponding
-component manifests to the target Git repository and configure <code>Flux</code> to continuously update
-the installed components from the target Git repository.</p>
-<p>After the <code>mpas bootstrap</code> command is executed, the cluster is ready to deploy software
-in a GitOps fashion using the Open Component Model and <code>MPAS</code>.</p>
-<p>{{% alert color=&quot;danger&quot; title=&quot;Required permissions&quot; %}}
-To bootstrap <code>MPAS</code>, the person running the command must have <strong>cluster admin rights</strong> for the target Kubernetes cluster.
-It is also required that the person running the command to be the <strong>owner</strong> of the GitHub repository,
-or to have admin rights of a GitHub organization.
-{{% /alert %}}</p>
-<h2 id="bootstrap-for-github"><a class="header" href="#bootstrap-for-github">Bootstrap for GitHub</a></h2>
-<h3 id="github-personal-access-token-pat"><a class="header" href="#github-personal-access-token-pat">GitHub Personal Access Token (PAT)</a></h3>
-<p>For accessing the GitHub API, the boostrap command requires a GitHub personal access token (PAT)
-with administration permissions.</p>
-<p>The GitHub PAT can be exported as environment variable:</p>
-<pre><code class="language-bash">export GITHUB_TOKEN=&lt;your-github-pat&gt;
-</code></pre>
-<p>If the <code>GITHUB_TOKEN</code> environment variable is not set, the <code>mpas bootstrap</code> command will prompt
-for the GitHub PAT.</p>
-<p>{{% alert color=&quot;danger&quot; title=&quot;PAT secret&quot; %}}
-Note that the GitHub PAT is stored in the cluster as a <strong>Kubernetes Secret</strong> named <code>flux-system</code>
-inside the <code>flux-system</code> namespace.
-{{% /alert %}}</p>
-<h3 id="personal-account"><a class="header" href="#personal-account">Personal account</a></h3>
-<p>Run the bootstrap for a repository on your personal GitHub account:</p>
-<pre><code class="language-bash">mpas bootstrap github \
-  --owner=&lt;your-github-username&gt; \
-  --repository=&lt;your-github-repository&gt; \
-  --path=clusters/my-cluster \
-  --personal
-</code></pre>
-<p>If the specified repository does not exist, the <code>mpas bootstrap</code> command will create it
-as a private repository. If you wish to create a public repository, you can use the <code>--private=false</code>
-flag.</p>
-<h3 id="organization"><a class="header" href="#organization">Organization</a></h3>
-<p>If you want to bootstrap <code>MPAS</code> for a repository owned by an GitHub organization,
-it is recommended to create a dedicated GitHub user for <code>MPAS</code> and use that user to bootstrap
-the repository.</p>
-<p>Run the bootstrap for a repository owned by a GitHub organization:</p>
-<pre><code class="language-bash">mpas bootstrap github \
-  --owner=&lt;your-github-organization&gt; \
-  --repository=&lt;your-github-repository&gt; \
-  --path=clusters/my-cluster \
-</code></pre>
-<h2 id="bootstrap-for-gitea"><a class="header" href="#bootstrap-for-gitea">Bootstrap for Gitea</a></h2>
-<h3 id="gitea-api-token"><a class="header" href="#gitea-api-token">Gitea API token</a></h3>
-<p>For accessing the Gitea API, the boostrap command requires a Gitea API token
-with administration permissions.</p>
-<p>The Gitea API Token can be exported as an environment variable:</p>
-<pre><code class="language-bash">export GITEA_TOKEN=&lt;your-gitea-api-token&gt;
-</code></pre>
-<p>If the <code>GITEA_TOKEN</code> environment variable is not set, the <code>mpas bootstrap</code> command will prompt
-for the Gitea API token.</p>
-<p>{{% alert color=&quot;danger&quot; title=&quot;API Token secret&quot; %}}
-Note that the Gitea API Token is stored in the cluster as a <strong>Kubernetes Secret</strong> named <code>flux-system</code>
-inside the <code>flux-system</code> namespace.
-{{% /alert %}}</p>
-<h3 id="personal-account-1"><a class="header" href="#personal-account-1">Personal account</a></h3>
-<p>Run bootstrap for a repository on your personal Gitea account:</p>
-<pre><code class="language-bash">mpas bootstrap gitea \
-  --owner=&lt;your-gite  -username&gt; \
-  --repository=&lt;your-gitea-repository&gt; \
-  --path=clusters/my-cluster \
-  --personal
-</code></pre>
-<p>If the specified repository does not exist, the <code>mpas bootstrap</code> command will create it
-as a private repository. If you wish to create a public repository, you can use the <code>--private=false</code>
-flag.</p>
-<h3 id="organization-1"><a class="header" href="#organization-1">Organization</a></h3>
-<p>If you want to bootstrap <code>MPAS</code> for a repository owned by an Gitea organization,
-it is recommended to create a dedicated Gitea user for <code>MPAS</code> and use that user to bootstrap
-the repository.</p>
-<p>Run the bootstrap for a repository owned by a Gitea organization:</p>
-<pre><code class="language-bash">mpas bootstrap gitea \
-  --owner=&lt;your-gitea-organization&gt; \
-  --repository=&lt;your-gitea-repository&gt; \
-  --path=clusters/my-cluster
-</code></pre>
-<h2 id="bootstrap-for-an-air-gapped-environment"><a class="header" href="#bootstrap-for-an-air-gapped-environment">Bootstrap for an air-gapped environment</a></h2>
-<p>If you want to bootstrap <code>MPAS</code> for a repository in an air-gapped environment, only Gitea
-is supported at the moment.</p>
-<h3 id="export-the-bootstrap-components-bundle"><a class="header" href="#export-the-bootstrap-components-bundle">Export the bootstrap components bundle</a></h3>
-<p>To bootstrap <code>MPAS</code> in an air-gapped environment, you need to export the bootstrap components
-bundle from the <code>MPAS</code> default registry.</p>
-<pre><code class="language-bash">mpas bootstrap \
-  --export \
-  --export-path=/tmp
-</code></pre>
-<p>The above command will export the bootstrap components archive to <code>/tmp/mpas-bundle.tar.gz</code>.</p>
-<p>It is then possible to import the bootstrap components bundle into an air-gapped environment
-registry and use it to bootstrap <code>MPAS</code> for a repository in that environment.</p>
-<pre><code class="language-bash">mpas bootstrap gitea \
-  --owner=&lt;your-gitea-organization&gt; \
-  --repository=&lt;your-gitea-repository&gt; \
-  --from-file=/tmp/mpas-bundle.tar.gz \
-  --registry=&lt;your-air-gapped-registry&gt; \
-  --path=clusters/my-cluster
-</code></pre>
-<p>The above command will copy the bootstrap components from the bundle archive to the specified
-air-gapped registry and bootstrap <code>MPAS</code> for the specified repository.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
+                        <h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
 <p>This tutorial shows you how to bootstrap MPAS to a Kubernetes cluster and deploy
 a simple application.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
@@ -577,24 +430,18 @@ Status:
   Observed Generation:     1
 </code></pre>
 <p>The application is deployed in the <code>mpas-podinfo-application</code> namespace.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="administration"><a class="header" href="#administration">Administration</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="project-setup"><a class="header" href="#project-setup">Project Setup</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="credentials"><a class="header" href="#credentials">Credentials</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="product-management"><a class="header" href="#product-management">Product Management</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="subscriptions"><a class="header" href="#subscriptions">Subscriptions</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="deployment"><a class="header" href="#deployment">Deployment</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="product-authoring"><a class="header" href="#product-authoring">Product Authoring</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="product-description"><a class="header" href="#product-description">Product Description</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="frequently-asked-questions"><a class="header" href="#frequently-asked-questions">Frequently Asked Questions</a></h1>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="bootstrap.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
+                            <a rel="next prefetch" href="administration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -602,7 +449,13 @@ Status:
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="bootstrap.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
+                    <a rel="next prefetch" href="administration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
@@ -625,11 +478,6 @@ Status:
 
         <!-- Custom JS scripts -->
 
-        <script>
-        window.addEventListener('load', function() {
-            window.setTimeout(window.print, 100);
-        });
-        </script>
 
     </div>
     </body>

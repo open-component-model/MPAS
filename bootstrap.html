@@ -1,0 +1,344 @@
+<!DOCTYPE HTML>
+<html lang="en" class="navy" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Bootstrap - MPAS Documentation</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "navy";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="setup.html"><strong aria-hidden="true">2.</strong> Setup</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="bootstrap.html" class="active"><strong aria-hidden="true">2.2.</strong> Bootstrap</a></li></ol></li><li class="chapter-item expanded "><a href="getting_started.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li class="chapter-item expanded "><a href="administration.html"><strong aria-hidden="true">4.</strong> Administration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="project_setup.html"><strong aria-hidden="true">4.1.</strong> Project Setup</a></li><li class="chapter-item expanded "><a href="credentials.html"><strong aria-hidden="true">4.2.</strong> Credentials</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="product_management.html"><strong aria-hidden="true">5.</strong> Product Management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_subscriptions.html"><strong aria-hidden="true">5.1.</strong> Subscriptions</a></li><li class="chapter-item expanded "><a href="product_deployment.html"><strong aria-hidden="true">5.2.</strong> Deployment</a></li><li class="chapter-item expanded "><a href="product_configuration.html"><strong aria-hidden="true">5.3.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="product_authoring.html"><strong aria-hidden="true">6.</strong> Product Authoring</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="product_description.html"><strong aria-hidden="true">6.1.</strong> Product Description</a></li><li class="spacer"></li></ol></li><li class="chapter-item expanded "><a href="architecture.html"><strong aria-hidden="true">7.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">8.</strong> Troubleshooting</a></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">9.</strong> Frequently Asked Questions</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">MPAS Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="bootstrap"><a class="header" href="#bootstrap">Bootstrap</a></h1>
+<p>The <code>mpas bootstrap</code> command deploys the following components to your cluster:</p>
+<ul>
+<li><a href="https://fluxcd.io/docs/components/">Flux</a>: A Kubernetes operator that will
+install and manage the other components.</li>
+<li><a href="https://github.com/open-component-model/ocm-controller">ocm-controller</a>: A Kubernetes controller 
+that enables the automated deployment of software using the <a href="https://ocm.software">Open Component Model</a> and <code>Flux</code>.</li>
+<li><a href="https://github.com/open-component-model/git-controller">git-controller</a>: A
+Kubernetes controller that will create pull requests in the target Github repository
+when changes are made to the cluster.</li>
+<li><a href="https://github.com/open-component-model/git-controller">replication-controller</a>: A Kubernetes controller that replicates
+everything defined and bundled in an OCM component version (and that the consumer subscribed to)
+into the local OCI registry of the cluster.</li>
+<li><a href="https://github.com/open-component-model/mpas-product-controller">mpas-product-controller</a>: A Kubernetes controller responsible
+for creating the custom resource <code>Product</code>. </li>
+<li><a href="https://github.com/open-component-model/mpas-project-controller">mpas-project-controller</a>: A Kubernetes controller responsible
+for bootstrapping a whole project and creating relevant access credentials, service accounts, roles and the main repository.
+It reconciles the <code>Project</code> resource.</li>
+</ul>
+<p>Besides the above components, the <code>mpas bootstrap</code> command will also push the corresponding
+component manifests to the target Git repository and configure <code>Flux</code> to continuously update
+the installed components from the target Git repository.</p>
+<p>After the <code>mpas bootstrap</code> command is executed, the cluster is ready to deploy software
+in a GitOps fashion using the Open Component Model and <code>MPAS</code>.</p>
+<p>{{% alert color=&quot;danger&quot; title=&quot;Required permissions&quot; %}}
+To bootstrap <code>MPAS</code>, the person running the command must have <strong>cluster admin rights</strong> for the target Kubernetes cluster.
+It is also required that the person running the command to be the <strong>owner</strong> of the GitHub repository,
+or to have admin rights of a GitHub organization.
+{{% /alert %}}</p>
+<h2 id="bootstrap-for-github"><a class="header" href="#bootstrap-for-github">Bootstrap for GitHub</a></h2>
+<h3 id="github-personal-access-token-pat"><a class="header" href="#github-personal-access-token-pat">GitHub Personal Access Token (PAT)</a></h3>
+<p>For accessing the GitHub API, the boostrap command requires a GitHub personal access token (PAT)
+with administration permissions.</p>
+<p>The GitHub PAT can be exported as environment variable:</p>
+<pre><code class="language-bash">export GITHUB_TOKEN=&lt;your-github-pat&gt;
+</code></pre>
+<p>If the <code>GITHUB_TOKEN</code> environment variable is not set, the <code>mpas bootstrap</code> command will prompt
+for the GitHub PAT.</p>
+<p>{{% alert color=&quot;danger&quot; title=&quot;PAT secret&quot; %}}
+Note that the GitHub PAT is stored in the cluster as a <strong>Kubernetes Secret</strong> named <code>flux-system</code>
+inside the <code>flux-system</code> namespace.
+{{% /alert %}}</p>
+<h3 id="personal-account"><a class="header" href="#personal-account">Personal account</a></h3>
+<p>Run the bootstrap for a repository on your personal GitHub account:</p>
+<pre><code class="language-bash">mpas bootstrap github \
+  --owner=&lt;your-github-username&gt; \
+  --repository=&lt;your-github-repository&gt; \
+  --path=clusters/my-cluster \
+  --personal
+</code></pre>
+<p>If the specified repository does not exist, the <code>mpas bootstrap</code> command will create it
+as a private repository. If you wish to create a public repository, you can use the <code>--private=false</code>
+flag.</p>
+<h3 id="organization"><a class="header" href="#organization">Organization</a></h3>
+<p>If you want to bootstrap <code>MPAS</code> for a repository owned by an GitHub organization,
+it is recommended to create a dedicated GitHub user for <code>MPAS</code> and use that user to bootstrap
+the repository.</p>
+<p>Run the bootstrap for a repository owned by a GitHub organization:</p>
+<pre><code class="language-bash">mpas bootstrap github \
+  --owner=&lt;your-github-organization&gt; \
+  --repository=&lt;your-github-repository&gt; \
+  --path=clusters/my-cluster \
+</code></pre>
+<h2 id="bootstrap-for-gitea"><a class="header" href="#bootstrap-for-gitea">Bootstrap for Gitea</a></h2>
+<h3 id="gitea-api-token"><a class="header" href="#gitea-api-token">Gitea API token</a></h3>
+<p>For accessing the Gitea API, the boostrap command requires a Gitea API token
+with administration permissions.</p>
+<p>The Gitea API Token can be exported as an environment variable:</p>
+<pre><code class="language-bash">export GITEA_TOKEN=&lt;your-gitea-api-token&gt;
+</code></pre>
+<p>If the <code>GITEA_TOKEN</code> environment variable is not set, the <code>mpas bootstrap</code> command will prompt
+for the Gitea API token.</p>
+<p>{{% alert color=&quot;danger&quot; title=&quot;API Token secret&quot; %}}
+Note that the Gitea API Token is stored in the cluster as a <strong>Kubernetes Secret</strong> named <code>flux-system</code>
+inside the <code>flux-system</code> namespace.
+{{% /alert %}}</p>
+<h3 id="personal-account-1"><a class="header" href="#personal-account-1">Personal account</a></h3>
+<p>Run bootstrap for a repository on your personal Gitea account:</p>
+<pre><code class="language-bash">mpas bootstrap gitea \
+  --owner=&lt;your-gite  -username&gt; \
+  --repository=&lt;your-gitea-repository&gt; \
+  --path=clusters/my-cluster \
+  --personal
+</code></pre>
+<p>If the specified repository does not exist, the <code>mpas bootstrap</code> command will create it
+as a private repository. If you wish to create a public repository, you can use the <code>--private=false</code>
+flag.</p>
+<h3 id="organization-1"><a class="header" href="#organization-1">Organization</a></h3>
+<p>If you want to bootstrap <code>MPAS</code> for a repository owned by an Gitea organization,
+it is recommended to create a dedicated Gitea user for <code>MPAS</code> and use that user to bootstrap
+the repository.</p>
+<p>Run the bootstrap for a repository owned by a Gitea organization:</p>
+<pre><code class="language-bash">mpas bootstrap gitea \
+  --owner=&lt;your-gitea-organization&gt; \
+  --repository=&lt;your-gitea-repository&gt; \
+  --path=clusters/my-cluster
+</code></pre>
+<h2 id="bootstrap-for-an-air-gapped-environment"><a class="header" href="#bootstrap-for-an-air-gapped-environment">Bootstrap for an air-gapped environment</a></h2>
+<p>If you want to bootstrap <code>MPAS</code> for a repository in an air-gapped environment, only Gitea
+is supported at the moment.</p>
+<h3 id="export-the-bootstrap-components-bundle"><a class="header" href="#export-the-bootstrap-components-bundle">Export the bootstrap components bundle</a></h3>
+<p>To bootstrap <code>MPAS</code> in an air-gapped environment, you need to export the bootstrap components
+bundle from the <code>MPAS</code> default registry.</p>
+<pre><code class="language-bash">mpas bootstrap \
+  --export \
+  --export-path=/tmp
+</code></pre>
+<p>The above command will export the bootstrap components archive to <code>/tmp/mpas-bundle.tar.gz</code>.</p>
+<p>It is then possible to import the bootstrap components bundle into an air-gapped environment
+registry and use it to bootstrap <code>MPAS</code> for a repository in that environment.</p>
+<pre><code class="language-bash">mpas bootstrap gitea \
+  --owner=&lt;your-gitea-organization&gt; \
+  --repository=&lt;your-gitea-repository&gt; \
+  --from-file=/tmp/mpas-bundle.tar.gz \
+  --registry=&lt;your-air-gapped-registry&gt; \
+  --path=clusters/my-cluster
+</code></pre>
+<p>The above command will copy the bootstrap components from the bundle archive to the specified
+air-gapped registry and bootstrap <code>MPAS</code> for the specified repository.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="installation.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="getting_started.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="installation.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="getting_started.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
