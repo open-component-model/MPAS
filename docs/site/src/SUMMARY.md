@@ -1,9 +1,10 @@
 # Summary
 
 - [Introduction](./introduction.md)
-- [Setup](./introduction.md)
+- [Setup](./setup.md)
     - [Installation](./installation.md)
-    - [Bootstrap](./boostrap.md)
+    - [Bootstrap](./bootstrap.md)
+- [Getting Started](./getting_started.md)
 - [Administration](./administration.md)
     - [Project Setup](./project_setup.md)
     - [Credentials](./credentials.md)
@@ -17,4 +18,4 @@
 ---
 - [Architecture](./architecture.md)
 - [Troubleshooting](./troubleshooting.md)
-- [Frequently Asked Questions](./fqa.md)
+- [Frequently Asked Questions](./faq.md)
