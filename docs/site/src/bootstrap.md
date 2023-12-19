@@ -60,7 +60,6 @@ mpas bootstrap github \
   --owner=<your-github-username> \
   --repository=<your-github-repository> \
   --path=clusters/my-cluster \
-  --dev \
   --personal
 ```
 
@@ -81,7 +80,6 @@ mpas bootstrap github \
   --owner=<your-github-organization> \
   --repository=<your-github-repository> \
   --path=clusters/my-cluster \
-  --dev
 ```
 
 ## Bootstrap for Gitea
@@ -114,7 +112,6 @@ mpas bootstrap gitea \
   --owner=<your-gite  -username> \
   --repository=<your-gitea-repository> \
   --path=clusters/my-cluster \
-  --dev \
   --personal
 ```
 
@@ -134,8 +131,7 @@ Run the bootstrap for a repository owned by a Gitea organization:
 mpas bootstrap gitea \
   --owner=<your-gitea-organization> \
   --repository=<your-gitea-repository> \
-  --path=clusters/my-cluster \
-  --dev
+  --path=clusters/my-cluster
 ```
 
 
@@ -166,8 +162,7 @@ mpas bootstrap gitea \
   --repository=<your-gitea-repository> \
   --from-file=/tmp/mpas-bundle.tar.gz \
   --registry=<your-air-gapped-registry> \
-  --path=clusters/my-cluster \
-  --dev
+  --path=clusters/my-cluster
 ```
 
 The above command will copy the bootstrap components from the bundle archive to the specified

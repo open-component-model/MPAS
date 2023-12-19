@@ -3,7 +3,7 @@
 - [Introduction](./introduction.md)
 - [Setup](./setup.md)
     - [Installation](./installation.md)
-    - [Bootstrap](./boostrap.md)
+    - [Bootstrap](./bootstrap.md)
 - [Getting Started](./getting_started.md)
 - [Administration](./administration.md)
     - [Project Setup](./project_setup.md)
