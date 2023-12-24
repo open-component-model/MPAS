@@ -34,7 +34,7 @@ require (
 	github.com/fluxcd/flux2/v2 v2.0.0-rc.3
 	github.com/fluxcd/go-git-providers v0.18.1-0.20230706132206-211750e8915d
 	github.com/fluxcd/kustomize-controller/api v1.1.0
-	github.com/fluxcd/pkg/apis/meta v1.1.2
+	github.com/fluxcd/pkg/apis/meta v1.2.0
 	github.com/fluxcd/pkg/git v0.11.0
 	github.com/fluxcd/pkg/git/gogit v0.8.1
 	github.com/fluxcd/pkg/kustomize v1.3.4
@@ -64,7 +64,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.28.3
 	k8s.io/apiextensions-apiserver v0.28.2
-	k8s.io/apimachinery v0.28.3
+	k8s.io/apimachinery v0.28.4
 	k8s.io/cli-runtime v0.28.2
 	k8s.io/client-go v0.28.3
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
