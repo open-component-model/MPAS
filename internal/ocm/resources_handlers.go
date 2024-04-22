@@ -10,13 +10,13 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/file"
-	"github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/ociimage"
 	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/open-component-model/ocm/pkg/contexts/datacontext/attrs/tmpcache"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	metav1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/resourcetypes"
 	"k8s.io/utils/pointer"
 )
 
@@ -75,12 +75,12 @@ func imageHandler(cv ocm.ComponentVersionAccess, opts *addImageOpts) error {
 			Version: opts.version,
 		},
 		Relation: metav1.ExternalRelation,
-		Type:     ociimage.TYPE,
+		Type:     resourcetypes.OCI_IMAGE,
 	}
 
 	spec := ociartifact.New(opts.image)
 
-	modificationOptions := ocm.ModificationOptions{
+	modificationOptions := &ocm.ModificationOptions{
 		ModifyResource: pointer.Bool(true),
 	}
 	if opts.skipDigest {
