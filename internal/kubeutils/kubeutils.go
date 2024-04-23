@@ -10,11 +10,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/fluxcd/cli-utils/pkg/object"
 	"github.com/fluxcd/flux2/v2/pkg/log"
 	"github.com/fluxcd/flux2/v2/pkg/status"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1"
 	"github.com/fluxcd/pkg/apis/meta"
-	"github.com/fluxcd/pkg/ssa"
+	"github.com/fluxcd/pkg/ssa/utils"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	productv1alpha1 "github.com/open-component-model/mpas-product-controller/api/v1alpha1"
 	projectv1alpha1 "github.com/open-component-model/mpas-project-controller/api/v1alpha1"
@@ -37,7 +38,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/retry"
-	"sigs.k8s.io/cli-utils/pkg/object"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -99,7 +99,7 @@ func KubeClient(rcg genericclioptions.RESTClientGetter) (client.WithWatch, error
 
 	kubeClient, err := client.NewWithWatch(cfg, client.Options{
 		Scheme: scheme,
-		Opts: client.WarningHandlerOptions{
+		WarningHandler: client.WarningHandlerOptions{
 			SuppressWarnings: true,
 		},
 	})
@@ -311,7 +311,7 @@ func ReportComponentsHealth(ctx context.Context, rcg genericclioptions.RESTClien
 
 // YamlToUnstructructured converts the given yaml to a slice of unstructured objects.
 func YamlToUnstructructured(data []byte) ([]*unstructured.Unstructured, error) {
-	return ssa.ReadObjects(bytes.NewReader(data))
+	return utils.ReadObjects(bytes.NewReader(data))
 }
 
 func UnstructuredToYaml(objs []*unstructured.Unstructured) ([]byte, error) {

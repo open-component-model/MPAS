@@ -266,7 +266,7 @@ func (f *fluxInstall) commitAndPushComponents(ctx context.Context, path string, 
 	}
 
 	if err == nil {
-		if err = f.gitClient.Push(ctx); err != nil {
+		if err = f.gitClient.Push(ctx, repository.PushConfig{}); err != nil {
 			return fmt.Errorf("failed to push manifests: %w", err)
 		}
 	}
@@ -282,7 +282,7 @@ func (f *fluxInstall) cloneRepository(ctx context.Context) error {
 			if err := f.cleanGitRepoDir(); err != nil {
 				return fmt.Errorf("failed to clean git repository directory: %w", err)
 			}
-			_, err = f.gitClient.Clone(ctx, f.url, repository.CloneOptions{
+			_, err = f.gitClient.Clone(ctx, f.url, repository.CloneConfig{
 				CheckoutStrategy: repository.CheckoutStrategy{
 					Branch: f.branch,
 				},

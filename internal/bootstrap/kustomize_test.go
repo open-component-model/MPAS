@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/open-component-model/ocm-controller/pkg/fakes"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,7 +56,7 @@ func TestKustomize(t *testing.T) {
 					"v1.0.0": {
 						Name:    componentName,
 						Version: "v1.0.0",
-						Resources: []*fakes.Resource{
+						Resources: []*fakes.Resource[*ocm.ResourceMeta]{
 							{
 								Name:    "ocm-config",
 								Version: "v1.0.0",

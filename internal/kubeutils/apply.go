@@ -13,11 +13,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/fluxcd/cli-utils/pkg/kstatus/polling"
 	"github.com/fluxcd/flux2/v2/pkg/manifestgen/kustomization"
 	"github.com/fluxcd/pkg/ssa"
+	"github.com/fluxcd/pkg/ssa/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"sigs.k8s.io/cli-utils/pkg/kstatus/polling"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/kustomize/api/konfig"
 )
@@ -50,7 +51,7 @@ func Apply(ctx context.Context, rcg genericclioptions.RESTClientGetter, root, ma
 	var stageTwo []*unstructured.Unstructured
 
 	for _, u := range objs {
-		if ssa.IsClusterDefinition(u) {
+		if utils.IsClusterDefinition(u) {
 			stageOne = append(stageOne, u)
 		} else {
 			stageTwo = append(stageTwo, u)
@@ -96,7 +97,7 @@ func readObjects(root, manifestPath string) ([]*unstructured.Unstructured, error
 		if err != nil {
 			return nil, err
 		}
-		return ssa.ReadObjects(bytes.NewReader(resources))
+		return utils.ReadObjects(bytes.NewReader(resources))
 	}
 
 	ms, err := os.Open(manifestPath)
@@ -105,7 +106,7 @@ func readObjects(root, manifestPath string) ([]*unstructured.Unstructured, error
 	}
 	defer ms.Close()
 
-	return ssa.ReadObjects(bufio.NewReader(ms))
+	return utils.ReadObjects(bufio.NewReader(ms))
 }
 
 func applySet(ctx context.Context, rcg genericclioptions.RESTClientGetter, objects []*unstructured.Unstructured) (*ssa.ChangeSet, error) {
