@@ -72,17 +72,17 @@ jobs:
         with:
           go-version-file: '${{ github.workspace }}/MPAS/go.mod'
       - name: Restore Go cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Setup Kubernetes
-        uses: helm/kind-action@v1.8.0
+        uses: helm/kind-action@v1.10.0
         with:
           install_only: true
-      - uses: yokawasa/action-setup-kube-tools@v0.9.3
+      - uses: yokawasa/action-setup-kube-tools@v0.11.1
         with:
           kustomize: '5.0.1'
           tilt: '0.32.2'
@@ -94,7 +94,7 @@ jobs:
 
       - name: Notify on Failure/Success
         id: slack-notification
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v1.26.0
         if: ${{ github.ref_name  == 'main' && github.event_name == 'schedule' && always() }}
         with:
           # Slack channel id, channel name, or user id to post message.
