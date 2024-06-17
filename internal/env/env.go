@@ -12,23 +12,23 @@ import (
 // The default versions of the components. Please update this list when a new version is released.
 const (
 	// DefaultFluxVer is the default version of the flux component.
-	DefaultFluxVer = "v2.1.2"
+	DefaultFluxVer = "v2.3.0"
 	// DefaultCertManagerVer is the default version of the cert-manager component.
 	DefaultCertManagerVer = "v1.13.2"
 	// DefaultExternalSecretsVer is the default version of the external secrets component.
 	DefaultExternalSecretsVer = "v0.9.9"
 	// DefaultOcmControllerVer is the default version of the ocm-controller component.
-	DefaultOcmControllerVer = "v0.19.0"
+	DefaultOcmControllerVer = "v0.23.3"
 	// DefaultGitControllerVer is the default version of the git-controller component.
-	DefaultGitControllerVer = "v0.12.0"
+	DefaultGitControllerVer = "v0.12.1"
 	// DefaultReplicationVer is the default version of the replication-controller component.
-	DefaultReplicationVer = "v0.13.0"
+	DefaultReplicationVer = "v0.13.1"
 	// DefaultMpasProductControllerVer is the default version of the mpas-product-controller component.
-	DefaultMpasProductControllerVer = "v0.11.0"
+	DefaultMpasProductControllerVer = "v0.11.1"
 	// DefaultMpasProjectControllerVer is the default version of the mpas-project-controller component.
-	DefaultMpasProjectControllerVer = "v0.6.0"
+	DefaultMpasProjectControllerVer = "v0.6.1"
 	// DefaultOcmCliVer is the default version of the ocm-cli component.
-	DefaultOcmCliVer = "v0.8.0"
+	DefaultOcmCliVer = "v0.11.0"
 )
 
 const (
